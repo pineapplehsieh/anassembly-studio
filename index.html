@@ -643,6 +643,12 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   border-top:1px solid var(--line);
   padding:24px 0; color:var(--muted); font-size:13px;
 }
+
+/* 讀不到檔案的圖片：以純黑色塊填滿原本的版位，取代瀏覽器預設的破圖圖示。
+   .img-failed 由 script 開頭的全域 error 監聽掛上，同時把 src 換成透明像素；
+   黑色來自元素自身的 background，因此不受 object-fit（cover／contain）影響，
+   在各種版位比例下都會完整填滿。 */
+img.img-failed{ background:#000; }
 </style>
 </head>
 <body>
@@ -696,6 +702,22 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   }
 </script>
 <script>
+/* ============================================================
+   BROKEN IMAGE FALLBACK (讀不到檔案的圖片一律顯示為純黑色塊)
+   ============================================================ */
+/* error 事件不會冒泡，必須用捕獲階段（第三個參數 true）才收得到 <img> 的載入失敗。
+   這段放在最前面，是為了確保在任何圖片開始載入之前就已經掛上監聽。
+   把 src 換成透明像素是為了消掉瀏覽器預設的破圖圖示與 alt 文字，
+   黑色則交給 CSS 的 .img-failed，兩者搭配才能得到乾淨的純黑版位。 */
+const BLANK_PIXEL = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+document.addEventListener("error", (e) => {
+  const el = e.target;
+  if(el && el.tagName === "IMG" && !el.classList.contains("img-failed")){
+    el.classList.add("img-failed");   // 先加 class，避免換 src 後又觸發一次 error 造成無窮迴圈
+    el.src = BLANK_PIXEL;
+  }
+}, true);
+
 /* ============================================================
    PROJECT DATA (可在此處修改各專案的照片路徑)
    ============================================================ */
