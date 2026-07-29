@@ -69,6 +69,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .home-caption-bl {
   position: absolute;
   left: 28px;
+  right: 160px;
   bottom: 28px;
   z-index: 10;
   pointer-events: none;
@@ -80,8 +81,12 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   font-weight: 700;
   font-size: 16px;
   letter-spacing: 0.02em;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8); 
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
   text-align: left;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .home-arrow{
@@ -137,7 +142,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 
 @media (max-width:700px){
   .home-hero{ height:64vh; min-height:380px; }
-  .home-caption-bl { left: 20px; bottom: 20px; }
+  .home-caption-bl { left: 20px; right: 20px; bottom: 70px; }
   .home-button-br { right: 20px; bottom: 20px; }
   .slide-caption { font-size: 14px; }
   .home-view-all-btn { padding: 8px 16px; font-size: 12px; }
@@ -255,7 +260,13 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   grid-template-columns:repeat(2, 1fr);
   gap:52px 40px;
 }
-@media (max-width:700px){ .grid{ grid-template-columns:1fr; gap:40px; } }
+@media (max-width:700px){
+  .grid{ grid-template-columns:1fr; gap:40px; }
+  .card-title{ font-size:17px; }
+  .card-meta{ font-size:12.5px; }
+  .intro h1{ font-size:26px; }
+  .intro p{ font-size:14px; }
+}
 
 .card{ cursor:pointer; }
 .card-thumb{
@@ -274,7 +285,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .empty-state{ padding:60px 0; text-align:center; color:var(--muted); }
 
 /* detail */
-.detail{ padding:36px 0 100px; }
+.detail{ padding-top:36px; padding-bottom:100px; }
 .back-link{ display:inline-block; color:var(--muted); font-size:14px; margin-bottom:32px; }
 .back-link:hover{ color:var(--ink); }
 
@@ -323,6 +334,12 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 @media (max-width:800px){ .detail-body{ grid-template-columns:1fr; gap:28px; } }
 .detail-desc p{ margin:0 0 18px; color:#3a3833; font-size:16.5px; line-height:1.85; max-width:640px; }
 .side-info{ font-size:14px; color:var(--muted); line-height:1.9; }
+@media (max-width:700px){
+  .detail-title{ font-size:clamp(24px,7vw,32px); }
+  .detail-meta{ font-size:13px; margin-bottom:24px; }
+  .detail-desc p{ font-size:15px; line-height:1.75; }
+  .side-info{ font-size:13px; }
+}
 .side-info strong{ display:block; color:var(--ink); font-size:13px; margin:22px 0 4px; }
 .side-info strong:first-child{ margin-top:0; }
 
@@ -643,12 +660,6 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   border-top:1px solid var(--line);
   padding:24px 0; color:var(--muted); font-size:13px;
 }
-
-/* 讀不到檔案的圖片：以純黑色塊填滿原本的版位，取代瀏覽器預設的破圖圖示。
-   .img-failed 由 script 開頭的全域 error 監聽掛上，同時把 src 換成透明像素；
-   黑色來自元素自身的 background，因此不受 object-fit（cover／contain）影響，
-   在各種版位比例下都會完整填滿。 */
-img.img-failed{ background:#000; }
 </style>
 </head>
 <body>
@@ -703,22 +714,6 @@ img.img-failed{ background:#000; }
 </script>
 <script>
 /* ============================================================
-   BROKEN IMAGE FALLBACK (讀不到檔案的圖片一律顯示為純黑色塊)
-   ============================================================ */
-/* error 事件不會冒泡，必須用捕獲階段（第三個參數 true）才收得到 <img> 的載入失敗。
-   這段放在最前面，是為了確保在任何圖片開始載入之前就已經掛上監聽。
-   把 src 換成透明像素是為了消掉瀏覽器預設的破圖圖示與 alt 文字，
-   黑色則交給 CSS 的 .img-failed，兩者搭配才能得到乾淨的純黑版位。 */
-const BLANK_PIXEL = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-document.addEventListener("error", (e) => {
-  const el = e.target;
-  if(el && el.tagName === "IMG" && !el.classList.contains("img-failed")){
-    el.classList.add("img-failed");   // 先加 class，避免換 src 後又觸發一次 error 造成無窮迴圈
-    el.src = BLANK_PIXEL;
-  }
-}, true);
-
-/* ============================================================
    PROJECT DATA (可在此處修改各專案的照片路徑)
    ============================================================ */
 const PROJECTS = [
@@ -746,6 +741,14 @@ const PROJECTS = [
       { src: "images/BC64D58E-6FAA-41B2-8DFD-7AC1478813FA.png", size: "large", position: "42% 0%" },
       
     ],
+    // 👇 示範用：series 讓多個頁面串連成同一系列，在 gallery 與 more-work 之間顯示導覽列
+    //    id 相同的專案會被歸為同一系列；part 決定排序（1,2,3...）；seriesTitle 是導覽列標題（同系列只需填一次也可以，這裡沿用目前頁面的即可）
+    //    ⚠️ 這三個專案（A-01 / A-02 / A-03）只是拿來示範效果，請改成你實際上屬於同一系列的專案 id
+    // 👇 thumb 是「系列縮圖」的路徑（正方形圖片，由你自己製作），放進 images/ 資料夾後把路徑填在這裡即可
+    //    這裡先用現有的一張圖示範，讓你能看到點擊後跳出譜系彈窗的效果，請替換成你做好的縮圖
+    // 👇 series 改為「陣列」，一個專案可以同時收錄在多個系列中，例如：
+    //    series: [ { id:"Series-R", part:1 }, { id:"Series-S", part:2 } ]
+    //    系列本身的標題／封面／文字介紹統一寫在上面的 SERIES_INFO，這裡只需要填 id 與 part（排序用）
     series: [ { id: "Series-R", part: 1 } ],
     books: [],
     summary: "A housing scheme stitched into the fine-grained fabric of an old city block.",
@@ -759,7 +762,12 @@ const PROJECTS = [
     year: "2026",
     location: "Department of Architecture, NCKU, Taiwan",
     status: "1:1 Full-scale Construction",
-    cover: "images/實構築工作坊.jpg",
+    cover: "images/實構築工作坊.jpg", // 專案封面圖檔
+    // 👇 示範用：series 讓多個頁面串連成同一系列，在 gallery 與 more-work 之間顯示導覽列
+    //    id 相同的專案會被歸為同一系列；part 決定排序（1,2,3...）；seriesTitle 是導覽列標題（同系列只需填一次也可以，這裡沿用目前頁面的即可）
+    //    ⚠️ 這三個專案（A-01 / A-02 / A-03）只是拿來示範效果，請改成你實際上屬於同一系列的專案 id
+    // 👇 thumb 是「系列縮圖」的路徑（正方形圖片，由你自己製作），放進 images/ 資料夾後把路徑填在這裡即可
+    //    這裡先用現有的一張圖示範，讓你能看到點擊後跳出譜系彈窗的效果，請替換成你做好的縮圖
     series: [ { id: "Series-S", part: 2 },{ id: "Series-R", part: 2 } ],
     gallery: [
       { src: "images/IMG_E9867.jpg", size: "small" },
@@ -773,7 +781,7 @@ const PROJECTS = [
       { src: "images/IMG_9861.jpg", size: "large" },
       { src: "images/IMG_9881.jpg", size: "small" },
     ],
-    drawings: [
+    drawings: [                                  // 👈 新增這個欄位
       // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
       // 若圖片是直式，加上 orientation: "portrait"：
       //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
@@ -794,8 +802,13 @@ const PROJECTS = [
     year: "2025",
     location: "Department of Architecture, NCKU, Taiwan",
     status: "1:1 Full-scale Construction",
-    cover: "images/大一展架1cover.jpg",
+    cover: "images/大一展架1cover.jpg", // 💡 請替換成你的專案封面照片路徑
     coverPosition: "0% 20%", 
+    // 👇 示範用：series 讓多個頁面串連成同一系列，在 gallery 與 more-work 之間顯示導覽列
+    //    id 相同的專案會被歸為同一系列；part 決定排序（1,2,3...）；seriesTitle 是導覽列標題（同系列只需填一次也可以，這裡沿用目前頁面的即可）
+    //    ⚠️ 這三個專案（A-01 / A-02 / A-03）只是拿來示範效果，請改成你實際上屬於同一系列的專案 id
+    // 👇 thumb 是「系列縮圖」的路徑（正方形圖片，由你自己製作），放進 images/ 資料夾後把路徑填在這裡即可
+    //    這裡先用現有的一張圖示範，讓你能看到點擊後跳出譜系彈窗的效果，請替換成你做好的縮圖
     series: [ { id: "Series-S", part: 1 },{ id: "Series-R", part: 3 } ],
     gallery: [
       { src: "images/IMG_7794.jpg", size: "large", position: "50% 85%" },
@@ -811,9 +824,12 @@ const PROJECTS = [
       { src: "images/IMG_0205.jpg", size: "small" }, 
       { src: "images/IMG_0206.jpg", size: "small" }, 
       { src: "images/IMG_7023.jpg", size: "small" },
-      { src: "images/IMG_7407.jpg", size: "small" },
+      { src: "images/IMG_7407.jpg", size: "small" },  // 💡 可自由加入專案內頁藝廊圖片
     ],
-    drawings: [
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
       { src: "images/20260325143647.jpg", size: "small" },
       { src: "images/層架.jpg", size: "small"},
     ],
@@ -829,7 +845,7 @@ const PROJECTS = [
     year: "2024",
     location: "Non",
     status: "Concept design",
-    cover: "images/物件轉益cover.jpg",
+    cover: "images/物件轉益cover.jpg", // 💡 請替換成照片路徑
     gallery: [
       { src: "images/S__31113268_0.jpg", size: "small"},
       { src: "images/S__31113262_0.jpg", size: "small", position: "50% 45%"},
@@ -839,7 +855,7 @@ const PROJECTS = [
       { src: "images/S__31113246_0.jpg", size: "large"},
       { src: "images/物件轉益cover.jpg", size: "small"},
     ],
-    drawings: [
+    drawings: [                                  // 👈 新增這個欄位
       { src: "images/S__30359571_0.jpg", size: "tiny", fit: "contain" },
       { src: "images/S__30359572_0.jpg", size: "tiny", fit: "contain" },
       { src: "images/S__30359577_0.jpg", size: "tiny", fit: "contain" },
@@ -859,6 +875,11 @@ const PROJECTS = [
       { src: "images/S__30359585_0.jpg", size: "small", fit: "contain" },
       { src: "images/S__30359583_0.jpg", size: "small", fit: "contain" },
     ],
+    // 👇 示範用：series 讓多個頁面串連成同一系列，在 gallery 與 more-work 之間顯示導覽列
+    //    id 相同的專案會被歸為同一系列；part 決定排序（1,2,3...）；seriesTitle 是導覽列標題（同系列只需填一次也可以，這裡沿用目前頁面的即可）
+    //    ⚠️ 這三個專案（A-01 / A-02 / A-03）只是拿來示範效果，請改成你實際上屬於同一系列的專案 id
+    // 👇 thumb 是「系列縮圖」的路徑（正方形圖片，由你自己製作），放進 images/ 資料夾後把路徑填在這裡即可
+    //    這裡先用現有的一張圖示範，讓你能看到點擊後跳出譜系彈窗的效果，請替換成你做好的縮圖
     series: [ { id: "Series-A", part: 1 } ],
     books: ["b02"],
     summary: "「回應對立的自由介面」。<br>外在試圖控制的亮暗對比；內裏由彈簧與金屬片構成簡單機械目的的電流通斷路，而以一平實塑膠塊體與可動護蓋總括流程。內部的目的是瞬間性的；而內部的設計是要求固定的：塑料突起是盡力地將各部件留在原位，而金屬組件是追求動起來，進而達成控制，在這樣矛盾之下，電燈開關是一種在既定秩序下的動態紀錄體，然而這兩者並非並置(juxtaposition) 而是時刻相互影響的「 秩序」 與「新秩序」 與「秩序使然」 迴圈（Oscillation）。",
@@ -872,7 +893,7 @@ const PROJECTS = [
     year: "2026",
     location: "Department of Architecture, NCKU, Taiwan",
     status: "1:1 Full-scale Construction",
-    cover: "images/IMG_9926.jpg",
+    cover: "images/IMG_9926.jpg", // 💡 請替換成照片路徑
     series: [ { id: "Series-S", part: 1 } ,{ id: "Series-R", part: 4 }],
     gallery: [
       { src: "images/ChatGPT Image 2026年7月9日 下午04_10_20.png", size: "small"},
@@ -890,7 +911,10 @@ const PROJECTS = [
       { src: "images/IMG_9907.jpg", size: "large"},
       { src: "images/S__45711430_0.jpg", size: "small"},
     ],
-    drawings: [
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
       { src: "images/光桌01 [轉換].jpg", size: "small", orientation: "portrait" },
     ],
     books: ["b02"],
@@ -906,7 +930,7 @@ const PROJECTS = [
     location: "Department of Architecture, NCKU, Taiwan",
     status: "Record",
     cover: "images/IMG_6676.jpg",
-    coverPosition: "50% 70%",
+    coverPosition: "50% 70%", // 💡 請替換成照片路徑
     series: [ { id: "Series-S", part: 1 } ],
     gallery: [
       { src: "images/ChatGPT Image 2026年7月9日 下午04_10_20.png", size: "small"},
@@ -925,7 +949,7 @@ const PROJECTS = [
     year: "2025",
     location: "Tainan, Taiwan",
     status: "Architectural design",
-    cover: "images/S__33906821_0.jpg",
+    cover: "images/S__33906821_0.jpg", // 💡 請替換成照片路徑
     gallery: [
       { src: "images/S__33906786_0.jpg", size: "large"},
       { src: "images/S__33906825_0.jpg", size: "small"},
@@ -940,7 +964,10 @@ const PROJECTS = [
       { src: "images/S__33906785_0.jpg", size: "small"},
       { src: "images/S__33906780_0.jpg", size: "wide"},
     ],
-    drawings: [
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
       { src: "images/level02&03 plan A1.jpg", size: "small", fit: "contain" },
       { src: "images/level01 plan A1.jpg", size: "small" , fit: "contain"},
       { src: "images/section  A1.jpg", size: "large" , fit: "contain" },
@@ -965,7 +992,7 @@ const PROJECTS = [
     year: "2024",
     location: "Tainan, Taiwan",
     status: "Architectural design",
-    cover: "images/IMG_8110.jpg",
+    cover: "images/IMG_8110.jpg", // 💡 請替換成照片路徑
     series: [{ id: "Series-W", part: 3 }],
     gallery: [
       { src: "images/IMG_8221.jpg", size: "large"},
@@ -977,7 +1004,10 @@ const PROJECTS = [
       { src: "images/IMG_8227.jpg", size: "large"},
       
     ],
-    drawings: [
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
       { src: "images/plan&section.jpg", size: "large", fit: "contain" },
       { src: "images/視域分析.jpg", size: "small" },
       { src: "images/imgw-618210106-1.jpg", size: "small"  },
@@ -995,13 +1025,16 @@ const PROJECTS = [
     year: "2023",
     location: "Tainan, Taiwan",
     status: "1:1 Full-scale Construction",
-    cover: "images/rubbing.jpg",
+    cover: "images/rubbing.jpg", // 💡 請替換成照片路徑
     gallery: [
       { src: "images/S__26206210.jpg", size: "small"},
       { src: "images/S__26198035_0.jpg", size: "small"},
       { src: "images/S__40083458.jpg", size: "small"},
     ],
-    drawings: [
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
       { src: "images/S__26279956.jpg", size: "large", fit: "contain" },
     ],
     books: ["b02"],
@@ -1016,7 +1049,7 @@ const PROJECTS = [
     year: "2025",
     location: "Tainan, Taiwan",
     status: "Concept design / Architectural design",
-    cover: "images/S__33906706_0.jpg",
+    cover: "images/S__33906706_0.jpg", // 💡 請替換成照片路徑
     gallery: [
       { src: "images/S__40108038_0.jpg", size: "large"},
       { src: "images/S__40108035_0.jpg", size: "large"},
@@ -1027,7 +1060,10 @@ const PROJECTS = [
       { src: "images/S__33923096_0.jpg", size: "small"},
       { src: "images/S__33923098.jpg", size: "small"},
     ],
-    drawings: [
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
       { src: "images/site plan_page-0001.jpg", size: "small", fit: "contain",orientation: "portrait" },
       { src: "images/plan+1700 5_page-0001.jpg", size: "small", fit: "contain",orientation: "portrait" },
       { src: "images/plan+1300 4_page-0001.jpg", size: "small", fit: "contain",orientation: "portrait" },
@@ -1054,7 +1090,7 @@ const PROJECTS = [
     year: "2024",
     location: "Non",
     status: "Record",
-    cover: "images/ChatGPT Image 2026年7月10日 下午09_41_47.png",
+    cover: "images/ChatGPT Image 2026年7月10日 下午09_41_47.png", // 💡 請替換成照片路徑
     gallery: [
       { src: "images/S__30416936_0.jpg", size: "large"},
       { src: "images/S__30613560_0.jpg", size: "large"},
@@ -1071,13 +1107,16 @@ const PROJECTS = [
     year: "2026",
     location: "Tainan, Taiwan",
     status: "Architectural design",
-    cover: "images/333.png",
+    cover: "images/333.png", // 💡 請替換成照片路徑
     series: [ { id: "Series-I", part: 2 } ],
     gallery: [
       { src: "images/S__30416936_0.jpg", size: "large"},
       { src: "images/S__30613560_0.jpg", size: "large"},
     ],
-    drawings: [
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
       { src: "images/loop. studio architectural drawing set_頁面_02.jpg", size: "small", fit: "contain" },
       { src: "images/loop. studio architectural drawing set_頁面_03.jpg", size: "small", fit: "contain" },
       { src: "images/loop. studio architectural drawing set_頁面_04.jpg", size: "small", fit: "contain" },
@@ -1103,14 +1142,17 @@ const PROJECTS = [
     year: "2026",
     location: "Tainan, Taiwan",
     status: "Detail design",
-    cover: "images/facade drawing set-17.jpg",
+    cover: "images/facade drawing set-17.jpg", // 💡 請替換成照片路徑
     series: [ { id: "Series-I", part: 3 } ],
     gallery: [
       { src: "images/S__46153740_0.jpg", size: "large"},
       { src: "images/S__46153738_0.jpg", size: "large"},
       { src: "images/S__46153736_0.jpg", size: "large"},
     ],
-    drawings: [
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
       { src: "images/facade drawing set-02.jpg", size: "small", fit: "contain" },
       { src: "images/facade drawing set-12.jpg", size: "small"},
       { src: "images/facadesection.jpg", size: "large", fit: "contain",orientation: "portrait" },
@@ -1129,9 +1171,12 @@ const PROJECTS = [
     year: "2023",
     location: "Non",
     status: "Concept design",
-    cover: "images/臨摹畫.jpg", fit: "contain",
+    cover: "images/臨摹畫.jpg", fit: "contain", // 💡 請替換成照片路徑
     series: [],
-    drawings: [
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
       { src: "images/S__26181675.jpg", size: "large", fit: "contain",orientation: "portrait" },
       { src: "images/S__26181672_0.jpg", size: "large", fit: "contain",orientation: "portrait" }
     
@@ -1148,14 +1193,17 @@ const PROJECTS = [
     year: "2024",
     location: "Non",
     status: "Concept design",
-    cover: "images4/master copy.jpg", fit: "contain",
+    cover: "images4/master copy.jpg", fit: "contain", // 💡 請替換成照片路徑
     series: [{ id: "Series-W", part: 1 }],
     gallery: [
       { src: "images4/IMG_7211.jpg", size: "small"},
       { src: "images4/IMG_7234.jpg", size: "small"},
       { src: "images4/IMG_7246.jpg", size: "small"},
     ],
-    drawings: [
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
       { src: "images4/69.jpg", size: "small", fit: "contain" },
       { src: "images4/未命名-1.jpg", size: "small", fit: "contain" },
       { src: "images4/master copy.jpg", size: "large", fit: "contain" },
@@ -1173,14 +1221,17 @@ const PROJECTS = [
     year: "2024",
     location: "Non",
     status: "Concept design",
-    cover: "images4/mixblood.jpg", fit: "contain",
+    cover: "images4/mixblood.jpg", fit: "contain", // 💡 請替換成照片路徑
     series: [{ id: "Series-W", part: 2 }],
     gallery: [
       { src: "images4/IMG_7852.jpg", size: "small"},
       { src: "images4/IMG_7846.jpg", size: "small"},
       { src: "images4/IMG_7843.jpg", size: "small"},
     ],
-    drawings: [
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
       { src: "images4/S__29057047_0.jpg", size: "small", fit: "contain" },
       { src: "images4/S__29057049_0.jpg", size: "small", fit: "contain" },
       { src: "images4/789_page-0001.jpg", size: "large", fit: "contain" },
@@ -1198,7 +1249,7 @@ const PROJECTS = [
     year: "2024",
     location: "Tainan, Taiwan",
     status: "Architectural design",
-    cover: "images4/cover.jpg", fit: "contain",
+    cover: "images4/cover.jpg", fit: "contain", // 💡 請替換成照片路徑
     series: [{ id: "Series-A", part: 2 }],
     gallery: [
       { src: "images4/S__31186996_0.jpg", size: "small"},
@@ -1211,7 +1262,10 @@ const PROJECTS = [
       { src: "images4/S__31203375_0.jpg", size: "small"},
       { src: "images4/S__31186977_0.jpg", size: "small"},
     ],
-    drawings: [
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
       { src: "images4/1F平面圖_page-0001.jpg", size: "small", fit: "contain" },
       { src: "images4/2F平面圖_page-0001.jpg", size: "small", fit: "contain" },
       { src: "images4/AA section_page-0001.jpg", size: "small", fit: "contain" },
@@ -1276,8 +1330,8 @@ const BOOKS = [
     id: "b01",
     title: "Inter-(potential)-Field: Architecture design booklet",
     year: "2026",
-    cover: "images/inter-(potential)-field.jpg",
-    file: "images2/loop. studio final booklet.pdf",
+    cover: "images/inter-(potential)-field.jpg", // 💡 書籍封面照片 (.jpg / .png)
+    file: "images2/loop. studio final booklet.pdf", // 💡 書籍實體 PDF 檔案路徑
     description: "A compiled record of site studies, massing iterations, and final drawings for the project."
   },
   {
@@ -1292,16 +1346,16 @@ const BOOKS = [
     id: "b03",
     title: "NCKU Architecture News v.114",
     year: "2025",
-    cover: "images/189_file_1 (1)_頁面_01.jpg",
-    file: "images/成大建築簡訊114.pdf",
+    cover: "images/189_file_1 (1)_頁面_01.jpg", // 💡 這裡放預覽圖片檔 (如 .jpg)，避免置入 PDF 導致破圖
+    file: "images/成大建築簡訊114.pdf",          // 💡 這裡放你的實體 PDF 檔案路徑
     description: "A short collection of research notes and precedent studies developed alongside the thesis project."
   },
   {
     id: "b04",
     title: "FURNITURE CONSTRUCTION WORKSHOP worksheet",
     year: "2026",
-    cover: "images/2026春 建築系期初實構築工作坊 題單-1.jpeg",
-    file: "images/2026春 建築系期初實構築工作坊 題單 (1).pdf",
+    cover: "images/2026春 建築系期初實構築工作坊 題單-1.jpeg", // 💡 這裡放預覽圖片檔 (如 .jpg)，避免置入 PDF 導致破圖
+    file: "images/2026春 建築系期初實構築工作坊 題單 (1).pdf",          // 💡 這裡放你的實體 PDF 檔案路徑
     description: "A short collection of research notes and precedent studies developed alongside the thesis project."
   }
 ];
@@ -1913,6 +1967,7 @@ function renderAbout(){
           <p style="margin-top:0;">Between Parts and Whole:<br>Probably a collection of random thoughts and reimagined ideas.</p>
           <div class="contact" style="margin-top:24px;">
             <a href="mailto:940714.pineapple@gmail.com">940714.pineapple@gmail.com</a> &nbsp;·&nbsp; 
+            <a href="#" target="_blank" rel="noopener">LinkedIn</a> &nbsp;·&nbsp; 
             <a href="https://www.instagram.com/tim.hsieh.3348/" target="_blank" rel="noopener">Instagram</a>
           </div>
         </div>
