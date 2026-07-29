@@ -419,6 +419,2423 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   .series-pedigree-title{ font-size:15.5px; }
 }
 
+/* gallery — Pinterest 式多欄瀑布流：每張圖片依自己的比例往下堆疊，
+   不用固定格數的網格去「跨欄跨列」，所以不會留下空白區塊。
+   手機版維持至少 2 欄，不會變成單欄「一張一張」條列。 */
+.gallery-grid{
+  column-count: 3;
+  column-gap: 12px;
+}
+.gallery-item{
+  display:block; width:100%;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  margin-bottom: 12px;
+  overflow:hidden; border-radius:4px; background:#fff;
+  cursor:zoom-in; position:relative;
+}
+.gallery-item img{
+  width:100%; height:auto; display:block;
+  transition:transform .4s ease;
+}
+.gallery-item:hover img{ transform:scale(1.045); }
+.gallery-item.large img{ aspect-ratio: 3 / 4; object-fit:cover; }
+.gallery-item.small img{ aspect-ratio: 4 / 3; object-fit:cover; }
+/* wide：給橫式照片使用。維持跟 large/small 一樣的單欄寬度，只是比例較扁（3:2），
+   不使用 column-span 跨欄，才能真正無縫融入瀑布流（跨欄會強制斷版造成空白，
+   Pinterest 本身也是靠「同欄寬、高度不同」達到無縫排列，並沒有跨欄的圖） */
+.gallery-item.wide img{ aspect-ratio: 3 / 2; object-fit:cover; }
+
+@media (max-width: 750px) {
+  .gallery-grid{ column-count: 2; }
+}
+@media (max-width: 420px) {
+  .gallery-grid{ column-gap: 8px; }
+  .gallery-item{ margin-bottom: 8px; }
+}
+
+/* drawings — 桌機維持原本的網格排版（large 佔滿整列、small 一列2張、tiny 一列3張）。
+   手機版另外改用跟 gallery 一樣的 Pinterest 多欄瀑布流，避免手機上變成整張圖佔一列、
+   一張一張往下排的條列式版面。 */
+.drawing-grid{
+  display:grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap:12px;
+}
+.drawing-item{
+  display:block; width:100%;
+  overflow:hidden; border-radius:4px; background:#fff;
+  cursor:zoom-in; position:relative;
+}
+.drawing-item.large{ grid-column: span 6; }
+.drawing-item.small{ grid-column: span 3; }
+.drawing-item.tiny{ grid-column: span 2; }
+.drawing-item.large.portrait{ grid-column: span 3; }
+.drawing-item.small.portrait{ grid-column: span 2; }
+.drawing-item img{
+  width:100%; height:100%; display:block;
+  transition:transform .4s ease;
+}
+.drawing-item:hover img{ transform:scale(1.045); }
+.drawing-item.large img{ aspect-ratio: 3 / 2; object-fit:cover; }
+.drawing-item.small img{ aspect-ratio: 16 / 9; object-fit:cover; }
+.drawing-item.tiny img{ aspect-ratio: 2 / 1; object-fit:cover; }
+.drawing-item.large.portrait img{ aspect-ratio: 2 / 3; object-fit:cover; }
+.drawing-item.small.portrait img{ aspect-ratio: 3 / 4; object-fit:cover; }
+
+@media (max-width: 750px) {
+  .drawing-grid{
+    display:block;
+    column-count: 2;
+    column-gap: 12px;
+  }
+  .drawing-item{
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    margin-bottom: 12px;
+  }
+  .drawing-item img{ height:auto; }
+}
+@media (max-width: 420px) {
+  .drawing-grid{ column-gap: 8px; }
+  .drawing-item{ margin-bottom: 8px; }
+}
+
+
+/* lightbox */
+.lightbox-overlay{
+  position:fixed; inset:0; background:rgba(20,19,17,0.94);
+  display:none; align-items:center; justify-content:center;
+  z-index:1000; padding:48px; cursor:zoom-out;
+  overflow:hidden;
+}
+.lightbox-overlay.active{ display:flex; }
+.lightbox-overlay img{
+  max-width:100%; max-height:100%; width:auto; height:auto;
+  object-fit:contain; border-radius:4px; box-shadow:0 10px 40px rgba(0,0,0,0.45);
+  cursor:zoom-in;
+  transform-origin:center center;
+  transition:transform .18s ease;
+  touch-action:none;
+  user-select:none;
+}
+.lightbox-overlay img.zoomed{ cursor:grab; }
+.lightbox-overlay img.zoomed.lb-dragging{ cursor:grabbing; transition:none; }
+.lightbox-zoom-hint{
+  position:absolute; top:24px; left:50%; transform:translateX(-50%);
+  color:rgba(255,255,255,0.55); font-size:12px; letter-spacing:0.02em;
+  pointer-events:none; transition:opacity .2s ease;
+}
+@media (max-width:700px){ .lightbox-zoom-hint{ display:none; } }
+.lightbox-close{
+  position:absolute; top:24px; right:28px; color:#fff; font-size:32px;
+  line-height:1; background:none; border:none; cursor:pointer; opacity:0.85;
+}
+.lightbox-close:hover{ opacity:1; }
+.lightbox-nav{
+  position:absolute; top:50%; transform:translateY(-50%); color:#fff;
+  font-size:26px; background:rgba(255,255,255,0.1); border:none;
+  width:48px; height:48px; border-radius:50%; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .2s ease;
+}
+.lightbox-nav:hover{ background:rgba(255,255,255,0.2); }
+.lightbox-prev{ left:20px; }
+.lightbox-next{ right:20px; }
+.lightbox-counter{
+  position:absolute; bottom:22px; left:50%; transform:translateX(-50%);
+  color:rgba(255,255,255,0.75); font-size:13px; letter-spacing:0.04em;
+}
+.lightbox-pdf-viewer{
+  display:none; align-items:center; justify-content:center;
+  position:relative;
+  width:min(92vw, 1200px); height:86vh;
+}
+.pdf-scroller{
+  display:flex;
+  width:100%; height:100%;
+  overflow-x:auto; overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  cursor:grab;
+}
+.pdf-scroller::-webkit-scrollbar{ display:none; }
+.pdf-scroller.dragging{ cursor:grabbing; scroll-snap-type:none; }
+.pdf-page{
+  flex:0 0 100%;
+  scroll-snap-align:center;
+  display:flex; align-items:center; justify-content:center;
+  height:100%;
+  user-select:none;
+}
+.pdf-page canvas{
+  display:block; background:#fff; border-radius:2px;
+  box-shadow:0 10px 40px rgba(0,0,0,0.45);
+  max-width:100%; max-height:100%;
+  opacity:1; transition:opacity .25s ease;
+  pointer-events:none;
+}
+.pdf-page.pending canvas{ opacity:0; }
+.lightbox-pdf-loading{
+  display:none; position:absolute; color:rgba(255,255,255,0.85);
+  font-size:13px; letter-spacing:0.04em; font-family:var(--f-heading);
+  pointer-events:none;
+}
+.lightbox-pdf-viewer.loading .lightbox-pdf-loading{ display:block; }
+.lightbox-pdf-error{
+  display:none; color:rgba(255,255,255,0.85); font-size:14px;
+  text-align:center; max-width:320px; line-height:1.7;
+}
+.lightbox-pdf-error a{ color:#fff; border-bottom:1px solid rgba(255,255,255,0.5); }
+
+.lightbox-pdf-slider{
+  position:absolute; bottom:50px; left:50%; transform:translateX(-50%);
+  width:min(60vw, 420px); z-index:12;
+  display:flex; align-items:center; gap:10px;
+}
+.lightbox-pdf-slider input[type="range"]{
+  -webkit-appearance:none; appearance:none;
+  flex:1; height:3px; margin:0;
+  background:rgba(255,255,255,0.25);
+  border-radius:2px; outline:none; cursor:pointer;
+}
+.lightbox-pdf-slider input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none;
+  width:13px; height:13px; border-radius:50%;
+  background:#fff; cursor:pointer;
+  box-shadow:0 1px 5px rgba(0,0,0,0.45);
+  transition:transform .15s ease;
+}
+.lightbox-pdf-slider input[type="range"]:hover::-webkit-slider-thumb,
+.lightbox-pdf-slider input[type="range"]:active::-webkit-slider-thumb{ transform:scale(1.2); }
+.lightbox-pdf-slider input[type="range"]::-moz-range-thumb{
+  width:13px; height:13px; border-radius:50%;
+  background:#fff; border:none; cursor:pointer;
+  box-shadow:0 1px 5px rgba(0,0,0,0.45);
+}
+.lightbox-pdf-slider input[type="range"]::-moz-range-track{
+  height:3px; background:rgba(255,255,255,0.25); border-radius:2px;
+}
+@media (max-width:600px){
+  .lightbox-pdf-slider{ bottom:44px; width:min(78vw, 320px); }
+}
+@media (max-width:600px){
+  .lightbox-overlay{ padding:16px; }
+  .lightbox-nav{ width:40px; height:40px; font-size:22px; }
+  .lightbox-close{ top:14px; right:16px; font-size:26px; }
+}
+
+.more-work{ margin-top:90px; padding-top:34px; border-top:1px solid var(--line); }
+.more-work h3{ font-size:20px; margin-bottom:22px; }
+
+/* about */
+.about{ padding:50px 0 100px; max-width:850px; }
+.about h1{ font-size:36px; margin-bottom:22px; }
+.about p{ color:#3a3833; font-size:16px; line-height:1.8; margin:0 0 16px; }
+.about .contact{ margin-top:28px; font-size:14.5px; color:var(--muted); }
+.about .contact a{ color:var(--ink); border-bottom:1px solid var(--line); }
+.about .contact a:hover{ border-color:var(--ink); }
+
+/* books */
+.book-grid{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:44px 34px;
+}
+@media (max-width:820px){ .book-grid{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:560px){ .book-grid{ grid-template-columns:repeat(2,1fr); gap:30px 20px; } }
+
+.book-card{ }
+.book-cover{
+  aspect-ratio:2/3; width:100%; overflow:hidden;
+  border-radius:4px; margin-bottom:14px; background:#efece5;
+  box-shadow:0 1px 2px rgba(32,31,29,0.08);
+}
+.book-cover img{ width:100%; height:100%; object-fit:cover; transition:opacity .25s ease; }
+.book-cover.book-cover-clickable{ cursor:zoom-in; }
+.book-cover.book-cover-clickable:hover img{ opacity:0.92; }
+.book-title{ font-size:16px; line-height:1.35; margin-bottom:4px; }
+.book-meta{ color:var(--muted); font-size:13px; margin-bottom:6px; }
+.book-link{ font-size:13px; color:var(--accent); border-bottom:1px solid var(--line); }
+.book-link:hover{ border-color:var(--accent); }
+
+.related-books{ margin-top:56px; padding-top:40px; border-top:1px solid var(--line); }
+.related-books h3{ font-size:18px; margin-bottom:20px; }
+
+/* footer */
+.site-footer{
+  border-top:1px solid var(--line);
+  padding:24px 0; color:var(--muted); font-size:13px;
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-row">
+    <a href="#/" class="site-title">Anassembly. Studio</a>
+    <nav class="nav-links">
+      <a href="#/work">Work</a>
+      <a href="#/books">Books</a>
+      <a href="#/series">Series</a>
+      <a href="#/about">About</a>
+    </nav>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<footer class="site-footer">
+  <div class="wrap" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+    <span>Anassembly. Studio</span>
+    <span id="footerYear"></span>
+  </div>
+</footer>
+
+<div class="lightbox-overlay" id="lightbox" aria-hidden="true">
+  <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
+  <button class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Previous image">&#8249;</button>
+  <img id="lightboxImg" src="" alt="">
+  <div class="lightbox-zoom-hint" id="lightboxZoomHint">點擊或滾輪放大檢視原始細節</div>
+  <div class="lightbox-pdf-viewer" id="lightboxPdfViewer">
+    <div class="pdf-scroller" id="pdfScroller"></div>
+    <div class="lightbox-pdf-loading" id="lightboxPdfLoading">載入中…</div>
+    <div class="lightbox-pdf-error" id="lightboxPdfError">
+      PDF 暫時無法預覽。<br>
+      <span id="lightboxPdfErrorReason" style="font-size:12px; opacity:0.7; display:block; margin:6px 0;"></span>
+      <a id="lightboxPdfErrorLink" href="" target="_blank" rel="noopener">在新分頁開啟</a>
+    </div>
+  </div>
+  <button class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Next image">&#8250;</button>
+  <div class="lightbox-pdf-slider" id="lightboxPdfSlider" style="display:none;">
+    <input type="range" id="pdfPageRange" min="1" max="1" value="1" step="1" aria-label="跳到指定頁面">
+  </div>
+  <div class="lightbox-counter" id="lightboxCounter"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  if(window.pdfjsLib){
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  }
+</script>
+<script>
+/* ============================================================
+   PROJECT DATA (可在此處修改各專案的照片路徑)
+   ============================================================ */
+const PROJECTS = [
+  {
+    id: "A-01",
+    title: "循環材聖誕樹\nRecycling Christmas Tree",
+    category: "Tectonic",
+    year: "2024",
+    location: "Department of Architecture, NCKU, Taiwan",
+    status: "1:1 Full-scale Construction",
+    cover: "images/CHRISTMAS TREE COVER PAGE.jpg", // 專案封面圖檔
+    coverPosition: "0% 55%", 
+    gallery: [
+      // size 可用："large"（直式裁切 3:4）／"small"（方形裁切 4:3）／"wide"（橫式照片，比例 3:2，同欄寬融入瀑布流）
+      { src: "images/北展展場展場模式.jpg", size: "large" },
+      { src: "images/天幕與構架線條複層交疊下產生動態紋理變化.jpg", size: "small" },//百分比："30% 70%" — 第一個數字是水平位置（0% 最左，100% 最右），第二個是垂直位置（0% 最上，100% 最下）
+      { src: "images/圖騰開口光影變化.jpg", size: "small" },
+      { src: "images/8769DAB2-8307-442F-BA7B-D41C9FBA9FE9.png", size: "small" },
+      { src: "images/CC486BDF-C5C5-49CB-9A2E-412AA23F0FF8.png", size: "small", position: "30% 90%" },
+      { src: "images/7BDE9233-0E4D-4E73-9C56-03276853C7AC.png", size: "small" },
+      { src: "images/E1717749-9426-4269-903D-D88A37845070.png", size: "large" },
+      { src: "images/IMG_1104.jpg", size: "small" },
+      { src: "images/70AC7914-250C-4D33-82C2-67C9907FFFC4.png", size: "large", position: "42% 40%" },
+      { src: "images/IMG_1134.jpg", size: "small" },
+      { src: "images/BC64D58E-6FAA-41B2-8DFD-7AC1478813FA.png", size: "large", position: "42% 0%" },
+      
+    ],
+    // 👇 示範用：series 讓多個頁面串連成同一系列，在 gallery 與 more-work 之間顯示導覽列
+    //    id 相同的專案會被歸為同一系列；part 決定排序（1,2,3...）；seriesTitle 是導覽列標題（同系列只需填一次也可以，這裡沿用目前頁面的即可）
+    //    ⚠️ 這三個專案（A-01 / A-02 / A-03）只是拿來示範效果，請改成你實際上屬於同一系列的專案 id
+    // 👇 thumb 是「系列縮圖」的路徑（正方形圖片，由你自己製作），放進 images/ 資料夾後把路徑填在這裡即可
+    //    這裡先用現有的一張圖示範，讓你能看到點擊後跳出譜系彈窗的效果，請替換成你做好的縮圖
+    // 👇 series 改為「陣列」，一個專案可以同時收錄在多個系列中，例如：
+    //    series: [ { id:"Series-R", part:1 }, { id:"Series-S", part:2 } ]
+    //    系列本身的標題／封面／文字介紹統一寫在上面的 SERIES_INFO，這裡只需要填 id 與 part（排序用）
+    series: [ { id: "Series-R", part: 1 } ],
+    books: [],
+    summary: "A housing scheme stitched into the fine-grained fabric of an old city block.",
+    description: "成大建築系八十週年展嘉年華落幕後，原先作為屋頂裝置的弧形鋼構曲架與其餘構件被遺留於現場，並在活動結束後被賦予了「廢棄物」的新身分。我們嘗試重新理解其構造邏輯與組構方式，並以再利用的角度提出一項新的裝置提案。<br>適逢聖誕節，我們選擇以聖誕樹作為裝置主體，結合系上材料銀行所保存的剩餘木料，以木角材作為主要結構骨架，並將原有的弧形鋼構曲架轉化為樹冠的構成元素。當曲架環繞主結構組裝一周後，藉由其接合節點與曲率的幾何特性，意外形成了一座具有旋轉動態感的圓錐體，使原本被視為廢棄的構件，在新的結構關係中展現出截然不同的空間表現與生命力。<br><br>Following the carnival celebrating the 80th Anniversary of the Department of Architecture at National Cheng Kung University, the curved steel roof frames and other installation components were left behind on site, taking on a new identity as 'waste.' Rather than treating them as discarded materials, we re-examined their structural logic and assembly system, proposing a new installation through the act of reuse.Coinciding with the Christmas season, we adopted the form of a Christmas tree as the primary concept. Reclaimed timber from the department's material bank was used to construct the main structural frame, while the salvaged curved steel members were reassembled to form the tree's canopy. As the steel frames were connected in a continuous ring around the structure, the geometry of their joints and inherent curvature unexpectedly generated a spiraling conical form. This unforeseen spatial quality transformed the discarded components into a new architectural expression, demonstrating how existing materials can acquire renewed meaning and structural potential through reinterpretation and reassembly.",
+    credits: "謝政庭, 謝廷威, 蕭本亮<br>黃郁翔, 廖昱衡, 方韋程, 郭柏辰, 胡鳴宏"
+  },
+  {
+    id: "A-02",
+    title: "家具實構築\nFurniture Construction Workshop",
+    category: "Tectonic",
+    year: "2026",
+    location: "Department of Architecture, NCKU, Taiwan",
+    status: "1:1 Full-scale Construction",
+    cover: "images/實構築工作坊.jpg", // 專案封面圖檔
+    // 👇 示範用：series 讓多個頁面串連成同一系列，在 gallery 與 more-work 之間顯示導覽列
+    //    id 相同的專案會被歸為同一系列；part 決定排序（1,2,3...）；seriesTitle 是導覽列標題（同系列只需填一次也可以，這裡沿用目前頁面的即可）
+    //    ⚠️ 這三個專案（A-01 / A-02 / A-03）只是拿來示範效果，請改成你實際上屬於同一系列的專案 id
+    // 👇 thumb 是「系列縮圖」的路徑（正方形圖片，由你自己製作），放進 images/ 資料夾後把路徑填在這裡即可
+    //    這裡先用現有的一張圖示範，讓你能看到點擊後跳出譜系彈窗的效果，請替換成你做好的縮圖
+    series: [ { id: "Series-S", part: 2 },{ id: "Series-R", part: 2 } ],
+    gallery: [
+      { src: "images/IMG_E9867.jpg", size: "small" },
+      { src: "images/IMG_E9801.jpg", size: "small" },
+      { src: "images/IMG_9841.jpg", size: "small" },
+      { src: "images/IMG_9817.jpg", size: "small" },
+      { src: "images/IMG_9616.jpg", size: "large" },
+      { src: "images/IMG_9971.jpg", size: "small" },
+      { src: "images/IMG_E9986.jpg", size: "small" },
+      { src: "images/IMG_E9941.jpg", size: "small" },
+      { src: "images/IMG_9861.jpg", size: "large" },
+      { src: "images/IMG_9881.jpg", size: "small" },
+    ],
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
+      { src: "images/2026實構築工作坊(休閒導向組)A1海報.jpg", size: "small", orientation: "portrait" },
+      { src: "images/2026實構築工作坊(討論導向組)A1海報.jpg", size: "small", orientation: "portrait" },
+      { src: "images/2026實構築工作坊(模型展示組)A1海報.jpg", size: "small", orientation: "portrait" },
+    ],
+    books: ["b04"],
+    summary: "A museum whose galleries open and close with the rhythm of the tide.",
+    description: `第一次將專案計畫向大家開放，以工作坊的形式來尋找符合當今建築系學生所迫切需要的機能支持：<br>位於設計教室之間、寬約三米的夾擠空間，隨時間推移與教學體制變遷，其使用方式亦不斷轉換：從最初規劃的模型室，逐漸成為儲藏室與系雅圖，直至今日，面向主要走廊的兩面牆體被拆除，隱於後方的樓梯間完全敞開，形成新的公共剖面，串聯一樓至二樓、連接大一至大三，成為同時支撐課間活動與教學成果交流的共享場所。<br>與教學體制同步變化的，也體現在系館家具之上。現今僅存於大一設計教室的圖桌，實為建築系遷入現址後購置的第一批家具，曾長期服務於各年級使用，隨後逐步被紙材工作桌、角鋼工作桌等取代。在教學空間型態產生巨大轉變的同時，這些長期堆置的圖桌架，或許也能重新被視為新的物件，並在考量現況需求後賦予其新的功能與意義。 最終，空間與物件皆在不斷被重新理解與再利用的過程中，持續回應教學與使用者的需求，也讓既有環境在轉變中生成新的公共可能。<br>本工作坊的實作課程為「空間家具製作」。空間家具單元則以現成物與既有框架為基礎，透過組裝與配置，製作可移動、具多元用途的家具系統，回應不同使用情境。藉由實作活動進行，從施工到組裝，探索空間如何在操作中被重新定義。<br><br>In this workshop, we opened the project to students, creating a space that meets the urgent needs of architecture students today. The narrow space between the design studios, approximately three meters wide, has evolved over time with changes in the educational system. Initially planned as a model room, it gradually became a storage area and a gallery for student work. Today, with the removal of walls facing the main corridor and the opening of the staircase area, it has become a new public section connecting the first and second floors and linking first-year to third-year students, supporting both class activities and the exchange of teaching outcomes.<br>The evolution of the educational system is also reflected in the department's furniture. The remaining drawing tables in the first-year design studio were part of the first batch of furniture purchased when the architecture department moved to its current location. They served all year levels for a long time before being replaced by paper work tables and angle steel work tables. As teaching spaces have undergone significant changes, these long-stored drawing table frames can be reconsidered as new objects, given new functions and meanings based on current needs. Ultimately, both space and objects continue to respond to teaching and user needs through ongoing reinterpretation and reuse, allowing existing environments to generate new public possibilities through transformation.<br>The practical course of this workshop is "Space Furniture Making." The space furniture unit is based on ready-made objects and existing frameworks, assembled and configured to create movable furniture systems with multiple uses, responding to different usage scenarios. Through hands-on activities from construction to assembly, we explore how space can be redefined through operation.`,
+
+    credits: "楊詩弘(教授), 謝政庭, 王子銘, 高宏奕<br>詹昀庭, 陳韋廷, 許博勛, 宋滙僑, 陳稷和,<br>張雅婷, 梁大祐, 于毓彤, 翁敏翎, 陳希, 黃駿揚"
+  },
+  {
+    id: "A-03",
+    title: "大一工作室展架\nYear1 Studio Exhibition Installation",
+    category: "Tectonic",
+    year: "2025",
+    location: "Department of Architecture, NCKU, Taiwan",
+    status: "1:1 Full-scale Construction",
+    cover: "images/大一展架1cover.jpg", // 💡 請替換成你的專案封面照片路徑
+    coverPosition: "0% 20%", 
+    // 👇 示範用：series 讓多個頁面串連成同一系列，在 gallery 與 more-work 之間顯示導覽列
+    //    id 相同的專案會被歸為同一系列；part 決定排序（1,2,3...）；seriesTitle 是導覽列標題（同系列只需填一次也可以，這裡沿用目前頁面的即可）
+    //    ⚠️ 這三個專案（A-01 / A-02 / A-03）只是拿來示範效果，請改成你實際上屬於同一系列的專案 id
+    // 👇 thumb 是「系列縮圖」的路徑（正方形圖片，由你自己製作），放進 images/ 資料夾後把路徑填在這裡即可
+    //    這裡先用現有的一張圖示範，讓你能看到點擊後跳出譜系彈窗的效果，請替換成你做好的縮圖
+    series: [ { id: "Series-S", part: 1 },{ id: "Series-R", part: 3 } ],
+    gallery: [
+      { src: "images/IMG_7794.jpg", size: "large", position: "50% 85%" },
+      { src: "images/IMG_7401.jpg", size: "large", position: "50% 70%" },
+      { src: "images/IMG_6981.jpg", size: "small" }, 
+      { src: "images/IMG_6988.jpg", size: "small" }, 
+      { src: "images/IMG_6965.jpg", size: "small" }, 
+      { src: "images/IMG_0207.jpg", size: "small" }, 
+      { src: "images/IMG_6993.jpg", size: "large" }, 
+      { src: "images/IMG_7029.jpg", size: "small" },
+      { src: "images/IMG_6744.jpg", size: "small" },
+      { src: "images/IMG_E7009.jpg", size: "large" },
+      { src: "images/IMG_0205.jpg", size: "small" }, 
+      { src: "images/IMG_0206.jpg", size: "small" }, 
+      { src: "images/IMG_7023.jpg", size: "small" },
+      { src: "images/IMG_7407.jpg", size: "small" },  // 💡 可自由加入專案內頁藝廊圖片
+    ],
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
+      { src: "images/20260325143647.jpg", size: "small" },
+      { src: "images/層架.jpg", size: "small"},
+    ],
+    books: ["b02","b03"],
+    summary: "A traditional market re-organized as a vertical stack of stalls and courtyards.",
+    description: "接續剖面計畫的制定出來的具有分級的展示交流模式，因為意識到我們日常的模型產出會具有明顯的生面週期，這關聯到這個模型對自己是否仍有用處，若以他人論，自身認為已經沒有用處的作品，似乎仍有很高的參考性，不論是技法、材質、構成邏輯等。因為模型生命週期，同時也牽扯著實際工作室空間的收納機能，所以如果以一個較非正式性的展覽呈現方式，以收納為主要目的，並同時在工作室中創造討論交流的節點。<br><br>Following the sectional project, a tiered system of display and exchange is developed in response to the lifecycle of models. As models lose value for their creators, they often remain valuable references for others—in technique, material, and spatial logic.<br>Recognizing this, the project adopts an informal exhibition approach centered on storage, addressing studio needs while creating moments for discussion and exchange within the workspace.",
+    credits: "謝政庭, 蕭本亮<br>謝廷威, 王子銘, 郭柏辰, 黃郁翔, 黃郁芯, 林語珩, 游承燁"
+  },
+  {
+    id: "A-04",
+    title: "Recalibration",
+    category: "Surreal",
+    year: "2024",
+    location: "Non",
+    status: "Concept design",
+    cover: "images/物件轉益cover.jpg", // 💡 請替換成照片路徑
+    gallery: [
+      { src: "images/S__31113268_0.jpg", size: "small"},
+      { src: "images/S__31113262_0.jpg", size: "small", position: "50% 45%"},
+      { src: "images/S__31113266_0.jpg", size: "small"},
+      { src: "images/S__31113282_0.jpg", size: "small", position: "50% 35%"},
+      { src: "images/S__31113273_0.jpg", size: "large"},
+      { src: "images/S__31113246_0.jpg", size: "large"},
+      { src: "images/物件轉益cover.jpg", size: "small"},
+    ],
+    drawings: [                                  // 👈 新增這個欄位
+      { src: "images/S__30359571_0.jpg", size: "tiny", fit: "contain" },
+      { src: "images/S__30359572_0.jpg", size: "tiny", fit: "contain" },
+      { src: "images/S__30359577_0.jpg", size: "tiny", fit: "contain" },
+      { src: "images/S__30359576_0.jpg", size: "tiny", fit: "contain" },
+      { src: "images/S__30359574_0.jpg", size: "tiny", fit: "contain" },
+      { src: "images/S__30359566_0.jpg", size: "tiny", fit: "contain" },
+      { src: "images/20241229192526_page-0001.jpg", size: "tiny" },
+      { src: "images/S__30359578_0.jpg", size: "tiny", fit: "contain" },
+      { src: "images/S__30359580_0.jpg", size: "tiny", fit: "contain" },
+      { src: "images/S__30359573_0.jpg", size: "small", orientation: "portrait" },
+      { src: "images/S__30359570_0.jpg", size: "small", orientation: "portrait" },
+      { src: "images/S__30359579_0.jpg", size: "small", orientation: "portrait" },
+      { src: "images/elevation front_page-0001.jpg", size: "small", fit: "contain" },
+      { src: "images/elevation back_page-0001.jpg", size: "small", fit: "contain" },
+      { src: "images/S__30359588_0.jpg", size: "large", fit: "contain" },
+      { src: "images/S__30359587_0.jpg", size: "large", fit: "contain" },
+      { src: "images/S__30359585_0.jpg", size: "small", fit: "contain" },
+      { src: "images/S__30359583_0.jpg", size: "small", fit: "contain" },
+    ],
+    // 👇 示範用：series 讓多個頁面串連成同一系列，在 gallery 與 more-work 之間顯示導覽列
+    //    id 相同的專案會被歸為同一系列；part 決定排序（1,2,3...）；seriesTitle 是導覽列標題（同系列只需填一次也可以，這裡沿用目前頁面的即可）
+    //    ⚠️ 這三個專案（A-01 / A-02 / A-03）只是拿來示範效果，請改成你實際上屬於同一系列的專案 id
+    // 👇 thumb 是「系列縮圖」的路徑（正方形圖片，由你自己製作），放進 images/ 資料夾後把路徑填在這裡即可
+    //    這裡先用現有的一張圖示範，讓你能看到點擊後跳出譜系彈窗的效果，請替換成你做好的縮圖
+    series: [ { id: "Series-A", part: 1 } ],
+    books: ["b02"],
+    summary: "「回應對立的自由介面」。<br>外在試圖控制的亮暗對比；內裏由彈簧與金屬片構成簡單機械目的的電流通斷路，而以一平實塑膠塊體與可動護蓋總括流程。內部的目的是瞬間性的；而內部的設計是要求固定的：塑料突起是盡力地將各部件留在原位，而金屬組件是追求動起來，進而達成控制，在這樣矛盾之下，電燈開關是一種在既定秩序下的動態紀錄體，然而這兩者並非並置(juxtaposition) 而是時刻相互影響的「 秩序」 與「新秩序」 與「秩序使然」 迴圈（Oscillation）。",
+    description: `「回應對立的自由介面」。<br>外在試圖控制的亮暗對比；內裏由彈簧與金屬片構成簡單機械目的的電流通斷路，而以一平實塑膠塊體與可動護蓋總括流程。內部的目的是瞬間性的；而內部的設計是要求固定的：塑料突起是盡力地將各部件留在原位，而金屬組件是追求動起來，進而達成控制，在這樣矛盾之下，電燈開關是一種在既定秩序下的動態紀錄體，然而這兩者並非並置(juxtaposition) 而是時刻相互影響的「 秩序」 與「新秩序」 與「秩序使然」 迴圈（Oscillation）。<br><br>Externally, the switch mediates light and dark; internally, springs and metal plates open or close the circuit within a simple plastic casing. While plastic fixes components in place, metal parts must move to control flow. From this tension, the switch becomes a dynamic act within a fixed structure—an ongoing cycle of order, new order, and oscillation.`,
+    credits: "謝政庭"
+  },
+  {
+    id: "A-05",
+    title: "光室\nLight Room",
+    category: "Tectonic",
+    year: "2026",
+    location: "Department of Architecture, NCKU, Taiwan",
+    status: "1:1 Full-scale Construction",
+    cover: "images/IMG_9926.jpg", // 💡 請替換成照片路徑
+    series: [ { id: "Series-S", part: 1 } ,{ id: "Series-R", part: 4 }],
+    gallery: [
+      { src: "images/ChatGPT Image 2026年7月9日 下午04_10_20.png", size: "small"},
+      { src: "images/IMG_6667.jpg", size: "small"},
+      { src: "images/IMG_E9930.jpg", size: "small"},
+      { src: "images/IMG_0086.jpg", size: "large"},
+      { src: "images/IMG_0087.jpg", size: "small"},
+      { src: "images/S__45711433_0.jpg", size: "large"},
+      { src: "images/S__45711434_0.jpg", size: "wide"},
+      { src: "images/IMG_0069.jpg", size: "small"},
+      { src: "images/S__45711435_0.jpg", size: "wide"},
+      { src: "images/S__45711431_0.jpg", size: "small", position: "35% 50%"},
+      { src: "images/S__45711432_0.jpg", size: "small"},
+      { src: "images/IMG_0077.jpg", size: "large"},
+      { src: "images/IMG_9907.jpg", size: "large"},
+      { src: "images/S__45711430_0.jpg", size: "small"},
+    ],
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
+      { src: "images/光桌01 [轉換].jpg", size: "small", orientation: "portrait" },
+    ],
+    books: ["b02"],
+    summary: "A small, largely open-air reading room testing shelter with minimal means.",
+    description: `意識到於現行建築設計課的教育中，手繪又重為主要的溝通媒介，而光桌便成為一個重要資源，我們也試圖將剖面計畫中的樓梯下方空間，原先為系上雜物、垃圾囤積空間已有逾十年，我們於計畫中將空間重新整理，使其恢復到可以被使用的狀態，並將其機能定為光室。同時改造系上現有家具使光桌的使用能更符合人體尺度。<br><br>Recognizing that hand drawing remains a primary communication medium in current architectural education, the light table has become an important resource. We also sought to reclaim the space beneath the staircase in the sectional project, which had been used for storage and waste accumulation for over a decade. In our plan, we reorganized the space to restore its usability and designated it as a light room. Additionally, we modified existing furniture in the department to better accommodate the use of light tables.`,
+    credits: "蕭本亮, 謝政庭, 王子銘, 謝廷威, 郭柏辰"
+  },
+  {
+    id: "A-06",
+    title: "Waste",
+    category: "Surreal",
+    year: "2025",
+    location: "Department of Architecture, NCKU, Taiwan",
+    status: "Record",
+    cover: "images/IMG_6676.jpg",
+    coverPosition: "50% 70%", // 💡 請替換成照片路徑
+    series: [ { id: "Series-S", part: 1 } ],
+    gallery: [
+      { src: "images/ChatGPT Image 2026年7月9日 下午04_10_20.png", size: "small"},
+      { src: "images/IMG_6667.jpg", size: "small"},
+      { src: "images/IMG_6692.jpg", size: "small"},
+    ],
+    books: [],
+    summary: "A full-scale bamboo pavilion exploring traditional lashing techniques.",
+    description: `它就是個超過10年的垃圾。<br><br>It is a waste that has been accumulating for over 10 years.`,
+    credits: "謝政庭, 謝廷威, 蕭本亮"
+  },
+  {
+    id: "A-07",
+    title: "Built as A Machine for Happening.",
+    category: "Public",
+    year: "2025",
+    location: "Tainan, Taiwan",
+    status: "Architectural design",
+    cover: "images/S__33906821_0.jpg", // 💡 請替換成照片路徑
+    gallery: [
+      { src: "images/S__33906786_0.jpg", size: "large"},
+      { src: "images/S__33906825_0.jpg", size: "small"},
+      { src: "images/S__33906846_0.jpg", size: "small"},
+      { src: "images/S__33906814_0.jpg", size: "wide"},
+      { src: "images/S__33906806_0.jpg", size: "wide"},
+      { src: "images/S__33906794_0.jpg", size: "large"},
+      { src: "images/S__33906841_0.jpg", size: "small"},
+      { src: "images/S__33906812_0.jpg", size: "small"},
+      { src: "images/S__33906790_0.jpg", size: "large"},
+      { src: "images/S__33906770_0.jpg", size: "wide"},
+      { src: "images/S__33906785_0.jpg", size: "small"},
+      { src: "images/S__33906780_0.jpg", size: "wide"},
+    ],
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
+      { src: "images/level02&03 plan A1.jpg", size: "small", fit: "contain" },
+      { src: "images/level01 plan A1.jpg", size: "small" , fit: "contain"},
+      { src: "images/section  A1.jpg", size: "large" , fit: "contain" },
+      { src: "images/site plan (1) A1.jpg", size: "large" , fit: "contain" },
+      { src: "images/場景透視 1 A3.jpg", size: "tiny", fit: "contain" },
+      { src: "images/場景透視 2 A3.jpg", size: "tiny", fit: "contain" },
+      { src: "images/level01 plan A0.jpg", size: "tiny" },
+      { src: "images/01.jpg", size: "small", fit: "contain" },
+      { src: "images/02.jpg", size: "small" , fit: "contain" },
+      { src: "images/03.jpg", size: "small" , fit: "contain" },
+      { src: "images/04.jpg", size: "small" , fit: "contain" },
+    ],
+    books: ["b02"],
+    summary: "A library, nursery, and elder space stacked around a shared atrium.",
+    description: `不是衛生所，不是健身房，也不是市集。是一幢建築，但它不被設計來容納，而是為了讓事情發生的巨大機器。它不從基地線升起量體配置策略，而是從被建築拒絕的停車場、車道滲入。這些傳統規劃中的餘料在這裡被重新定義為構成空間的積極元素。底層挑空，讓車道徑直穿越量體；廣場不是前庭，而是延伸的動線界面。舞台車、捐血車、餐車、貨車不再被隔離於建築之外，而是成為建築的內部器官，進入、停靠、轉變其功能與關係。活動因此不再由預先的使用定義，而是由這些不斷穿梭與停駐的單位生成。懸空量體，人行車道徑直而過，實際健身房、演講廳、諮商室與衛生所的活動機能因其串聯，不宣稱中心，不穩定、不固定，不做為屹立實體，而是製造可能性出現的條件。<br><br>It is neither clinic, gym, nor marketplace. It is a building not meant to contain, but a machine enabling events to occur. Its mass does not rise from the site edge; instead, it infiltrates through parking lots and driveways typically rejected by architecture, redefining them as active spatial elements.<br>The ground floor is opened, allowing traffic to pass through; the plaza becomes circulation rather than forecourt. Mobile stages, blood donation vans, food trucks, and cargo trucks enter the building as internal organs, constantly reshaping use and relationships. Suspended volumes allow flows to cross freely, while program spaces—gym, lecture hall, counseling rooms, clinic—avoid central dominance, remaining unstable and open, creating conditions for possibilities rather than fixed functions.`,
+    credits: "謝政庭"
+  },
+  {
+    id: "A-08",
+    title: "Wall Gallery",
+    category: "Public",
+    year: "2024",
+    location: "Tainan, Taiwan",
+    status: "Architectural design",
+    cover: "images/IMG_8110.jpg", // 💡 請替換成照片路徑
+    series: [{ id: "Series-W", part: 3 }],
+    gallery: [
+      { src: "images/IMG_8221.jpg", size: "large"},
+      { src: "images/IMG_8094.jpg", size: "small"},
+      { src: "images/IMG_8104.jpg", size: "small"},
+      { src: "images/IMG_8125.jpg", size: "small"},
+      { src: "images/IMG_8181.jpg", size: "small"},
+      { src: "images/IMG_8160.jpg", size: "small"},
+      { src: "images/IMG_8227.jpg", size: "large"},
+      
+    ],
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
+      { src: "images/plan&section.jpg", size: "large", fit: "contain" },
+      { src: "images/視域分析.jpg", size: "small" },
+      { src: "images/imgw-618210106-1.jpg", size: "small"  },
+      { src: "images/視域軸線 建築軸線關係圖.jpg", size: "large", position: "bottom" },
+    ],
+    books: ["b02"],
+    summary: "A gathering hall stepped into a valley, its roofline echoing the ridge above.",
+    description: "牆大多時候最直接地代表著阻擋與劃分，我總喜歡用冷酷來形容這樣的事件，然而出自於圍牆行為，卻總是讓人不自覺地露出微笑，倚靠牆邊擺餐桌的小吃攤販、撐高腳尖探頭想一睹牆內神祕的路人、悠閒地騎著單車自在掠過牆邊的年輕人，一道牆收錄了生活的日常。很多時候，就是有著那一道牆遮蔽了某一程度的視野，這個場域才開始變得溫馨與秘密，一種人與環境的親密感、好奇也因此繫了起來。<br><br>Walls often most directly signify blockage and division, and I like to describe this quality as cold. Yet the very act of enclosing can unexpectedly bring a smile: street vendors set up tables along a wall, passersby tiptoe to peek at its hidden interior, and young cyclists glide leisurely past its edge. A single wall collects these everyday moments of life. Often, it is precisely because a wall partially shields the view that a place becomes warm and secret—a subtle intimacy between people and their environment, where curiosity is quietly bound to the space.",
+    credits: "謝政庭"
+  },
+  {
+    id: "A-09",
+    title: "Texture Recorder",
+    category: "Tectonic",
+    year: "2023",
+    location: "Tainan, Taiwan",
+    status: "1:1 Full-scale Construction",
+    cover: "images/rubbing.jpg", // 💡 請替換成照片路徑
+    gallery: [
+      { src: "images/S__26206210.jpg", size: "small"},
+      { src: "images/S__26198035_0.jpg", size: "small"},
+      { src: "images/S__40083458.jpg", size: "small"},
+    ],
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
+      { src: "images/S__26279956.jpg", size: "large", fit: "contain" },
+    ],
+    books: ["b02"],
+    summary: "A performance space with a folded roof that reconfigures for different shows.",
+    description: `小從硬幣，大至整個城市，都有屬於它的獨特質地，而分辨這些肌理取決於觸覺給予的回饋，也許會是平滑、粗糙、浮凸、細膩、膨鬆、硬挺……。但是一切對於紋理的表達似乎僅存於自己的認定與衍伸出來的對話、文字，它不像視覺有相片、聽覺有音符記號，不是這麼絕對，好像也沒有一定群體間的交集，但儘管如此，對於紋理，還是可以試圖記錄下來的。拓印，將觸覺的特色某一程度上的轉移到視覺上，讓人們有更多的機會產生討論甚至是共識。<br><br>From a coin to an entire city, everything possesses its own unique texture. Our ability to distinguish these surfaces depends on tactile feedback—smooth, rough, embossed, delicate, soft, or rigid. Yet expressions of texture often remain personal, existing mainly through individual interpretation and description. Unlike vision, which has photographs, or sound, which has musical notation, texture lacks an absolute or commonly shared language. Even so, it can still be recorded. Through rubbing, tactile qualities are partially translated into visual form, creating opportunities for discussion and even shared understanding.`,
+    credits: "謝政庭"
+  },
+  {
+    id: "A-10",
+    title: "Whole from Parts from Whole.",
+    category: "Housing",
+    year: "2025",
+    location: "Tainan, Taiwan",
+    status: "Concept design / Architectural design",
+    cover: "images/S__33906706_0.jpg", // 💡 請替換成照片路徑
+    gallery: [
+      { src: "images/S__40108038_0.jpg", size: "large"},
+      { src: "images/S__40108035_0.jpg", size: "large"},
+      { src: "images/S__33906726_0.jpg", size: "small"},
+      { src: "images/S__33906714_0.jpg", size: "wide"},
+      { src: "images/S__33906736_0.jpg", size: "large"},
+      { src: "images/S__33923095_0.jpg", size: "small"},
+      { src: "images/S__33923096_0.jpg", size: "small"},
+      { src: "images/S__33923098.jpg", size: "small"},
+    ],
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
+      { src: "images/site plan_page-0001.jpg", size: "small", fit: "contain",orientation: "portrait" },
+      { src: "images/plan+1700 5_page-0001.jpg", size: "small", fit: "contain",orientation: "portrait" },
+      { src: "images/plan+1300 4_page-0001.jpg", size: "small", fit: "contain",orientation: "portrait" },
+      { src: "images/plan+920 3_page-0001.jpg", size: "small", fit: "contain",orientation: "portrait" },
+      { src: "images/plan+640 2_page-0001.jpg", size: "small", fit: "contain",orientation: "portrait" },
+      { src: "images/plan+350 1_page-0001.jpg", size: "small", fit: "contain",orientation: "portrait" },
+      { src: "images/chamber 1_page-0001.jpg", size: "tiny", fit: "contain" },
+      { src: "images/chamber 2_page-0001.jpg", size: "tiny", fit: "contain" },
+      { src: "images/chamber 3_page-0001.jpg", size: "tiny", fit: "contain" },
+      { src: "images/作品集 暫時完整版1_頁面_47.jpg", size: "small", fit: "contain" },
+      { src: "images/作品集 暫時完整版1_頁面_471.jpg", size: "small", fit: "contain" },
+      { src: "images/作品集 暫時完整版1_頁面_49.jpg", size: "large", fit: "contain",orientation: "portrait" },
+      { src: "images/圖片1.jpg", size: "large", fit: "contain",orientation: "portrait" },
+    ],
+    books: ["b02"],
+    summary: "A rethink of Taiwan's covered arcade, caught between shops and pedestrians.",
+    description: `一切開始於對正常集合住宅的拒絕，但出自於回應基地紋理。竹溪原先彎曲地穿越城鎮，後來被截斷並向南導出一條新的人工水線。水文被暴力地更動，不規則的街廓卻提醒其存在。曾經依河而生的聚落，今與理想秩序的棋盤街道相接，一端是工業化系統，一端是歷史的地形記憶，兩種紋理交錯產生不穩定的場域。在設計案中：一條人工水道以泳池為機能被放置在原河線周遭，離地四米，長二十六米，不試圖修復，而是選擇過度再造，對截彎取直的回應。腔室以不規則街區為原型，從數百單元，壓縮至1至2戶。它們成為建築的單位，不再是集合。棋盤街道不再存在外部而嵌入其中並串連腔室，抬升九十公分，使用被切割，活動被嵌入，好似反原本既定廊道的凸字型。所有邊界變得模糊，所有系統成為碎片，所有碎片重新生成系統。<br><br>It begins with a rejection of the conventional collective housing model, yet still responds to the site’s texture. The river once meandered through the town before being cut and redirected south into an artificial channel. Though the hydrology was forcibly altered, the irregular urban fabric continues to reveal its memory. A settlement once shaped by the river now meets the imposed order of a grid—industrial logic on one side, historical terrain on the other—producing an unstable field where two systems overlap.<br>In this project, an artificial water line reappears as a pool, placed along the former river path—elevated four meters and extending twenty-six meters. Rather than restoring, it chooses to reinterpret, responding to the act of straightening the river. Spatial chambers, derived from irregular blocks, are compressed into one- to two-unit entities, becoming the building’s fundamental units rather than a collective whole. The grid is no longer external but embedded within, linking these chambers while lifted 90 cm, fragmenting use and inserting activity—reversing the conventional corridor logic. Boundaries blur, systems fragment, and fragments recombine into a new order.`,
+    credits: "謝政庭"
+  },
+  {
+    id: "A-11",
+    title: "Centre Pompidou Facade Study",
+    category: "Study",
+    year: "2024",
+    location: "Non",
+    status: "Record",
+    cover: "images/ChatGPT Image 2026年7月10日 下午09_41_47.png", // 💡 請替換成照片路徑
+    gallery: [
+      { src: "images/S__30416936_0.jpg", size: "large"},
+      { src: "images/S__30613560_0.jpg", size: "large"},
+    ],
+    books: [""],
+    summary: "A performance space with a folded roof that reconfigures for different shows.",
+    description: `龐畢度中心最大的特色，在於將原本隱藏於建築內部的結構、設備管線與交通系統移至建築外側，讓立面不只是建築的外殼，更成為建築運作方式的展現。不同顏色的管線分別代表不同的設備系統，使人們能直接從外觀理解建築的組成，也讓立面呈現出鮮明且富有秩序的特色。這樣的設計不僅提高了室內空間的使用彈性，也改變了人們對建築外觀的既有印象。<br>本次研究透過分析龐畢度中心立面的構成方式，將結構、管線、交通系統與立面框架重新整理，並以模型重現各元素之間的配置關係。在製作過程中發現，這些外露的構件並非只是視覺上的裝飾，而是共同支撐建築運作的重要部分。透過模型的重構，更能理解龐畢度中心如何運用規律的構架、鮮明的色彩與清楚的系統配置，打造出兼具功能性與辨識度的立面，也展現出高科技建築將工程技術直接轉化為建築表現的設計特色。<br><br>The most distinctive feature of the Centre Pompidou is its externalization of structural, mechanical, and circulation systems, transforming the facade into a visible expression of the building’s operational logic. Color-coded pipes represent different systems, allowing observers to understand the building’s composition at a glance, while imparting a striking and orderly aesthetic. This design not only enhances interior spatial flexibility but also challenges conventional perceptions of architectural exteriors.<br>This study analyzes the facade’s composition, reorganizing its structural, mechanical, and circulation elements and reconstructing their relationships through modeling. The process revealed that these exposed components are not mere visual embellishments but integral to the building’s functionality. By reconstructing the model, we gain insight into how the Centre Pompidou employs systematic frameworks, vivid colors, and clear configurations to create a facade that is both functional and iconic, exemplifying high-tech architecture’s translation of engineering into architectural expression.`,
+    credits: "謝政庭, 蕭本亮"
+  },
+  {
+    id: "A-12",
+    title: "Inter-(potential)-Field",
+    category: "Public",
+    year: "2026",
+    location: "Tainan, Taiwan",
+    status: "Architectural design",
+    cover: "images/333.png", // 💡 請替換成照片路徑
+    series: [ { id: "Series-I", part: 2 } ],
+    gallery: [
+      { src: "images/S__30416936_0.jpg", size: "large"},
+      { src: "images/S__30613560_0.jpg", size: "large"},
+    ],
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
+      { src: "images/loop. studio architectural drawing set_頁面_02.jpg", size: "small", fit: "contain" },
+      { src: "images/loop. studio architectural drawing set_頁面_03.jpg", size: "small", fit: "contain" },
+      { src: "images/loop. studio architectural drawing set_頁面_04.jpg", size: "small", fit: "contain" },
+      { src: "images/loop. studio architectural drawing set_頁面_05.jpg", size: "small", fit: "contain" },
+      { src: "images/loop. studio architectural drawing set_頁面_06.jpg", size: "small", fit: "contain" },
+      { src: "images/loop. studio architectural drawing set_頁面_07.jpg", size: "small", fit: "contain" },
+      { src: "images/loop. studio architectural drawing set_頁面_08.jpg", size: "small", fit: "contain" },
+      { src: "images/loop. studio architectural drawing set_頁面_09.jpg", size: "small", fit: "contain" },
+      { src: "images/loop. studio architectural drawing set_頁面_10.jpg", size: "small", fit: "contain" },
+      { src: "images/loop. studio architectural drawing set_頁面_11.jpg", size: "small", fit: "contain" },
+      { src: "images/loop. studio architectural drawing set_頁面_12.jpg", size: "small", fit: "contain" },
+      { src: "images/loop. studio architectural drawing set_頁面_13.jpg", size: "small", fit: "contain" },
+    ],
+    books: ["b01"],
+    summary: "A performance space with a folded roof that reconfigures for different shows.",
+    description: `龐畢度中心最大的特色，在於將原本隱藏於建築內部的結構、設備管線與交通系統移至建築外側，讓立面不只是建築的外殼，更成為建築運作方式的展現。不同顏色的管線分別代表不同的設備系統，使人們能直接從外觀理解建築的組成，也讓立面呈現出鮮明且富有秩序的特色。這樣的設計不僅提高了室內空間的使用彈性，也改變了人們對建築外觀的既有印象。<br>本次研究透過分析龐畢度中心立面的構成方式，將結構、管線、交通系統與立面框架重新整理，並以模型重現各元素之間的配置關係。在製作過程中發現，這些外露的構件並非只是視覺上的裝飾，而是共同支撐建築運作的重要部分。透過模型的重構，更能理解龐畢度中心如何運用規律的構架、鮮明的色彩與清楚的系統配置，打造出兼具功能性與辨識度的立面，也展現出高科技建築將工程技術直接轉化為建築表現的設計特色。<br><br>The most distinctive feature of the Centre Pompidou is its externalization of structural, mechanical, and circulation systems, transforming the facade into a visible expression of the building’s operational logic. Color-coded pipes represent different systems, allowing observers to understand the building’s composition at a glance, while imparting a striking and orderly aesthetic. This design not only enhances interior spatial flexibility but also challenges conventional perceptions of architectural exteriors.<br>This study analyzes the facade’s composition, reorganizing its structural, mechanical, and circulation elements and reconstructing their relationships through modeling. The process revealed that these exposed components are not mere visual embellishments but integral to the building’s functionality. By reconstructing the model, we gain insight into how the Centre Pompidou employs systematic frameworks, vivid colors, and clear configurations to create a facade that is both functional and iconic, exemplifying high-tech architecture’s translation of engineering into architectural expression.`,
+    credits: "謝政庭, 蕭本亮"
+  },
+  {
+    id: "A-13",
+    title: "Inter-(potential)-Field 'Theater Facade'",
+    category: "Detail",
+    year: "2026",
+    location: "Tainan, Taiwan",
+    status: "Detail design",
+    cover: "images/facade drawing set-17.jpg", // 💡 請替換成照片路徑
+    series: [ { id: "Series-I", part: 3 } ],
+    gallery: [
+      { src: "images/S__46153740_0.jpg", size: "large"},
+      { src: "images/S__46153738_0.jpg", size: "large"},
+      { src: "images/S__46153736_0.jpg", size: "large"},
+    ],
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
+      { src: "images/facade drawing set-02.jpg", size: "small", fit: "contain" },
+      { src: "images/facade drawing set-12.jpg", size: "small"},
+      { src: "images/facadesection.jpg", size: "large", fit: "contain",orientation: "portrait" },
+      { src: "images/facade drawing set.jpg", size: "small", fit: "contain" },
+    
+    ],
+    books: ["b01"],
+    summary: "A performance space with a folded roof that reconfigures for different shows.",
+    description: `作為「制度化逃離」的劇場功能，從更廣闊的視角來看，劇場仍是一種基礎設施，支撐著廣場那份真切的熱烈氛圍。這座碗狀、類似體育場的建築形式，已透過地面與牆壁實現了空間的圍合與支撐，而劇場那懸浮的體量，則構成了天空的空間邊界。<br>我們設想的天花板既具功能性，又能促進廣場層進行更多元的活動。<br>劇場中常見的走道設施，通常是最隱蔽的空間區域；當它們向外延伸至建築外皮時，劇場體量便顯得殘缺且支離破碎，反而更像一個向外擴張的基礎設施核心。<br>走道外殼在劇院體量周圍被解構，轉化為由鋼纜構成的立面。外殼與建築外牆之間預留了一條供工作人員使用的維護通道，而標準的走道設施則設置於體量基部。<br><br>As a theatrical function of “institutionalized escape,” the theater, viewed from a broader perspective, still serves as a form of infrastructure that supports the square’s state of genuine excitement. The bowl-shaped, stadium-like architectural form has already achieved the spatial enclosure and support provided by the ground and walls, while the floating volume of the theater serves as the spatial boundary of the sky.<br>We envision a ceiling that is both functional and capable of fostering a wider variety of activities on the plaza level.<br>The catwalk facilities commonly found in theaters are typically the most concealed spatial areas; when they are turned outward onto the building’s skin, the theater volume becomes incomplete and disjointed, resembling instead an outward-expanding infrastructure core.<br>The catwalk envelope is deconstructed around the theater volume into a facade composed of steel cables. A maintenance passage is left between the envelope and the building’s exterior wall for staff use, while the standard catwalk facilities are situated at the base of the volume.`,
+    credits: "謝政庭, 蕭本亮"
+  },
+  {
+    id: "A-14",
+    title: "Plagiarism",
+    category: "Surreal",
+    year: "2023",
+    location: "Non",
+    status: "Concept design",
+    cover: "images/臨摹畫.jpg", fit: "contain", // 💡 請替換成照片路徑
+    series: [],
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
+      { src: "images/S__26181675.jpg", size: "large", fit: "contain",orientation: "portrait" },
+      { src: "images/S__26181672_0.jpg", size: "large", fit: "contain",orientation: "portrait" }
+    
+    ],
+    books: [],
+    summary: "A performance space with a folded roof that reconfigures for different shows.",
+    description: `複製Daniel Libeskind的The Burrow Laws, Micromegas(1979)，藉抄襲之手段，再衍生出另種用想像填充未定義區的When We Look ''The Burrow Laws, Micromegas'' From Different Side。<br><br>Copying Daniel Libeskind's The Burrow Laws, Micromegas (1979), and through the act of plagiarism, deriving another work that fills undefined areas with imagination: When We Look ''The Burrow Laws, Micromegas'' From Different Side.`,
+    credits: "謝政庭"
+  },
+  {
+    id: "A-15",
+    title: "Dissolving System",
+    category: "Surreal",
+    year: "2024",
+    location: "Non",
+    status: "Concept design",
+    cover: "images4/master copy.jpg", fit: "contain", // 💡 請替換成照片路徑
+    series: [{ id: "Series-W", part: 1 }],
+    gallery: [
+      { src: "images4/IMG_7211.jpg", size: "small"},
+      { src: "images4/IMG_7234.jpg", size: "small"},
+      { src: "images4/IMG_7246.jpg", size: "small"},
+    ],
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
+      { src: "images4/69.jpg", size: "small", fit: "contain" },
+      { src: "images4/未命名-1.jpg", size: "small", fit: "contain" },
+      { src: "images4/master copy.jpg", size: "large", fit: "contain" },
+    ],
+
+    books: ["b02"],
+    summary: "A performance space with a folded roof that reconfigures for different shows.",
+    description: `作為Wall Gallery的前導研究，來自於建築的建築，發掘其精神性與建築邏輯技巧並重新拆解應用。<br>St. Nicolas Church由Walter Maria Förderer設計，空間秩序源於兩套交錯45度的正交系統網，牆體、隔間與座椅位置皆由90°、135°、45°角度生成，看似隨機卻嚴謹可測。至少50公分厚的實牆板構築整體，牆高隨地勢與內部需求推移錯動，形成複雜的空間層次；光影投射出的邊界，使建築在實與虛、可觸與不可觸之間同時被理解。巨大混凝土量體置入木屋村落，隨距離主殿而逐漸消退，高度與切口設計連接道路，使其既為聚落核心，又保持親近性。秩序、邊界與感知在此交織，建築的存在在行走與停留中逐步浮現，空間不僅被安排，而是在體驗中被理解。<br><br>As a preliminary study for the Wall Gallery, this project explores the spiritual and architectural logic of architecture itself, deconstructing and reapplying its techniques.<br>St. Nicolas Church, designed by Walter Maria Förderer, derives its spatial order from two interlocking orthogonal systems at 45-degree angles. The walls, partitions, and seating positions are generated by angles of 90°, 135°, and 45°, creating a seemingly random yet rigorously measurable arrangement. The thick concrete walls, at least 50 centimeters, construct the overall structure, with wall heights shifting according to terrain and internal needs, resulting in complex spatial layers. The interplay of light and shadow casts boundaries that allow the building to be understood in terms of both tangible and intangible qualities. The massive concrete volume is inserted into a wooden village, gradually receding with distance from the main hall. Its height and cut design connect to the roads, making it both the core of the settlement and maintaining a sense of intimacy. Order, boundaries, and perception intertwine here, with the building's presence gradually emerging through walking and pausing; space is not merely arranged but understood through experience.`,
+    credits: "謝政庭"
+  },
+  {
+    id: "A-16",
+    title: "混血／重組",
+    category: "Surreal",
+    year: "2024",
+    location: "Non",
+    status: "Concept design",
+    cover: "images4/mixblood.jpg", fit: "contain", // 💡 請替換成照片路徑
+    series: [{ id: "Series-W", part: 2 }],
+    gallery: [
+      { src: "images4/IMG_7852.jpg", size: "small"},
+      { src: "images4/IMG_7846.jpg", size: "small"},
+      { src: "images4/IMG_7843.jpg", size: "small"},
+    ],
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
+      { src: "images4/S__29057047_0.jpg", size: "small", fit: "contain" },
+      { src: "images4/S__29057049_0.jpg", size: "small", fit: "contain" },
+      { src: "images4/789_page-0001.jpg", size: "large", fit: "contain" },
+    ],
+
+    books: ["b02"],
+    summary: "A performance space with a folded roof that reconfigures for different shows.",
+    description: `本階段為小組合作的專案項目，延續上一階段的研究成果(critical section)於連續圖紙上接圖創作，將兩個不同的case study 重新在精神與手法上再次結合，將專屬於大師傑作的片段DNA銘刻於新的集合體，繁衍出另一種精神表現，來自非生命體的生意形變。St. Nicholas Church 的網格脈絡、Salk Institute 的空間彈性，那原先決定性的規矩勢必產生新的空間排列敘事。<br><br>This phase is a collaborative project that continues the research findings from the previous stage (critical section) and creates a continuous drawing by connecting two different case studies. The project reinterprets the DNA fragments of the masterpieces of the masters, combining them in spirit and technique to create a new collective entity, resulting in a new form of expression derived from non-living entities. The grid structure of St. Nicholas Church and the spatial flexibility of the Salk Institute inevitably lead to new spatial arrangements and narratives.`,
+    credits: "謝政庭"
+  },
+  {
+    id: "A-17",
+    title: "We Are All Connected",
+    category: "Public",
+    year: "2024",
+    location: "Tainan, Taiwan",
+    status: "Architectural design",
+    cover: "images4/cover.jpg", fit: "contain", // 💡 請替換成照片路徑
+    series: [{ id: "Series-A", part: 2 }],
+    gallery: [
+      { src: "images4/S__31186996_0.jpg", size: "small"},
+      { src: "images4/S__31187013_0.jpg", size: "small"},
+      { src: "images4/S__31187028_0.jpg", size: "small"},
+      { src: "images4/S__31187029_0.jpg", size: "small"},
+      { src: "images4/S__31187030_0.jpg", size: "small"},
+      { src: "images4/S__31187031_0.jpg", size: "small"},
+      { src: "images4/S__31187035_0.jpg", size: "small"},
+      { src: "images4/S__31203375_0.jpg", size: "small"},
+      { src: "images4/S__31186977_0.jpg", size: "small"},
+    ],
+    drawings: [                                  // 👈 新增這個欄位
+      // size 可用 "large"（一列1張）／"small"（一列2張）／"tiny"（一列3張，橫式）
+      // 若圖片是直式，加上 orientation: "portrait"：
+      //   large + portrait → 一列2張直式圖　／　small + portrait → 一列3張直式圖
+      { src: "images4/1F平面圖_page-0001.jpg", size: "small", fit: "contain" },
+      { src: "images4/2F平面圖_page-0001.jpg", size: "small", fit: "contain" },
+      { src: "images4/AA section_page-0001.jpg", size: "small", fit: "contain" },
+      { src: "images4/BB section_page-0001.jpg", size: "small", fit: "contain" },
+      { src: "images4/爆炸圖(手繪)_page-0001.jpg", size: "large", fit: "contain" },
+    ],
+
+    books: ["b02"],
+    summary: "A performance space with a folded roof that reconfigures for different shows.",
+    description: `"消極的面"。東寧公園東側由一貫民房高築，牆上開了窗與門正暗示不同尺度的交流，而當窗與門被安置上了鐵籠、違章加建，卻是宣告拒絕互動。公園與民宅反映了兩種極端考量基準點，然而我不認為這只有拒絕溝通的結論。"外部內部化"，我在既有的民房秩序中尋找新秩序的著力點，並試圖利用"外加物件"進到民宅內部，將外部空間內部化，反之亦然，以公園側出入口作為主體，搭配保有民宅私人的西藥房商業行為，進而達成公共與私密間的蒙太奇。<br><br>The Negative Aspect. Along Dongning Park’s edge, residential blocks open toward the park through windows and doors, yet iron cages and illegal additions often turn these into gestures of refusal. Park and home stand as two extremes, but not simply as a breakdown of communication.<br>Externalizing the Internal. Within the existing residential order, I searched for leverage to introduce a new one—using external additions to blur inside and outside. Focusing on the park-side entrance and the pharmacy’s semi-public activity, the project seeks a montage between public and private realms.`,
+    credits: "謝政庭"
+  },
+];
+
+/* ============================================================
+   SERIES DATA — 系列的「主視覺封面」與「文字介紹」統一寫在這裡，
+   每個系列只需要維護一份，不用在每個專案裡重複填寫。
+   - id：對應專案 series 陣列裡的 id
+   - title：系列名稱
+   - cover：系列頁最上方主視覺（正方形比例呈現，圖片會完整顯示不裁切，建議用方形或接近方形的圖）
+   - thumb：Series 目錄頁縮圖（正方形圖片）；沒填的話會自動改用 cover
+   - description：系列的文字介紹，換行請用 <br>，中英文之間可用 <br><br> 分段
+   ============================================================ */
+const SERIES_INFO = {
+  "Series-R": {
+    title: "材料循環中...",
+    cover: "images/SECTION PROJECT (4).jpg",
+    thumb: "images/SECTION PROJECT (4).jpg",
+    description: "關於這個系列的文字介紹，請在這裡填入計畫的整體概念、發展脈絡與各階段之間的關係。<br><br>A short introduction to this series — describe the overarching concept and how each project within it connects to the next."
+  },
+  "Series-S": {
+    title: "Section Project",
+    cover: "images/SECTION PROJECT.jpg",
+    thumb: "images/SECTION PROJECT.jpg",
+    description: "關於這個系列的文字介紹，請在這裡填入計畫的整體概念、發展脈絡與各階段之間的關係。<br><br>A short introduction to this series — describe the overarching concept and how each project within it connects to the next."
+  },
+  "Series-A": {
+    title: "Behind bar(s)",
+    cover: "images/SECTION PROJECT4.png",
+    thumb: "images/SECTION PROJECT4.png",
+    description: "物件轉譯作為一種剖析事物的方法，藉由這樣的方法論的強制導入，被迫必須要正視與依憑自身潛在對於世界的自主意識與思考模式，極度不自在、充滿著恐懼出自於對於社會刻板印象的揣測，依循看似菁英式的縝密品質，或是好似普普藝術的直接產出，對於態度的選擇的開始，就是自說自話，但卻又期望是公共性的集體意識，矛盾的好笑。<br>本專輯由兩個獨立步驟在延續的時間線上所構成，有著理所當然的「為甚麼」的推託之詞，因為在時間上，它具有無法也無意義被解釋清楚的因果關係：<br><br>Object translation as a method: it forces one to confront autonomous ways of seeing and thinking. Fear arises from anticipated stereotypes. Whether meticulous or Pop-like direct, every stance begins as self-monologue yet seeks collective resonance—an almost absurd contradiction.<br>This chapter consists of two independent steps unfolding along a continuous timeline, accompanied by the inevitable “why” excuses. For in terms of time, it possesses causal relationships that cannot and need not be explained clearly:"
+  },
+  "Series-I": {
+    title: "waitting for happening",
+    cover: "images/SECTION PROJECT (2).jpg",
+    thumb: "images/SECTION PROJECT (2).jpg",
+    description: "關於這個系列的文字介紹，請在這裡填入計畫的整體概念、發展脈絡與各階段之間的關係。<br><br>A short introduction to this series — describe the overarching concept and how each project within it connects to the next."
+  },
+  "Series-W": {
+    title: "Wall",
+    cover: "images4/wall gallery.png",
+    thumb: "images4/wall gallery.png",
+    description: "關於這個系列的文字介紹，請在這裡填入計畫的整體概念、發展脈絡與各階段之間的關係。<br><br>A short introduction to this series — describe the overarching concept and how each project within it connects to the next."
+  }
+};
+
+/* ============================================================
+   BOOKS DATA (已修正：圖片歸圖片，PDF 連結歸 PDF 連結)
+   ============================================================ */
+const BOOKS = [
+  {
+    id: "b01",
+    title: "Inter-(potential)-Field: Architecture design booklet",
+    year: "2026",
+    cover: "images/inter-(potential)-field.jpg", // 💡 書籍封面照片 (.jpg / .png)
+    file: "images2/loop. studio final booklet.pdf", // 💡 書籍實體 PDF 檔案路徑
+    description: "A compiled record of site studies, massing iterations, and final drawings for the project."
+  },
+  {
+    id: "b02",
+    title: "Methods of Assembly:Between Parts and Whole.\n(selected works 2023-2026)",
+    year: "2026",
+    cover: "images/作品集 暫時完整版1_頁面_01.jpg",
+    file: "images3/作品集 暫時完整版.pdf",
+    description: "A short collection of research notes and precedent studies developed alongside the thesis project."
+  },  
+  {
+    id: "b03",
+    title: "NCKU Architecture News v.114",
+    year: "2025",
+    cover: "images/189_file_1 (1)_頁面_01.jpg", // 💡 這裡放預覽圖片檔 (如 .jpg)，避免置入 PDF 導致破圖
+    file: "images/成大建築簡訊114.pdf",          // 💡 這裡放你的實體 PDF 檔案路徑
+    description: "A short collection of research notes and precedent studies developed alongside the thesis project."
+  },
+  {
+    id: "b04",
+    title: "FURNITURE CONSTRUCTION WORKSHOP worksheet",
+    year: "2026",
+    cover: "images/2026春 建築系期初實構築工作坊 題單-1.jpeg", // 💡 這裡放預覽圖片檔 (如 .jpg)，避免置入 PDF 導致破圖
+    file: "images/2026春 建築系期初實構築工作坊 題單 (1).pdf",          // 💡 這裡放你的實體 PDF 檔案路徑
+    description: "A short collection of research notes and precedent studies developed alongside the thesis project."
+  }
+];
+
+/* ============================================================
+   RENDER LOGIC (核心渲染邏輯，請勿更動)
+   ============================================================ */
+const app = document.getElementById("app");
+document.getElementById("footerYear").textContent = new Date().getFullYear();
+
+function categories(){
+  const list = [];
+  PROJECTS.forEach(p => { if(!list.includes(p.category)) list.push(p.category); });
+  return list;
+}
+
+function esc(str){
+  return String(str).replace(/[&<>"']/g, s => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[s]));
+}
+
+function thumb(p){
+  if(p.cover){
+    return `<div class="card-thumb"><img decoding="async" src="${esc(p.cover)}" alt="${esc(p.title)}" loading="lazy" style="object-position:${esc(p.coverPosition || "center")}"></div>`;
+  }
+  return `<div class="card-thumb"><div class="placeholder">Image coming soon</div></div>`;
+}
+
+function bookCover(b){
+  if(b.cover){
+    const clickable = b.file ? " book-cover-clickable" : "";
+    const attrs = b.file ? ` data-pdf-src="${esc(b.file)}" data-book-title="${esc(b.title)}"` : "";
+    return `<div class="book-cover${clickable}"${attrs}><img decoding="async" src="${esc(b.cover)}" alt="${esc(b.title)} cover" loading="lazy"></div>`;
+  }
+  return `<div class="book-cover"><div class="placeholder">Cover coming soon</div></div>`;
+}
+
+function bookCardHtml(b){
+  return `
+    <div class="book-card">
+      ${bookCover(b)}
+      <h3 class="book-title">${esc(b.title)}</h3>
+      <p class="book-meta">${esc(b.year)}</p>
+    </div>
+  `;
+}
+
+function booksForProject(project){
+  const ids = project.books || [];
+  return BOOKS.filter(b => ids.includes(b.id));
+}
+
+/* 系列（series）：一個專案現在可以同時收錄在「複數個」系列中，
+   所以 project.series 是一個陣列，例如：
+   series: [ { id:"Series-R", part:1 }, { id:"Series-S", part:2 } ]
+   下面這些函式都是以「某一個 series id」為主角去找相關資料，
+   而不是像以前一樣以單一 project 為主角。 */
+
+/* 找出某個 project 在某個 series 裡對應的 { id, part } 項目 */
+function seriesEntry(project, seriesId){
+  return (project.series || []).find(s => s.id === seriesId);
+}
+
+/* 找出屬於某個 series id 的所有專案，並依各自的 part 由小到大排序 */
+function seriesMembers(seriesId){
+  return PROJECTS
+    .filter(x => (x.series || []).some(s => s.id === seriesId))
+    .sort((a, b) => (seriesEntry(a, seriesId).part || 0) - (seriesEntry(b, seriesId).part || 0));
+}
+
+/* 系列總覽：收集所有出現過的 series id，each 一筆（供頂部 Series 分類頁使用），
+   標題／縮圖／介紹文字統一從 SERIES_INFO 讀取，找不到時才 fallback 到自動產生的預設值 */
+function allSeries(){
+  const ids = [];
+  PROJECTS.forEach(p => {
+    (p.series || []).forEach(s => {
+      if(!ids.includes(s.id)) ids.push(s.id);
+    });
+  });
+  return ids.map(id => {
+    const info = SERIES_INFO[id] || {};
+    return {
+      id,
+      title: info.title || id,
+      cover: info.cover || info.thumb || "",
+      thumb: info.thumb || info.cover || "",
+      description: info.description || "",
+      members: seriesMembers(id)
+    };
+  });
+}
+
+let currentCategory = "All";
+let currentViewMode = "list"; // "list" | "matrix" — matrix 模式為所有案子一字排開的縮圖陣列
+let currentYearFilter = null; 
+let homeSlideTimer = null;
+let homeSlideIdx = 0;
+
+function shuffleArray(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function collectHomeSlides(){
+  const slides = [];
+  PROJECTS.forEach(p => {
+    if(p.cover) slides.push({ type:"image", src:p.cover, alt:p.title, id: p.id, position: p.coverPosition || "center" });
+  });
+  if(!slides.length){
+    PROJECTS.slice(0, 8).forEach(p => slides.push({ type:"placeholder", label:p.title, id: p.id }));
+  }
+  return shuffleArray(slides);
+}
+
+function stopHomeSlideshow(){
+  if(homeSlideTimer){ clearInterval(homeSlideTimer); homeSlideTimer = null; }
+}
+
+function goToHomeSlide(newIdx){
+  const slides = document.querySelectorAll("#homeHero .home-slide");
+  const captionEl = document.getElementById("slideCaption");
+  if(!slides.length) return;
+  if(slides[homeSlideIdx]) slides[homeSlideIdx].classList.remove("active");
+  homeSlideIdx = ((newIdx % slides.length) + slides.length) % slides.length;
+  slides[homeSlideIdx].classList.add("active");
+  if(captionEl && slides[homeSlideIdx].dataset.title){
+    captionEl.textContent = slides[homeSlideIdx].dataset.title;
+  }
+}
+
+function startHomeSlideshow(){
+  stopHomeSlideshow();
+  const slides = document.querySelectorAll("#homeHero .home-slide");
+  if(slides.length <= 1) return;
+  homeSlideTimer = setInterval(() => {
+    goToHomeSlide(homeSlideIdx + 1);
+  }, 4000);
+}
+
+function navHomeSlide(direction){
+  goToHomeSlide(homeSlideIdx + direction);
+  startHomeSlideshow();
+}
+
+function renderFilters(){
+  const cats = ["All", ...categories()];
+  const html = cats.map(c => {
+    const active = (c === currentCategory && !currentYearFilter) ? "active" : "";
+    return `<button class="${active}" data-cat="${esc(c)}">${esc(c)}</button>`;
+  }).join("");
+  return `<div class="filters">${html}</div>`;
+}
+
+function attachFilterEvents(){
+  document.querySelectorAll(".filters button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      currentYearFilter = null; 
+      currentCategory = btn.dataset.cat;
+      location.hash = currentCategory === "All" ? "#/work" : "#/category/" + encodeURIComponent(currentCategory);
+    });
+  });
+}
+
+function filteredProjects(){
+  if (currentYearFilter) {
+    return PROJECTS.filter(p => p.year === currentYearFilter);
+  }
+  return PROJECTS.filter(p => currentCategory === "All" || p.category === currentCategory);
+}
+
+/* list / matrix 檢視切換按鈕 */
+function renderViewToggle(){
+  const listActive = currentViewMode === "list" ? "active" : "";
+  const matrixActive = currentViewMode === "matrix" ? "active" : "";
+  return `
+    <div class="view-toggle" role="group" aria-label="View mode">
+      <button type="button" class="${listActive}" data-view="list" aria-label="List view" aria-pressed="${currentViewMode === "list"}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <line x1="4" y1="6" x2="20" y2="6"></line>
+          <line x1="4" y1="12" x2="20" y2="12"></line>
+          <line x1="4" y1="18" x2="20" y2="18"></line>
+        </svg>
+      </button>
+      <button type="button" class="${matrixActive}" data-view="matrix" aria-label="Grid (category × year) view" aria-pressed="${currentViewMode === "matrix"}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <rect x="3.5" y="3.5" width="17" height="17" rx="1"></rect>
+          <line x1="3.5" y1="10" x2="20.5" y2="10"></line>
+          <line x1="3.5" y1="16" x2="20.5" y2="16"></line>
+          <line x1="10" y1="3.5" x2="10" y2="20.5"></line>
+          <line x1="16" y1="3.5" x2="16" y2="20.5"></line>
+        </svg>
+      </button>
+    </div>
+  `;
+}
+
+function attachViewToggleEvents(){
+  document.querySelectorAll(".view-toggle button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if(btn.dataset.view === currentViewMode) return;
+      currentViewMode = btn.dataset.view;
+      renderWork();
+    });
+  });
+}
+
+/* matrix（陣列）檢視：不分類別／年份分組，所有案子直接一字排開成一張均勻的縮圖陣列，
+   滑鼠移到縮圖上會浮現作品名稱與年份 */
+function matrixThumbHtml(p){
+  const inner = p.cover
+    ? `<img decoding="async" src="${esc(p.cover)}" alt="${esc(p.title)}" loading="lazy" style="object-position:${esc(p.coverPosition || "center")}">`
+    : `<div class="placeholder"></div>`;
+  return `
+    <div class="matrix-thumb" data-goto="${p.id}" tabindex="0" title="${esc(p.title)} · ${esc(p.year)}">
+      ${inner}
+      <div class="matrix-thumb-caption">
+        <div class="matrix-thumb-title">${esc(p.title)}</div>
+        <div class="matrix-thumb-year">${esc(p.year)}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMatrixView(list){
+  if(!list.length) return `<div class="empty-state">No projects found.</div>`;
+  return `
+    <div class="matrix-wrap">
+      <div class="matrix-table">
+        ${list.map(matrixThumbHtml).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function cardHtml(p){
+  return `
+    <article class="card" data-goto="${p.id}">
+      ${thumb(p)}
+      <h3 class="card-title">${esc(p.title)}</h3>
+      <p class="card-meta">${esc(p.category)} · ${esc(p.year)}</p>
+    </article>
+  `;
+}
+
+function renderLanding(){
+  const slides = collectHomeSlides();
+  homeSlideIdx = 0;
+  app.innerHTML = `
+    <div class="home-hero" id="homeHero">
+      <div class="home-slides" style="position:absolute; inset:0; width:100%; height:100%;">
+        ${slides.map((s, i) => s.type === "image"
+          ? `<div class="home-slide${i === 0 ? " active" : ""}" data-id="${esc(s.id)}" data-title="${esc(s.alt || "")}" style="position:absolute; inset:0;">
+              <img decoding="async" src="${esc(s.src)}" alt="${esc(s.alt || "")}" loading="${i === 0 ? "eager" : "lazy"}" ${i === 0 ? 'fetchpriority="high"' : ''} style="width:100%; height:100%; object-fit:cover; object-position:${esc(s.position || "center")};">
+             </div>`
+          : `<div class="home-slide placeholder-slide${i === 0 ? " active" : ""}" data-id="${esc(s.id)}" data-title="${esc(s.label || "")}" style="position:absolute; inset:0;">
+              <span>${esc(s.label)}</span>
+             </div>`
+        ).join("")}
+      </div>
+      ${slides.length > 1 ? `
+      <button type="button" class="home-arrow home-arrow-left" id="homeArrowLeft" aria-label="Previous slide">‹</button>
+      <button type="button" class="home-arrow home-arrow-right" id="homeArrowRight" aria-label="Next slide">›</button>
+      ` : ""}
+      <div class="home-caption-bl">
+        <div class="slide-caption" id="slideCaption">${esc(slides[0] ? (slides[0].alt || slides[0].label) : "")}</div>
+      </div>
+      <div class="home-button-br">
+        <a href="#/work" class="home-view-all-btn">VIEW ALL PROJECTS →</a>
+      </div>
+    </div>
+  `;
+
+  const hero = document.getElementById("homeHero");
+  hero.addEventListener("click", (e) => {
+    if(e.target.closest(".home-view-all-btn") || e.target.closest(".home-arrow")) return;
+    const activeSlide = hero.querySelector(".home-slide.active");
+    if(activeSlide && activeSlide.dataset.id){
+      location.hash = "#/project/" + activeSlide.dataset.id;
+    }
+  });
+
+  const leftArrow = document.getElementById("homeArrowLeft");
+  const rightArrow = document.getElementById("homeArrowRight");
+  if(leftArrow) leftArrow.addEventListener("click", (e) => { e.stopPropagation(); navHomeSlide(-1); });
+  if(rightArrow) rightArrow.addEventListener("click", (e) => { e.stopPropagation(); navHomeSlide(1); });
+
+  startHomeSlideshow();
+}
+
+function workRowHtml(p){
+  const thumbHtml = p.cover
+    ? `<img decoding="async" src="${esc(p.cover)}" alt="${esc(p.title)}" loading="lazy" style="object-position:${esc(p.coverPosition || "center")}">`
+    : `<div class="placeholder" style="font-size:10.5px; text-align:center; padding:6px;">Image coming soon</div>`;
+  return `
+    <div class="work-row" data-goto="${p.id}">
+      <div class="work-year">${esc(p.year)}</div>
+      <div class="work-thumb">${thumbHtml}</div>
+      <div class="work-title-wrap">
+        <h3 class="work-title">${esc(p.title)}</h3>
+        <p class="work-meta">${esc(p.category)} · ${esc(p.location)}</p>
+      </div>
+    </div>
+  `;
+}
+
+function renderWork(){
+  const list = filteredProjects().slice().sort((a, b) => {
+    return parseInt(b.year, 10) - parseInt(a.year, 10) || a.title.localeCompare(b.title);
+  });
+
+  const subtitle = currentYearFilter 
+    ? `Showing all projects from the year ${currentYearFilter}.`
+    : `A collection of design projects, from early studies to more developed proposals, listed by year.`;
+
+  const bodyHtml = currentViewMode === "matrix"
+    ? renderMatrixView(list)
+    : (list.length ? `<div class="work-list">${list.map(workRowHtml).join("")}</div>` : `<div class="empty-state">No projects found.</div>`);
+
+  app.innerHTML = `
+    <div class="wrap work-wrap">
+      <div class="intro">
+        <h1>Selected architectural work</h1>
+        <p>${subtitle}</p>
+      </div>
+      <div class="work-toolbar">
+        ${renderFilters()}
+        ${renderViewToggle()}
+      </div>
+      <section class="grid-section">
+        ${bodyHtml}
+      </section>
+    </div>
+  `;
+  attachFilterEvents();
+  attachViewToggleEvents();
+  app.querySelectorAll("[data-goto]").forEach(el => {
+    el.addEventListener("click", () => { location.hash = "#/project/" + el.dataset.goto; });
+  });
+}
+
+function galleryItemSrc(item){
+  return typeof item === "string" ? item : item.src;
+}
+function gallerySizeClass(item){
+  const size = typeof item === "string" ? "small" : (item.size || "small");
+  return ["large", "small", "tiny", "wide"].includes(size) ? size : "small";
+}
+function galleryItemPosition(item){
+  return (typeof item === "object" && item.position) ? item.position : "center";
+}
+function galleryItemFit(item){
+  return (typeof item === "object" && item.fit) ? item.fit : "cover";
+}
+function drawingOrientationClass(item){
+  return (typeof item === "object" && item.orientation === "portrait") ? "portrait" : "";
+}
+
+function renderProject(id){
+  const p = PROJECTS.find(x => x.id === id);
+  if(!p){ renderWork(); return; }
+  const relatedPool = PROJECTS.filter(x => x.category === p.category && x.id !== p.id);
+  const related = shuffleArray(relatedPool).slice(0,2);
+  const relatedBooks = booksForProject(p);
+  const paragraphs = p.description
+    .split(/<br>\s*<br>|\n\n+/i)
+    .map(t => t.trim())
+    .filter(Boolean)
+    .map(t => `<p>${esc(t).replace(/&lt;br&gt;/gi, "<br>")}</p>`)
+    .join("");
+  const galleryHtml = (p.gallery && p.gallery.length)
+    ? `
+      <div class="project-gallery">
+        <h3>Gallery</h3>
+        <div class="gallery-grid">${p.gallery.map((item, i) => `
+          <div class="gallery-item ${gallerySizeClass(item)}" data-gallery-index="${i}">
+            <img decoding="async" src="${esc(galleryItemSrc(item))}" alt="${esc(p.title)}" loading="lazy" style="object-position:${esc(galleryItemPosition(item))}; object-fit:${esc(galleryItemFit(item))}">
+          </div>`).join("")}</div>
+      </div>`
+    : "";
+  const projectSeries = p.series || [];
+  const seriesSideHtml = projectSeries.length
+    ? `
+      <strong>Series</strong>
+      <div style="display:flex; gap:14px; flex-wrap:wrap;">
+        ${projectSeries.map(s => {
+          const info = SERIES_INFO[s.id] || {};
+          const thumbSrc = info.thumb || info.cover;
+          return `
+            <div class="side-series" data-series-goto="${esc(s.id)}" title="${esc(info.title || s.id)}">
+              <div class="side-series-thumb">
+                ${thumbSrc
+                  ? `<img src="${esc(thumbSrc)}" alt="${esc(info.title || s.id)}">`
+                  : `<div class="side-series-placeholder">上傳系列縮圖</div>`}
+              </div>
+            </div>`;
+        }).join("")}
+      </div>`
+    : "";
+
+  const drawingHtml = (p.drawings && p.drawings.length)
+    ? `
+      <div class="project-drawings">
+        <h3>Drawings</h3>
+        <div class="drawing-grid">${p.drawings.map((item, i) => `
+          <div class="drawing-item ${gallerySizeClass(item)} ${drawingOrientationClass(item)}" data-drawing-index="${i}">
+            <img decoding="async" src="${esc(galleryItemSrc(item))}" alt="${esc(p.title)}" loading="lazy" style="object-position:${esc(galleryItemPosition(item))}; object-fit:${esc(galleryItemFit(item))}">
+          </div>`).join("")}</div>
+      </div>`
+    : "";
+  
+  const sideInfo = `
+    <div class="side-info">
+      <strong>Location</strong>${esc(p.location)}
+      <strong>Year</strong>${esc(p.year)}
+      <strong>Status</strong>${esc(p.status)}
+      ${p.credits ? `<strong>Credits</strong>${p.credits}` : ""}
+      ${seriesSideHtml}
+    </div>
+  `;
+
+  app.innerHTML = `
+    <div class="wrap detail">
+      <a href="#/work" class="back-link">← Back to work</a>
+      <h1 class="detail-title">${esc(p.title)}</h1>
+      
+      <div class="detail-meta">
+        <a class="meta-link" href="#/category/${encodeURIComponent(p.category)}">${esc(p.category)}</a>
+        <a class="meta-link" href="#/year/${encodeURIComponent(p.year)}">${esc(p.year)}</a>
+        <span>${esc(p.location)}</span>
+      </div>
+
+      ${thumb(p).replace('card-thumb','detail-hero')}
+      <div class="detail-body">
+        <div class="detail-desc">${paragraphs}</div>
+        ${sideInfo}
+      </div>
+      ${drawingHtml}
+      ${galleryHtml}
+      ${relatedBooks.length ? `
+        <div class="related-books">
+          <h3>Related publications</h3>
+          <div class="book-grid">${relatedBooks.map(bookCardHtml).join("")}</div>
+        </div>` : ""}
+      ${related.length ? `
+        <div class="more-work">
+          <h3>More in ${esc(p.category)}</h3>
+          <div class="grid">${related.map(cardHtml).join("")}</div>
+        </div>` : ""}
+    </div>
+  `;
+  app.querySelectorAll("[data-goto]").forEach(el => {
+    el.addEventListener("click", () => { location.hash = "#/project/" + el.dataset.goto; });
+  });
+
+  if(p.gallery && p.gallery.length){
+    const galleryImages = p.gallery.map(item => ({ src: galleryItemSrc(item), alt: p.title }));
+    app.querySelectorAll(".gallery-item").forEach(el => {
+      el.addEventListener("click", () => {
+        openLightbox(galleryImages, parseInt(el.dataset.galleryIndex, 10));
+      });
+    });
+  }
+  if(p.drawings && p.drawings.length){
+    const drawingImages = p.drawings.map(item => ({ src: galleryItemSrc(item), alt: p.title }));
+    app.querySelectorAll(".drawing-item").forEach(el => {
+      el.addEventListener("click", () => {
+        openLightbox(drawingImages, parseInt(el.dataset.drawingIndex, 10));
+      });
+    });
+  }
+  app.querySelectorAll("[data-series-goto]").forEach(el => {
+    el.addEventListener("click", () => { location.hash = "#/series/" + encodeURIComponent(el.dataset.seriesGoto); });
+  });
+  bindBookCoverClicks(app);
+  window.scrollTo(0, 0);
+}
+
+function renderBooks(){
+  app.innerHTML = `
+    <div class="wrap">
+      <div class="intro">
+        <h1>Books &amp; publications</h1>
+        <p>Journals, notes, and other printed matter produced alongside the projects — each one links back to the project it belongs to.</p>
+      </div>
+      <section class="grid-section">
+        ${BOOKS.length ? `<div class="book-grid">${BOOKS.map(bookCardWithLinkHtml).join("")}</div>` : `<div class="empty-state">No publications yet.</div>`}
+      </section>
+    </div>
+  `;
+  app.querySelectorAll("[data-goto]").forEach(el => {
+    el.addEventListener("click", () => { location.hash = "#/project/" + el.dataset.goto; });
+  });
+  bindBookCoverClicks(app);
+}
+
+function bookCardWithLinkHtml(b){
+  const owner = PROJECTS.find(p => (p.books || []).includes(b.id));
+  return `
+    <div class="book-card">
+      ${bookCover(b)}
+      <h3 class="book-title">${esc(b.title)}</h3>
+      <p class="book-meta">${esc(b.year)}</p>
+      ${owner ? `<div style="margin-top:6px;"><a class="book-link" data-goto="${owner.id}">${esc(owner.title)} →</a></div>` : ""}
+    </div>
+  `;
+}
+
+function bookCoverLightboxItem(el){
+  return { src: el.dataset.pdfSrc, alt: el.dataset.bookTitle, type: "pdf" };
+}
+
+function bindBookCoverClicks(container){
+  container.querySelectorAll(".book-cover-clickable").forEach(el => {
+    el.addEventListener("click", () => {
+      openLightbox([bookCoverLightboxItem(el)], 0);
+    });
+  });
+}
+
+function renderSeriesIndex(){
+  const list = allSeries();
+  app.innerHTML = `
+    <div class="wrap">
+      <div class="intro">
+        <h1>Series</h1>
+        <p>Projects grouped into ongoing series — click through to see how each one unfolds.</p>
+      </div>
+      <section class="grid-section">
+        ${list.length ? `<div class="series-thumb-grid">${list.map(s => `
+          <div class="series-index-card" data-series-goto="${esc(s.id)}">
+            <div class="series-thumb-trigger">
+              ${s.thumb
+                ? `<img decoding="async" src="${esc(s.thumb)}" alt="${esc(s.title)}" loading="lazy">`
+                : `<div class="series-thumb-placeholder">上傳系列縮圖<span>series.thumb: "images/…jpg"</span></div>`}
+            </div>
+            <div class="series-caption"><b>${esc(s.title)}</b> — ${s.members.length} tracks</div>
+          </div>
+        `).join("")}</div>` : `<div class="empty-state">No series yet.</div>`}
+      </section>
+    </div>
+  `;
+  app.querySelectorAll("[data-series-goto]").forEach(el => {
+    el.addEventListener("click", () => { location.hash = "#/series/" + encodeURIComponent(el.dataset.seriesGoto); });
+  });
+}
+
+function renderSeriesDetail(id){
+  const members = seriesMembers(id);
+  if(!members.length){ renderSeriesIndex(); return; }
+  const info = SERIES_INFO[id] || {};
+  const title = info.title || id;
+  const heroSrc = info.cover || info.thumb;
+  const heroHtml = heroSrc
+    ? `<div class="series-hero"><img decoding="async" src="${esc(heroSrc)}" alt="${esc(title)}" loading="lazy"></div>`
+    : `<div class="series-hero"><div class="placeholder">上傳系列主視覺（SERIES_INFO.cover）</div></div>`;
+  const descHtml = info.description
+    ? info.description
+        .split(/<br>\s*<br>|\n\n+/i)
+        .map(t => t.trim())
+        .filter(Boolean)
+        .map(t => `<p>${t}</p>`)
+        .join("")
+    : `<p style="color:var(--muted);">請在 SERIES_INFO 裡填入這個系列的文字介紹。</p>`;
+
+  app.innerHTML = `
+    <div class="wrap detail">
+      <a href="#/series" class="back-link">← Back to series</a>
+      <h1 class="detail-title">${esc(title)}</h1>
+      <div class="detail-meta"><span>${members.length} project${members.length > 1 ? "s" : ""} in this series</span></div>
+      <div class="series-content">
+        ${heroHtml}
+        <div class="detail-desc" style="margin-bottom:56px;">${descHtml}</div>
+        <div class="project-gallery">
+          <h3>被收錄的案子</h3>
+          <div class="series-grid">
+            ${members.map((m, i) => {
+              const entry = seriesEntry(m, id);
+              const trackNum = String((entry && entry.part) || i + 1).padStart(2, "0");
+              return `
+                <article class="card" data-goto="${esc(m.id)}">
+                  ${thumb(m)}
+                  <h3 class="card-title">${esc((m.title || "").split("\n")[0])}</h3>
+                  <p class="card-meta">Track ${trackNum} · ${esc(m.category)} · ${esc(m.year)}</p>
+                </article>
+              `;
+            }).join("")}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  app.querySelectorAll("[data-goto]").forEach(el => {
+    el.addEventListener("click", () => { location.hash = "#/project/" + el.dataset.goto; });
+  });
+  window.scrollTo(0, 0);
+}
+
+function renderAbout(){
+  app.innerHTML = `
+    <div class="wrap about" style="max-width:850px;">
+      <div style="display:flex; gap:50px; align-items:center; margin-top:32px; flex-wrap:wrap-reverse;">
+        <div style="flex:1; min-width:280px; margin:0;">
+          <h1 style="margin-bottom:22px;">About</h1>
+          <p style="margin-top:0;">Between Parts and Whole:<br>Probably a collection of random thoughts and reimagined ideas.</p>
+          <div class="contact" style="margin-top:24px;">
+            <a href="mailto:940714.pineapple@gmail.com">940714.pineapple@gmail.com</a> &nbsp;·&nbsp; 
+            <a href="#" target="_blank" rel="noopener">LinkedIn</a> &nbsp;·&nbsp; 
+            <a href="https://www.instagram.com/tim.hsieh.3348/" target="_blank" rel="noopener">Instagram</a>
+          </div>
+        </div>
+        <div style="flex-shrink:0; margin: 0 auto;">
+          <img decoding="async" src="images/profile.jpg" alt="Profile" style="width:180px; height:180px; aspect-ratio: 1 / 1; object-fit:cover; border-radius:50%;">
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function route(){
+  stopHomeSlideshow();
+  if(typeof closeLightbox === "function") closeLightbox();
+  const hash = location.hash || "#/";
+  if(hash === "#/about"){
+    currentCategory = "All";
+    currentYearFilter = null;
+    renderAbout();
+  } else if(hash === "#/books"){
+    currentCategory = "All";
+    currentYearFilter = null;
+    renderBooks();
+  } else if(hash === "#/series"){
+    currentCategory = "All";
+    currentYearFilter = null;
+    renderSeriesIndex();
+  } else if(hash.startsWith("#/series/")){
+    renderSeriesDetail(decodeURIComponent(hash.replace("#/series/","")));
+  } else if(hash.startsWith("#/project/")){
+    renderProject(decodeURIComponent(hash.replace("#/project/","")));
+  } else if(hash === "#/work"){
+    currentCategory = "All";
+    currentYearFilter = null;
+    renderWork();
+  } else if(hash.startsWith("#/category/")){
+    currentCategory = decodeURIComponent(hash.replace("#/category/",""));
+    currentYearFilter = null;
+    renderWork();
+  } else if(hash.startsWith("#/year/")){
+    currentYearFilter = decodeURIComponent(hash.replace("#/year/",""));
+    currentCategory = "All";
+    renderWork();
+  } else {
+    currentCategory = "All";
+    currentYearFilter = null;
+    renderLanding();
+  }
+}
+
+/* ============================================================
+   LIGHTBOX LOGIC
+   ============================================================ */
+let lightboxImages = [];
+let lightboxIndex = 0;
+let lbZoomed = false;
+let lbScale = 1;
+let lbPanX = 0, lbPanY = 0;
+let lbDragging = false;
+let lbDragStartX = 0, lbDragStartY = 0, lbPanStartX = 0, lbPanStartY = 0;
+
+const lightboxEl = document.getElementById("lightbox");
+const lightboxImgEl = document.getElementById("lightboxImg");
+const lightboxZoomHintEl = document.getElementById("lightboxZoomHint");
+const lightboxPdfViewerEl = document.getElementById("lightboxPdfViewer");
+const pdfScrollerEl = document.getElementById("pdfScroller");
+const lightboxPdfErrorEl = document.getElementById("lightboxPdfError");
+const lightboxPdfErrorLinkEl = document.getElementById("lightboxPdfErrorLink");
+const lightboxCounterEl = document.getElementById("lightboxCounter");
+const lightboxPrevBtn = document.getElementById("lightboxPrev");
+const lightboxNextBtn = document.getElementById("lightboxNext");
+const lightboxPdfSliderEl = document.getElementById("lightboxPdfSlider");
+const pdfPageRangeEl = document.getElementById("pdfPageRange");
+let isDraggingPdfSlider = false;
+
+/* PDF 書頁狀態：每一頁都是一張獨立的 canvas，並排放在一條可橫向滑動、
+   有 scroll-snap 的軌道上 — 像連續滑動相片一樣翻頁，不跳新分頁，
+   也不使用瀏覽器原生的 PDF 檢視器。 */
+let pdfDoc = null;
+let pdfPageCount = 0;
+let pdfCurrentPage = 1;
+let pdfLoadId = 0;
+let pdfObserver = null;
+
+function openLightbox(images, index){
+  lightboxImages = images;
+  lightboxIndex = index;
+  updateLightbox();
+  lightboxEl.classList.add("active");
+  lightboxEl.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+
+function resetLbZoom(){
+  lbZoomed = false; lbScale = 1; lbPanX = 0; lbPanY = 0;
+  lightboxImgEl.classList.remove("zoomed", "lb-dragging");
+  lightboxImgEl.style.transform = "";
+  lightboxZoomHintEl.style.opacity = "";
+}
+
+function closeLightbox(){
+  lightboxEl.classList.remove("active");
+  lightboxEl.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+  resetPdfViewer();
+  resetLbZoom();
+}
+
+function resetPdfViewer(){
+  pdfDoc = null;
+  pdfLoadId++;
+  if(pdfObserver){ pdfObserver.disconnect(); pdfObserver = null; }
+  pdfScrollerEl.innerHTML = "";
+  isDraggingPdfSlider = false;
+  lightboxPdfSliderEl.style.display = "none";
+}
+
+function updateLightbox(){
+  const item = lightboxImages[lightboxIndex];
+  const isPdf = item.type === "pdf";
+
+  lightboxImgEl.style.display = isPdf ? "none" : "block";
+  lightboxPdfViewerEl.style.display = isPdf ? "flex" : "none";
+  lightboxPdfErrorEl.style.display = "none";
+  lightboxZoomHintEl.style.display = isPdf ? "none" : "block";
+  resetLbZoom();
+
+  if(isPdf){
+    lightboxImgEl.src = "";
+    loadPdfDocument(item.src);
+  } else {
+    resetPdfViewer();
+    lightboxImgEl.src = item.src;
+    lightboxImgEl.alt = item.alt || "";
+    updateLightboxNav();
+  }
+}
+
+/* 依目前是在看圖片組還是 PDF 書頁，決定計數器與上一頁/下一頁按鈕的顯示方式 */
+function updateLightboxNav(){
+  const item = lightboxImages[lightboxIndex];
+  const isPdf = item.type === "pdf";
+
+  if(isPdf){
+    const multiPage = pdfPageCount > 1;
+    lightboxPrevBtn.style.display = multiPage ? "flex" : "none";
+    lightboxNextBtn.style.display = multiPage ? "flex" : "none";
+    lightboxCounterEl.textContent = pdfPageCount ? `${pdfCurrentPage} / ${pdfPageCount}` : "";
+
+    lightboxPdfSliderEl.style.display = multiPage ? "flex" : "none";
+    if(multiPage){
+      pdfPageRangeEl.min = "1";
+      pdfPageRangeEl.max = String(pdfPageCount);
+      if(!isDraggingPdfSlider) pdfPageRangeEl.value = String(pdfCurrentPage);
+    }
+  } else {
+    const multi = lightboxImages.length > 1;
+    lightboxPrevBtn.style.display = multi ? "flex" : "none";
+    lightboxNextBtn.style.display = multi ? "flex" : "none";
+    lightboxCounterEl.textContent = multi ? `${lightboxIndex + 1} / ${lightboxImages.length}` : "";
+    lightboxPdfSliderEl.style.display = "none";
+  }
+}
+
+async function loadPdfDocument(src){
+  const loadId = ++pdfLoadId;
+  pdfDoc = null;
+  pdfPageCount = 0;
+  pdfCurrentPage = 1;
+  if(pdfObserver){ pdfObserver.disconnect(); pdfObserver = null; }
+  pdfScrollerEl.innerHTML = "";
+  pdfScrollerEl.scrollLeft = 0;
+  lightboxPdfViewerEl.classList.add("loading");
+  updateLightboxNav();
+
+  if(!window.pdfjsLib){
+    lightboxPdfViewerEl.classList.remove("loading");
+    showPdfError(src, "PDF 元件載入失敗（pdf.js 未載入，請確認網路連線）");
+    return;
+  }
+  try{
+    // encodeURI 避免路徑中的中文檔名或空白造成讀取失敗
+    const doc = await pdfjsLib.getDocument(encodeURI(src)).promise;
+    if(loadId !== pdfLoadId) return; // 使用者已切換到別的項目
+    pdfDoc = doc;
+    pdfPageCount = doc.numPages;
+    buildPdfPages(loadId);
+    lightboxPdfViewerEl.classList.remove("loading");
+    updateLightboxNav();
+  }catch(err){
+    if(loadId !== pdfLoadId) return;
+    console.warn("PDF 載入失敗：", src, err);
+    lightboxPdfViewerEl.classList.remove("loading");
+    showPdfError(src, (err && err.message) ? err.message : String(err));
+  }
+}
+
+function showPdfError(src, reason){
+  lightboxPdfErrorEl.style.display = "block";
+  lightboxPdfErrorLinkEl.href = src;
+  const reasonEl = document.getElementById("lightboxPdfErrorReason");
+  if(reasonEl) reasonEl.textContent = reason || "";
+}
+
+/* 建立每一頁的容器並排放進捲動軌道；用 IntersectionObserver 偵測哪一頁
+   正進入畫面，即時渲染該頁（並順便預先渲染相鄰頁面），滑動起來才會順暢。 */
+function buildPdfPages(loadId){
+  const frag = document.createDocumentFragment();
+  for(let i = 1; i <= pdfPageCount; i++){
+    const pageEl = document.createElement("div");
+    pageEl.className = "pdf-page pending";
+    pageEl.dataset.pageNum = String(i);
+    pageEl.appendChild(document.createElement("canvas"));
+    frag.appendChild(pageEl);
+  }
+  pdfScrollerEl.appendChild(frag);
+
+  pdfObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const pageEl = entry.target;
+      const num = parseInt(pageEl.dataset.pageNum, 10);
+      if(entry.isIntersecting){
+        renderPdfPageInto(pageEl, num, loadId);
+        if(entry.intersectionRatio > 0.5){
+          pdfCurrentPage = num;
+          updateLightboxNav();
+        }
+      }
+    });
+  }, { root: pdfScrollerEl, threshold: [0, 0.5, 1] });
+
+  pdfScrollerEl.querySelectorAll(".pdf-page").forEach(el => pdfObserver.observe(el));
+}
+
+async function renderPdfPageInto(pageEl, num, loadId){
+  if(loadId !== pdfLoadId || !pdfDoc) return;
+  if(pageEl.dataset.rendered === "1" || pageEl.dataset.rendering === "1") return;
+  pageEl.dataset.rendering = "1";
+  try{
+    const page = await pdfDoc.getPage(num);
+    if(loadId !== pdfLoadId) return;
+    const unscaled = page.getViewport({ scale: 1 });
+    const maxW = Math.min(window.innerWidth * 0.92, 1200);
+    const maxH = window.innerHeight * 0.86;
+    const fitScale = Math.min(maxW / unscaled.width, maxH / unscaled.height);
+    // 建築線稿常有很多密集的細線，用一般螢幕解析度渲染會讓線條糊成一片。
+    // 這裡刻意把「畫布實際像素」拉高到遠超過螢幕顯示尺寸（至少 2 倍，
+    // Retina 螢幕再加倍），瀏覽器縮小顯示時線條才會維持銳利、不會擠在一起。
+    const outputScale = Math.max(window.devicePixelRatio || 1, 1) * 2;
+    const viewport = page.getViewport({ scale: fitScale });
+
+    const canvas = pageEl.querySelector("canvas");
+    canvas.width = Math.floor(viewport.width * outputScale);
+    canvas.height = Math.floor(viewport.height * outputScale);
+    canvas.style.width = viewport.width + "px";
+    canvas.style.height = viewport.height + "px";
+    const ctx = canvas.getContext("2d");
+    const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined;
+
+    await page.render({ canvasContext: ctx, viewport, transform }).promise;
+    if(loadId !== pdfLoadId) return;
+    pageEl.dataset.rendered = "1";
+    pageEl.classList.remove("pending");
+  }catch(err){
+    console.warn("PDF 頁面渲染失敗：", err);
+  }finally{
+    pageEl.dataset.rendering = "0";
+  }
+}
+
+function scrollToPdfPage(num){
+  const pageEl = pdfScrollerEl.querySelector(`.pdf-page[data-page-num="${num}"]`);
+  if(pageEl) pageEl.scrollIntoView({ behavior:"smooth", inline:"center", block:"nearest" });
+}
+
+/* 滑桿拖曳跳頁：直接跳過去，不做平滑捲動動畫，
+   避免拖到很遠的頁面時要把中間每一頁都滑過一遍、速度變慢 */
+function jumpToPdfPageInstant(num){
+  pdfCurrentPage = num;
+  lightboxCounterEl.textContent = pdfPageCount ? `${pdfCurrentPage} / ${pdfPageCount}` : "";
+  const pageEl = pdfScrollerEl.querySelector(`.pdf-page[data-page-num="${num}"]`);
+  if(pageEl) pageEl.scrollIntoView({ behavior:"auto", inline:"center", block:"nearest" });
+}
+
+function lightboxPrev(){
+  const item = lightboxImages[lightboxIndex];
+  if(item.type === "pdf" && pdfPageCount > 1){
+    const prevPage = pdfCurrentPage > 1 ? pdfCurrentPage - 1 : pdfPageCount;
+    scrollToPdfPage(prevPage);
+    return;
+  }
+  lightboxIndex = (lightboxIndex - 1 + lightboxImages.length) % lightboxImages.length;
+  updateLightbox();
+}
+
+function lightboxNext(){
+  const item = lightboxImages[lightboxIndex];
+  if(item.type === "pdf" && pdfPageCount > 1){
+    const nextPage = pdfCurrentPage < pdfPageCount ? pdfCurrentPage + 1 : 1;
+    scrollToPdfPage(nextPage);
+    return;
+  }
+  lightboxIndex = (lightboxIndex + 1) % lightboxImages.length;
+  updateLightbox();
+}
+
+/* 桌機滑鼠拖曳翻頁（觸控裝置本來就能直接用手指滑動） */
+(function enablePdfDragScroll(){
+  let isDown = false, startX = 0, startScroll = 0;
+
+  pdfScrollerEl.addEventListener("pointerdown", (e) => {
+    if(e.pointerType === "touch") return;
+    isDown = true;
+    pdfScrollerEl.classList.add("dragging");
+    startX = e.clientX;
+    startScroll = pdfScrollerEl.scrollLeft;
+    pdfScrollerEl.setPointerCapture(e.pointerId);
+  });
+  pdfScrollerEl.addEventListener("pointermove", (e) => {
+    if(!isDown) return;
+    pdfScrollerEl.scrollLeft = startScroll - (e.clientX - startX);
+  });
+  function endDrag(){
+    if(!isDown) return;
+    isDown = false;
+    pdfScrollerEl.classList.remove("dragging");
+    const w = pdfScrollerEl.clientWidth || 1;
+    const idx = Math.round(pdfScrollerEl.scrollLeft / w) + 1;
+    scrollToPdfPage(Math.min(Math.max(idx, 1), pdfPageCount));
+  }
+  pdfScrollerEl.addEventListener("pointerup", endDrag);
+  pdfScrollerEl.addEventListener("pointercancel", endDrag);
+  pdfScrollerEl.addEventListener("pointerleave", endDrag);
+})();
+
+lightboxEl.addEventListener("click", (e) => {
+  if(e.target === lightboxEl) closeLightbox();
+});
+document.getElementById("lightboxClose").addEventListener("click", closeLightbox);
+lightboxPrevBtn.addEventListener("click", lightboxPrev);
+lightboxNextBtn.addEventListener("click", lightboxNext);
+
+function applyLbTransform(){
+  lightboxImgEl.style.transform = `translate(${lbPanX}px, ${lbPanY}px) scale(${lbScale})`;
+  lightboxZoomHintEl.style.opacity = lbZoomed ? "0" : "";
+}
+
+// 依圖片原始像素與目前顯示尺寸的比例，算出「幾乎等於原始解析度」的放大倍率（上限 5 倍，避免過度放大變糊）
+function lbMaxScale(){
+  const rect = lightboxImgEl.getBoundingClientRect();
+  const baseWidth = rect.width / (lbScale || 1);
+  const natural = lightboxImgEl.naturalWidth || baseWidth;
+  return Math.min(Math.max(natural / baseWidth, 1.4), 5);
+}
+
+// 點擊圖片：在「縮小塞進視窗」與「接近原始像素」之間切換，並以點擊位置為中心放大
+lightboxImgEl.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if(lbDragging) return;
+  const rect = lightboxImgEl.getBoundingClientRect();
+  if(!lbZoomed){
+    const targetScale = lbMaxScale();
+    const offsetX = e.clientX - (rect.left + rect.width / 2);
+    const offsetY = e.clientY - (rect.top + rect.height / 2);
+    lbScale = targetScale;
+    lbPanX = -offsetX * (targetScale - 1);
+    lbPanY = -offsetY * (targetScale - 1);
+    lbZoomed = true;
+    lightboxImgEl.classList.add("zoomed");
+  } else {
+    resetLbZoom();
+  }
+  applyLbTransform();
+});
+
+// 滾輪縮放：以游標位置為中心放大/縮小，方便直接對著想看清楚的細節捲動滑鼠滾輪
+lightboxImgEl.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const rect = lightboxImgEl.getBoundingClientRect();
+  const cursorOffsetX = e.clientX - (rect.left + rect.width / 2);
+  const cursorOffsetY = e.clientY - (rect.top + rect.height / 2);
+  const prevScale = lbScale || 1;
+  const maxScale = lbMaxScale();
+  let newScale = prevScale - e.deltaY * 0.0025;
+  newScale = Math.min(Math.max(newScale, 1), maxScale);
+  if(newScale === prevScale) return;
+  const ratio = newScale / prevScale;
+  lbPanX = (lbPanX - cursorOffsetX) * ratio + cursorOffsetX;
+  lbPanY = (lbPanY - cursorOffsetY) * ratio + cursorOffsetY;
+  lbScale = newScale;
+  lbZoomed = newScale > 1.01;
+  lightboxImgEl.classList.toggle("zoomed", lbZoomed);
+  if(!lbZoomed){ lbPanX = 0; lbPanY = 0; }
+  applyLbTransform();
+}, { passive:false });
+
+// 放大後可拖曳平移，查看畫面各個角落的細節
+lightboxImgEl.addEventListener("pointerdown", (e) => {
+  if(!lbZoomed) return;
+  lbDragging = true;
+  lightboxImgEl.classList.add("lb-dragging");
+  lbDragStartX = e.clientX; lbDragStartY = e.clientY;
+  lbPanStartX = lbPanX; lbPanStartY = lbPanY;
+  lightboxImgEl.setPointerCapture(e.pointerId);
+});
+lightboxImgEl.addEventListener("pointermove", (e) => {
+  if(!lbDragging) return;
+  lbPanX = lbPanStartX + (e.clientX - lbDragStartX);
+  lbPanY = lbPanStartY + (e.clientY - lbDragStartY);
+  applyLbTransform();
+});
+function endLbDrag(){
+  lbDragging = false;
+  lightboxImgEl.classList.remove("lb-dragging");
+}
+lightboxImgEl.addEventListener("pointerup", endLbDrag);
+lightboxImgEl.addEventListener("pointercancel", endLbDrag);
+lightboxImgEl.addEventListener("pointerleave", endLbDrag);
+
+pdfPageRangeEl.addEventListener("input", () => {
+  isDraggingPdfSlider = true;
+  jumpToPdfPageInstant(parseInt(pdfPageRangeEl.value, 10));
+});
+pdfPageRangeEl.addEventListener("change", () => {
+  isDraggingPdfSlider = false;
+});
+
+document.addEventListener("keydown", (e) => {
+  if(!lightboxEl.classList.contains("active")) return;
+  if(document.activeElement === pdfPageRangeEl) return; // 讓滑桿聚焦時，方向鍵只調整滑桿本身
+  if(e.key === "Escape"){ closeLightbox(); }
+  if(e.key === "ArrowLeft") lightboxPrev();
+  if(e.key === "ArrowRight") lightboxNext();
+});
+
+window.addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio — Architectural Work</title>
+<meta name="description" content="A personal portfolio of architectural design work">
+<style>
+:root{
+  --paper:   #fbfaf8;
+  --ink:     #201f1d;
+  --muted:   #8a8781;
+  --line:    #eae7e1;
+  --accent:  #6b6355;
+  --f-heading: 'Trebuchet MS', 'Yu Gothic', 'Meiryo', sans-serif;
+  --f-body:    'Yu Gothic Light', 'Yu Gothic', 'Meiryo', sans-serif;
+}
+*,*::before,*::after{ box-sizing:border-box; }
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--f-body);
+  font-weight:300;
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+img{ max-width:100%; display:block; }
+a{ color:inherit; text-decoration:none; }
+button{ font-family:inherit; background:none; border:none; cursor:pointer; }
+h1,h2,h3{ font-family:var(--f-heading); font-weight:700; letter-spacing:-0.01em; margin:0; }
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+}
+a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; }
+
+.wrap{ max-width:1100px; margin:0 auto; padding:0 28px; }
+
+/* 只加寬「主畫面」(作品列表頁 #/work、#/category、#/year) 的容器寬度，
+   案子內頁、系列頁、about、books 等其他頁面維持原本 1100px 寬度不變 */
+@media (min-width:1300px){ .work-wrap{ max-width:1320px; padding:0 40px; } }
+@media (min-width:1600px){ .work-wrap{ max-width:1560px; padding:0 48px; } }
+@media (min-width:1920px){ .work-wrap{ max-width:1800px; padding:0 60px; } }
+
+/* 頁首（Logo + 導覽列）與頁尾是每頁共用的元件，本身不屬於任何頁面內容，
+   一併加寬讓它們在寬螢幕下更貼近首頁全滿版輪播圖的寬度，減少視覺落差 */
+@media (min-width:1300px){ .site-header .wrap, .site-footer .wrap{ max-width:1320px; padding:0 40px; } }
+@media (min-width:1600px){ .site-header .wrap, .site-footer .wrap{ max-width:1560px; padding:0 48px; } }
+@media (min-width:1920px){ .site-header .wrap, .site-footer .wrap{ max-width:1800px; padding:0 60px; } }
+
+/* ---------------- home hero — full-bleed rotating gallery ---------------- */
+.home-hero{
+  position:relative; width:100%; height:82vh; min-height:460px;
+  overflow:hidden; background:#1c1b19; cursor:pointer;
+}
+.home-slides{ position:absolute; inset:0; }
+.home-slide{ position:absolute; inset:0; opacity:0; transition:opacity 1.4s ease; }
+.home-slide.active{ opacity:1; }
+.home-slide img{ width:100%; height:100%; object-fit:cover; object-position: center; }
+.placeholder-slide{
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,#efece5,#ddd8cc);
+  color:var(--muted); font-family:var(--f-heading); font-size:15px; letter-spacing:0.02em;
+  text-align:center; padding:20px;
+}
+
+.home-caption-bl {
+  position: absolute;
+  left: 28px;
+  right: 160px;
+  bottom: 28px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.slide-caption {
+  color: #fff;
+  font-family: var(--f-heading);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+  text-align: left;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.home-arrow{
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.28);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 22px;
+  line-height: 1;
+  opacity: 0.75;
+  transition: background 0.3s ease, opacity 0.3s ease;
+}
+.home-arrow:hover{ background: rgba(0,0,0,0.5); opacity: 1; }
+.home-arrow-left{ left: 20px; }
+.home-arrow-right{ right: 20px; }
+
+.home-button-br {
+  position: absolute;
+  right: 28px;
+  bottom: 28px;
+  z-index: 10;
+}
+
+.home-view-all-btn {
+  background: var(--paper);
+  color: var(--ink);
+  padding: 10px 22px;
+  font-family: var(--f-heading);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+.home-view-all-btn:hover {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
+@media (max-width:700px){
+  .home-hero{ height:64vh; min-height:380px; }
+  .home-caption-bl { left: 20px; right: 20px; bottom: 70px; }
+  .home-button-br { right: 20px; bottom: 20px; }
+  .slide-caption { font-size: 14px; }
+  .home-view-all-btn { padding: 8px 16px; font-size: 12px; }
+  .home-arrow{ width: 36px; height: 36px; font-size: 18px; }
+  .home-arrow-left{ left: 10px; }
+  .home-arrow-right{ right: 10px; }
+}
+
+/* ---------------- work list ---------------- */
+.work-list{ border-top:1px solid var(--line); }
+.work-row{
+  display:flex; align-items:center; gap:26px;
+  padding:24px 4px; border-bottom:1px solid var(--line);
+  cursor:pointer; transition:background .2s ease;
+}
+.work-row:hover{ background:rgba(245,223,77,0.28); } /* Pantone 13-0647 TCX — Illuminating */
+.work-year{ width:56px; flex-shrink:0; font-family:var(--f-heading); font-size:14px; color:var(--muted); }
+.work-thumb{ width:200px; aspect-ratio:4/3; flex-shrink:0; overflow:hidden; border-radius:4px; background:#efece5; }
+.work-thumb img{ width:100%; height:100%; object-fit:cover; transition:transform .4s ease; }
+.work-row:hover .work-thumb img{ transform:scale(1.04); }
+.work-title-wrap{ flex:1; min-width:0; }
+.work-title{ font-size:21px; margin-bottom:4px; }
+.work-meta{ color:var(--muted); font-size:13px; }
+@media (min-width:1300px){ .work-thumb{ width:230px; } }
+@media (min-width:1600px){ .work-thumb{ width:260px; } }
+@media (max-width:600px){
+  .work-row{ gap:16px; }
+  .work-thumb{ width:130px; }
+  .work-title{ font-size:17px; }
+  .work-year{ width:40px; font-size:12.5px; }
+}
+
+/* header */
+.site-header{ padding:36px 0 20px; }
+.header-row{ display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:16px; }
+.site-title{ font-size:22px; font-family:var(--f-heading); font-weight:700; }
+.nav-links{ display:flex; gap:28px; font-size:14px; color:var(--muted); }
+.nav-links a:hover{ color:var(--ink); }
+
+/* category filter */
+.filters{
+  display:flex; gap:22px; flex-wrap:wrap;
+  font-size:14px;
+}
+.filters button{ color:var(--muted); padding:2px 0; border-bottom:1px solid transparent; }
+.filters button:hover{ color:var(--ink); }
+.filters button.active{ color:var(--ink); border-color:var(--ink); }
+
+/* work toolbar: category filters (left) + list/matrix view toggle (right) */
+.work-toolbar{
+  display:flex; justify-content:space-between; align-items:flex-end; gap:20px;
+  flex-wrap:wrap;
+  padding:18px 0 26px;
+  border-bottom:1px solid var(--line);
+}
+.view-toggle{ display:flex; gap:4px; flex-shrink:0; }
+.view-toggle button{
+  display:flex; align-items:center; justify-content:center;
+  width:32px; height:32px; border-radius:4px;
+  color:var(--muted); border:1px solid transparent;
+}
+.view-toggle button:hover{ color:var(--ink); }
+.view-toggle button.active{ color:var(--ink); border-color:var(--line); background:rgba(0,0,0,0.03); }
+.view-toggle svg{ width:16px; height:16px; display:block; }
+
+/* matrix (array) view — all projects laid out in one flat, uniform grid,
+   no category/year grouping, small tiles, hover reveals title + year */
+.matrix-wrap{ width:100%; }
+.matrix-table{
+  display:grid;
+  grid-template-columns:repeat(5, 1fr);
+  gap:8px;
+  width:100%;
+}
+@media (max-width:900px){ .matrix-table{ grid-template-columns:repeat(4, 1fr); } }
+@media (max-width:700px){ .matrix-table{ grid-template-columns:repeat(3, 1fr); gap:6px; } }
+@media (max-width:460px){ .matrix-table{ grid-template-columns:repeat(2, 1fr); } }
+.matrix-thumb{
+  position:relative;
+  aspect-ratio:4/3; border-radius:2px;
+  overflow:hidden; cursor:pointer; background:#efece5;
+}
+.matrix-thumb img{ width:100%; height:100%; object-fit:cover; transition:transform .3s ease; }
+.matrix-thumb:hover img{ transform:scale(1.08); }
+.matrix-thumb .placeholder{ font-size:0; }
+.matrix-thumb-caption{
+  position:absolute; inset:0;
+  background:linear-gradient(to top, rgba(20,19,17,0.82) 0%, rgba(20,19,17,0.35) 45%, rgba(20,19,17,0) 75%);
+  display:flex; flex-direction:column; justify-content:flex-end;
+  padding:8px 8px 6px;
+  opacity:0; transition:opacity .2s ease;
+  pointer-events:none;
+}
+.matrix-thumb:hover .matrix-thumb-caption, .matrix-thumb:focus-visible .matrix-thumb-caption{ opacity:1; }
+.matrix-thumb-title{
+  color:#fff; font-family:var(--f-heading); font-weight:700; font-size:14px; line-height:1.3;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  text-shadow:0 1px 4px rgba(0,0,0,0.6);
+}
+.matrix-thumb-year{ color:rgba(255,255,255,0.9); font-size:12px; margin-top:3px; }
+@media (max-width:700px){
+  .matrix-thumb-title{ font-size:11.5px; }
+  .matrix-thumb-year{ font-size:10px; }
+}
+
+/* intro */
+.intro{ padding:44px 0 8px; max-width:560px; }
+.intro h1{ font-size:34px; line-height:1.25; margin-bottom:14px; }
+.intro p{ color:var(--muted); font-size:15.5px; }
+
+/* grid */
+.grid-section{ padding:44px 0 90px; }
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:52px 40px;
+}
+@media (max-width:700px){
+  .grid{ grid-template-columns:1fr; gap:40px; }
+  .card-title{ font-size:17px; }
+  .card-meta{ font-size:12.5px; }
+  .intro h1{ font-size:26px; }
+  .intro p{ font-size:14px; }
+}
+
+.card{ cursor:pointer; }
+.card-thumb{
+  aspect-ratio:4/3; width:100%; overflow:hidden;
+  border-radius:6px; margin-bottom:16px; background:#efece5;
+}
+.card-thumb img{ width:100%; height:100%; object-fit:cover; transition:transform .4s ease; }
+.card:hover .card-thumb img{ transform:scale(1.03); }
+.placeholder{
+  width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+  color:var(--muted); font-size:13px; background:#efece5; text-align:center; padding:10px;
+}
+.card-title{ font-size:20px; margin-bottom:4px; }
+.card-meta{ color:var(--muted); font-size:13.5px; }
+
+.empty-state{ padding:60px 0; text-align:center; color:var(--muted); }
+
+/* detail */
+.detail{ padding-top:36px; padding-bottom:100px; }
+.back-link{ display:inline-block; color:var(--muted); font-size:14px; margin-bottom:32px; }
+.back-link:hover{ color:var(--ink); }
+
+.detail-title{ font-size:clamp(30px,5vw,46px); line-height:1.15; margin-bottom:10px; white-space:pre-line; }
+.detail-meta{ color:var(--muted); font-size:14.5px; margin-bottom:32px; }
+.detail-meta > *:not(:last-child)::after{ content:"  ·  "; white-space: pre; }
+
+.meta-link {
+  color: var(--muted);
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.meta-link:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.detail-hero{
+  aspect-ratio:16/9; width:100%; overflow:hidden; border-radius:8px;
+  background:#efece5; margin-bottom:44px;
+}
+.detail-hero img{ width:100%; height:100%; object-fit:cover; }
+
+/* 系列頁主視覺：正方形、置中、比原本稍微放大，並用 contain 讓整張封面完整顯示、不被裁切 */
+.series-hero{
+  aspect-ratio:1/1; width:100%; max-width:640px; overflow:hidden; border-radius:8px;
+  background:#efece5; margin:0 auto 44px;
+  display:flex; align-items:center; justify-content:center;
+}
+.series-hero img{ width:100%; height:100%; object-fit:contain; }
+
+/* 主視覺下方的文字介紹與收錄案子網格，統一置中並與主視覺同寬對齊 */
+.series-content{ max-width:640px; margin:0 auto; }
+
+/* 系列詳情頁的「被收錄案子」：固定 3 個一列的方塊網格 */
+.series-grid{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:28px 22px;
+}
+@media (max-width:820px){ .series-grid{ grid-template-columns:repeat(2, 1fr); gap:26px 20px; } }
+@media (max-width:520px){ .series-grid{ grid-template-columns:1fr; gap:30px; } }
+
+.detail-body{ display:grid; grid-template-columns:minmax(0,640px) 1fr; gap:80px; width:100%; }
+@media (max-width:1000px){ .detail-body{ grid-template-columns:minmax(0,1fr) 1fr; gap:48px; } }
+@media (max-width:800px){ .detail-body{ grid-template-columns:1fr; gap:28px; } }
+.detail-desc p{ margin:0 0 18px; color:#3a3833; font-size:16.5px; line-height:1.85; max-width:640px; }
+.side-info{ font-size:14px; color:var(--muted); line-height:1.9; }
+@media (max-width:700px){
+  .detail-title{ font-size:clamp(24px,7vw,32px); }
+  .detail-meta{ font-size:13px; margin-bottom:24px; }
+  .detail-desc p{ font-size:15px; line-height:1.75; }
+  .side-info{ font-size:13px; }
+}
+.side-info strong{ display:block; color:var(--ink); font-size:13px; margin:22px 0 4px; }
+.side-info strong:first-child{ margin-top:0; }
+
+/* 側欄內的系列小縮圖（取代原本頁面下方的大區塊，改移到 Credits 旁邊） */
+.side-series{ margin-top:10px; cursor:pointer; display:inline-block; }
+.side-series-thumb{
+  width:140px; height:140px; overflow:hidden; background:#efece5;
+  box-shadow:0 6px 18px rgba(32,31,29,0.18);
+  transition:opacity .25s ease, transform .25s ease, box-shadow .25s ease;
+}
+.side-series:hover .side-series-thumb{ opacity:0.85; transform:translateY(-2px); box-shadow:0 10px 22px rgba(32,31,29,0.24); }
+.side-series-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.side-series-placeholder{
+  width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+  text-align:center; font-size:9px; color:var(--muted); padding:4px; box-sizing:border-box;
+}
+
+.project-gallery{ margin-top:56px; }
+.project-gallery h3{ font-size:18px; margin-bottom:20px; color:var(--muted); font-weight:400; }
+.project-drawings{ margin-top:56px; }
+.project-drawings h3{ font-size:18px; margin-bottom:20px; color:var(--muted); font-weight:400; }
+
+/* ---------------- series — 系列縮圖＋譜系彈窗 ----------------
+   Gallery 和 More work 之間只放「這個系列」單一一張正方形縮圖（圖片由你自己製作、放到 images/ 底下，
+   在 PROJECTS 資料的 series.thumb 填入路徑即可）。縮圖尺寸跟 Books 頁面的書封同一套欄寬邏輯
+   （沿用 .book-grid 的 grid-template-columns），只是比例改成正方形。
+   點擊縮圖會跳出一個彈窗，列出這個系列所有頁面，目前所在的頁面那一項會提高透明度、不可點擊。 */
+.series-thumb-grid{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:44px 34px;
+}
+@media (max-width:820px){ .series-thumb-grid{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:560px){ .series-thumb-grid{ grid-template-columns:repeat(2,1fr); gap:30px 20px; } }
+.series-thumb-trigger{
+  aspect-ratio:1/1; width:100%;
+  overflow:hidden; cursor:pointer;
+  background:#efece5;
+  box-shadow:0 6px 20px rgba(32,31,29,0.16);
+  transition:opacity .25s ease, transform .25s ease, box-shadow .25s ease;
+}
+.series-thumb-trigger:hover{ opacity:0.85; transform:translateY(-3px); box-shadow:0 12px 26px rgba(32,31,29,0.22); }
+.series-thumb-trigger img{ width:100%; height:100%; object-fit:cover; display:block; }
+.series-thumb-placeholder{
+  width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; gap:4px; border:1px dashed var(--line); box-sizing:border-box;
+  font-family:var(--f-heading); font-size:13px; color:var(--muted); padding:14px;
+}
+.series-thumb-placeholder span{ font-size:11px; opacity:0.7; word-break:break-all; }
+.series-caption{ margin-top:14px; font-size:14px; color:var(--muted); }
+.series-caption b{ color:var(--ink); font-weight:600; }
+.series-index-card{ cursor:pointer; }
+
+/* 系列完整介紹頁（取代原本的彈窗，改成獨立頁面 #/series/:id，樣式沿用同一套 list/item） */
+.series-pedigree-sub{ font-size:14px; color:var(--muted); margin-top:6px; margin-bottom:30px; }
+.series-pedigree-list{ display:flex; flex-direction:column; }
+.series-pedigree-item{
+  display:flex; align-items:center; gap:24px;
+  padding:22px 0; border-top:1px solid var(--line);
+  cursor:pointer; transition:opacity .25s ease;
+}
+.series-pedigree-list .series-pedigree-item:first-child{ border-top:none; }
+.series-pedigree-item:not(.current):hover .series-pedigree-title{ color:var(--accent); }
+.series-pedigree-thumb{ width:104px; height:104px; flex:0 0 auto; overflow:hidden; background:#efece5; }
+.series-pedigree-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.series-pedigree-part{ font-family:var(--f-heading); font-size:12.5px; color:var(--muted); letter-spacing:0.05em; margin-bottom:5px; }
+.series-pedigree-title{ font-size:18px; line-height:1.35; color:var(--ink); transition:color .2s ease; }
+.series-pedigree-item.current{
+  cursor:default;
+  opacity:0.45; /* 目前所在頁面：提高透明度 */
+}
+
+@media (max-width:700px){
+  .series-pedigree-panel{ padding:34px 22px 24px; }
+  .series-pedigree-thumb{ width:76px; height:76px; }
+  .series-pedigree-head h3{ font-size:22px; }
+  .series-pedigree-title{ font-size:15.5px; }
+}
+
 /* gallery — 改用多欄（masonry）瀑布流排列：每張圖片依自己的比例往下堆疊，
    不再用固定格數的網格去「跨欄跨列」，所以不會再留下像截圖那樣的空白區塊 */
 .gallery-grid{
