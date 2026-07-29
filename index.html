@@ -563,17 +563,39 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   overflow:hidden;
 }
 .lightbox-overlay.active{ display:flex; }
-.lightbox-overlay img{
+.lightbox-img-viewer{
+  display:flex; align-items:center; justify-content:center;
+  position:relative;
+  width:min(92vw, 1200px); height:86vh;
+}
+.lightbox-img-scroller{
+  display:flex;
+  width:100%; height:100%;
+  overflow-x:auto; overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  cursor:grab;
+}
+.lightbox-img-scroller::-webkit-scrollbar{ display:none; }
+.lightbox-img-scroller.dragging{ cursor:grabbing; scroll-snap-type:none; }
+.lightbox-img-slide{
+  flex:0 0 100%;
+  scroll-snap-align:center;
+  display:flex; align-items:center; justify-content:center;
+  height:100%;
+}
+.lightbox-img-slide img{
   max-width:100%; max-height:100%; width:auto; height:auto;
   object-fit:contain; border-radius:4px; box-shadow:0 10px 40px rgba(0,0,0,0.45);
   cursor:zoom-in;
   transform-origin:center center;
   transition:transform .18s ease;
-  touch-action:none;
+  -webkit-user-drag:none;
   user-select:none;
 }
-.lightbox-overlay img.zoomed{ cursor:grab; }
-.lightbox-overlay img.zoomed.lb-dragging{ cursor:grabbing; transition:none; }
+.lightbox-img-slide img.zoomed{ cursor:grab; touch-action:none; }
+.lightbox-img-slide img.zoomed.lb-dragging{ cursor:grabbing; transition:none; }
 .lightbox-zoom-hint{
   position:absolute; top:24px; left:50%; transform:translateX(-50%);
   color:rgba(255,255,255,0.55); font-size:12px; letter-spacing:0.02em;
@@ -583,6 +605,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .lightbox-close{
   position:absolute; top:24px; right:28px; color:#fff; font-size:32px;
   line-height:1; background:none; border:none; cursor:pointer; opacity:0.85;
+  z-index:20;
 }
 .lightbox-close:hover{ opacity:1; }
 .lightbox-nav{
@@ -591,6 +614,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   width:48px; height:48px; border-radius:50%; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
   transition:background .2s ease;
+  z-index:20;
 }
 .lightbox-nav:hover{ background:rgba(255,255,255,0.2); }
 .lightbox-prev{ left:20px; }
@@ -598,6 +622,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .lightbox-counter{
   position:absolute; bottom:22px; left:50%; transform:translateX(-50%);
   color:rgba(255,255,255,0.75); font-size:13px; letter-spacing:0.04em;
+  z-index:20;
 }
 .lightbox-pdf-viewer{
   display:none; align-items:center; justify-content:center;
@@ -749,7 +774,9 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 <div class="lightbox-overlay" id="lightbox" aria-hidden="true">
   <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
   <button class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Previous image">&#8249;</button>
-  <img id="lightboxImg" src="" alt="">
+  <div class="lightbox-img-viewer" id="lightboxImgViewer">
+    <div class="lightbox-img-scroller" id="lightboxImgScroller"></div>
+  </div>
   <div class="lightbox-zoom-hint" id="lightboxZoomHint">點擊或滾輪放大檢視原始細節</div>
   <div class="lightbox-pdf-viewer" id="lightboxPdfViewer">
     <div class="pdf-scroller" id="pdfScroller"></div>
@@ -2165,7 +2192,8 @@ let lbDragging = false;
 let lbDragStartX = 0, lbDragStartY = 0, lbPanStartX = 0, lbPanStartY = 0;
 
 const lightboxEl = document.getElementById("lightbox");
-const lightboxImgEl = document.getElementById("lightboxImg");
+const lightboxImgViewerEl = document.getElementById("lightboxImgViewer");
+const lightboxImgScrollerEl = document.getElementById("lightboxImgScroller");
 const lightboxZoomHintEl = document.getElementById("lightboxZoomHint");
 const lightboxPdfViewerEl = document.getElementById("lightboxPdfViewer");
 const pdfScrollerEl = document.getElementById("pdfScroller");
@@ -2187,6 +2215,14 @@ let pdfCurrentPage = 1;
 let pdfLoadId = 0;
 let pdfObserver = null;
 
+/* 一般照片瀏覽也採用跟 PDF 書頁完全相同的機制：把每張照片放進同一條
+   有 scroll-snap 的橫向軌道，讓瀏覽器原生處理滑動手勢與慣性動畫，
+   再用 IntersectionObserver 偵測目前捲動到哪一張，藉此同步計數器、
+   上一張/下一張按鈕，以及放大狀態。 */
+let lbImgObserver = null;
+let lbActiveImgEl = null;
+let lbBuiltForImages = null;
+
 function openLightbox(images, index){
   lightboxImages = images;
   lightboxIndex = index;
@@ -2196,10 +2232,13 @@ function openLightbox(images, index){
   document.body.style.overflow = "hidden";
 }
 
-function resetLbZoom(){
+function resetLbZoom(img){
+  const target = img !== undefined ? img : lbActiveImgEl;
   lbZoomed = false; lbScale = 1; lbPanX = 0; lbPanY = 0;
-  lightboxImgEl.classList.remove("zoomed", "lb-dragging");
-  lightboxImgEl.style.transform = "";
+  if(target){
+    target.classList.remove("zoomed", "lb-dragging");
+    target.style.transform = "";
+  }
   lightboxZoomHintEl.style.opacity = "";
 }
 
@@ -2207,8 +2246,9 @@ function closeLightbox(){
   lightboxEl.classList.remove("active");
   lightboxEl.setAttribute("aria-hidden", "true");
   document.body.style.overflow = "";
-  resetPdfViewer();
   resetLbZoom();
+  resetPdfViewer();
+  resetImgScroller();
 }
 
 function resetPdfViewer(){
@@ -2220,23 +2260,75 @@ function resetPdfViewer(){
   lightboxPdfSliderEl.style.display = "none";
 }
 
+function resetImgScroller(){
+  if(lbImgObserver){ lbImgObserver.disconnect(); lbImgObserver = null; }
+  lightboxImgScrollerEl.innerHTML = "";
+  lbBuiltForImages = null;
+  lbActiveImgEl = null;
+}
+
+/* 建立照片滑動軌道：每張照片各自一格（跟 .pdf-page 結構相同），
+   用 IntersectionObserver 偵測哪一格滑到畫面中央超過一半，
+   就把它視為「目前這一張」，同步索引、計數器與放大狀態。 */
+function buildImgSlides(){
+  resetImgScroller();
+  const frag = document.createDocumentFragment();
+  lightboxImages.forEach((item, i) => {
+    const slide = document.createElement("div");
+    slide.className = "lightbox-img-slide";
+    slide.dataset.index = String(i);
+    const img = document.createElement("img");
+    img.src = item.src;
+    img.alt = item.alt || "";
+    img.draggable = false;
+    slide.appendChild(img);
+    frag.appendChild(slide);
+  });
+  lightboxImgScrollerEl.appendChild(frag);
+
+  lbImgObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting && entry.intersectionRatio > 0.5){
+        const idx = parseInt(entry.target.dataset.index, 10);
+        const newImg = entry.target.querySelector("img");
+        if(idx !== lightboxIndex || newImg !== lbActiveImgEl){
+          resetLbZoom(lbActiveImgEl); // 切到別張照片時，重置上一張的放大狀態
+          lbActiveImgEl = newImg;
+        }
+        lightboxIndex = idx;
+        updateLightboxNav();
+      }
+    });
+  }, { root: lightboxImgScrollerEl, threshold: [0, 0.5, 1] });
+
+  lightboxImgScrollerEl.querySelectorAll(".lightbox-img-slide").forEach(el => lbImgObserver.observe(el));
+}
+
+function scrollToImgSlide(idx, behavior){
+  const slide = lightboxImgScrollerEl.querySelector(`.lightbox-img-slide[data-index="${idx}"]`);
+  if(slide) slide.scrollIntoView({ behavior: behavior || "smooth", inline:"center", block:"nearest" });
+}
+
 function updateLightbox(){
   const item = lightboxImages[lightboxIndex];
   const isPdf = item.type === "pdf";
 
-  lightboxImgEl.style.display = isPdf ? "none" : "block";
+  lightboxImgViewerEl.style.display = isPdf ? "none" : "flex";
   lightboxPdfViewerEl.style.display = isPdf ? "flex" : "none";
   lightboxPdfErrorEl.style.display = "none";
   lightboxZoomHintEl.style.display = isPdf ? "none" : "block";
   resetLbZoom();
 
   if(isPdf){
-    lightboxImgEl.src = "";
+    resetImgScroller();
     loadPdfDocument(item.src);
   } else {
     resetPdfViewer();
-    lightboxImgEl.src = item.src;
-    lightboxImgEl.alt = item.alt || "";
+    if(lbBuiltForImages !== lightboxImages){
+      buildImgSlides();
+      lbBuiltForImages = lightboxImages;
+    }
+    scrollToImgSlide(lightboxIndex, "auto");
     updateLightboxNav();
   }
 }
@@ -2389,24 +2481,28 @@ function jumpToPdfPageInstant(num){
 
 function lightboxPrev(){
   const item = lightboxImages[lightboxIndex];
-  if(item.type === "pdf" && pdfPageCount > 1){
-    const prevPage = pdfCurrentPage > 1 ? pdfCurrentPage - 1 : pdfPageCount;
-    scrollToPdfPage(prevPage);
+  if(item.type === "pdf"){
+    if(pdfPageCount > 1){
+      const prevPage = pdfCurrentPage > 1 ? pdfCurrentPage - 1 : pdfPageCount;
+      scrollToPdfPage(prevPage);
+    }
     return;
   }
-  lightboxIndex = (lightboxIndex - 1 + lightboxImages.length) % lightboxImages.length;
-  updateLightbox();
+  const newIndex = (lightboxIndex - 1 + lightboxImages.length) % lightboxImages.length;
+  scrollToImgSlide(newIndex);
 }
 
 function lightboxNext(){
   const item = lightboxImages[lightboxIndex];
-  if(item.type === "pdf" && pdfPageCount > 1){
-    const nextPage = pdfCurrentPage < pdfPageCount ? pdfCurrentPage + 1 : 1;
-    scrollToPdfPage(nextPage);
+  if(item.type === "pdf"){
+    if(pdfPageCount > 1){
+      const nextPage = pdfCurrentPage < pdfPageCount ? pdfCurrentPage + 1 : 1;
+      scrollToPdfPage(nextPage);
+    }
     return;
   }
-  lightboxIndex = (lightboxIndex + 1) % lightboxImages.length;
-  updateLightbox();
+  const newIndex = (lightboxIndex + 1) % lightboxImages.length;
+  scrollToImgSlide(newIndex);
 }
 
 /* 桌機滑鼠拖曳翻頁（觸控裝置本來就能直接用手指滑動） */
@@ -2445,48 +2541,54 @@ document.getElementById("lightboxClose").addEventListener("click", closeLightbox
 lightboxPrevBtn.addEventListener("click", lightboxPrev);
 lightboxNextBtn.addEventListener("click", lightboxNext);
 
-function applyLbTransform(){
-  lightboxImgEl.style.transform = `translate(${lbPanX}px, ${lbPanY}px) scale(${lbScale})`;
+function applyLbTransform(img){
+  const target = img || lbActiveImgEl;
+  if(!target) return;
+  target.style.transform = `translate(${lbPanX}px, ${lbPanY}px) scale(${lbScale})`;
   lightboxZoomHintEl.style.opacity = lbZoomed ? "0" : "";
 }
 
 // 依圖片原始像素與目前顯示尺寸的比例，算出「幾乎等於原始解析度」的放大倍率（上限 5 倍，避免過度放大變糊）
-function lbMaxScale(){
-  const rect = lightboxImgEl.getBoundingClientRect();
+function lbMaxScale(img){
+  const rect = img.getBoundingClientRect();
   const baseWidth = rect.width / (lbScale || 1);
-  const natural = lightboxImgEl.naturalWidth || baseWidth;
+  const natural = img.naturalWidth || baseWidth;
   return Math.min(Math.max(natural / baseWidth, 1.4), 5);
 }
 
 // 點擊圖片：在「縮小塞進視窗」與「接近原始像素」之間切換，並以點擊位置為中心放大
-lightboxImgEl.addEventListener("click", (e) => {
+// （用事件委派綁在軌道上，因為每張照片的 <img> 是動態建立的）
+lightboxImgScrollerEl.addEventListener("click", (e) => {
+  const img = e.target.closest(".lightbox-img-slide img");
+  if(!img) return;
   e.stopPropagation();
-  if(lbDragging) return;
-  if(lbJustSwiped){ lbJustSwiped = false; return; }
-  const rect = lightboxImgEl.getBoundingClientRect();
+  if(lbDragging || lbScrollDragging) return;
+  const rect = img.getBoundingClientRect();
   if(!lbZoomed){
-    const targetScale = lbMaxScale();
+    const targetScale = lbMaxScale(img);
     const offsetX = e.clientX - (rect.left + rect.width / 2);
     const offsetY = e.clientY - (rect.top + rect.height / 2);
     lbScale = targetScale;
     lbPanX = -offsetX * (targetScale - 1);
     lbPanY = -offsetY * (targetScale - 1);
     lbZoomed = true;
-    lightboxImgEl.classList.add("zoomed");
+    img.classList.add("zoomed");
   } else {
-    resetLbZoom();
+    resetLbZoom(img);
   }
-  applyLbTransform();
+  applyLbTransform(img);
 });
 
 // 滾輪縮放：以游標位置為中心放大/縮小，方便直接對著想看清楚的細節捲動滑鼠滾輪
-lightboxImgEl.addEventListener("wheel", (e) => {
+lightboxImgScrollerEl.addEventListener("wheel", (e) => {
+  const img = e.target.closest(".lightbox-img-slide img");
+  if(!img) return;
   e.preventDefault();
-  const rect = lightboxImgEl.getBoundingClientRect();
+  const rect = img.getBoundingClientRect();
   const cursorOffsetX = e.clientX - (rect.left + rect.width / 2);
   const cursorOffsetY = e.clientY - (rect.top + rect.height / 2);
   const prevScale = lbScale || 1;
-  const maxScale = lbMaxScale();
+  const maxScale = lbMaxScale(img);
   let newScale = prevScale - e.deltaY * 0.0025;
   newScale = Math.min(Math.max(newScale, 1), maxScale);
   if(newScale === prevScale) return;
@@ -2495,80 +2597,62 @@ lightboxImgEl.addEventListener("wheel", (e) => {
   lbPanY = (lbPanY - cursorOffsetY) * ratio + cursorOffsetY;
   lbScale = newScale;
   lbZoomed = newScale > 1.01;
-  lightboxImgEl.classList.toggle("zoomed", lbZoomed);
+  img.classList.toggle("zoomed", lbZoomed);
   if(!lbZoomed){ lbPanX = 0; lbPanY = 0; }
-  applyLbTransform();
+  applyLbTransform(img);
 }, { passive:false });
 
-// 放大後可拖曳平移，查看畫面各個角落的細節
-lightboxImgEl.addEventListener("pointerdown", (e) => {
-  if(!lbZoomed) return;
-  lbDragging = true;
-  lightboxImgEl.classList.add("lb-dragging");
-  lbDragStartX = e.clientX; lbDragStartY = e.clientY;
-  lbPanStartX = lbPanX; lbPanStartY = lbPanY;
-  lightboxImgEl.setPointerCapture(e.pointerId);
+/* 照片切換手勢跟 PDF 頁面共用同一套機制：原生 scroll-snap 橫向捲動
+   （見上面的 .lightbox-img-scroller），觸控裝置本來就能直接用手指滑動；
+   這裡只額外補上桌機滑鼠拖曳翻頁（跟 enablePdfDragScroll 一致），
+   並保留放大後用拖曳平移看細節的功能——兩者用同一個 pointerdown
+   判斷要走哪一種，避免手勢互相干擾。 */
+let lbScrollDragging = false, lbScrollStartX = 0, lbScrollStartScroll = 0;
+
+lightboxImgScrollerEl.addEventListener("pointerdown", (e) => {
+  const img = e.target.closest(".lightbox-img-slide img");
+  if(img && lbZoomed && img === lbActiveImgEl){
+    lbDragging = true;
+    img.classList.add("lb-dragging");
+    lbDragStartX = e.clientX; lbDragStartY = e.clientY;
+    lbPanStartX = lbPanX; lbPanStartY = lbPanY;
+    img.setPointerCapture(e.pointerId);
+    return;
+  }
+  if(e.pointerType === "touch") return; // 觸控裝置原生就能滑動，不需要這段
+  lbScrollDragging = true;
+  lightboxImgScrollerEl.classList.add("dragging");
+  lbScrollStartX = e.clientX;
+  lbScrollStartScroll = lightboxImgScrollerEl.scrollLeft;
+  lightboxImgScrollerEl.setPointerCapture(e.pointerId);
 });
-lightboxImgEl.addEventListener("pointermove", (e) => {
-  if(!lbDragging) return;
-  lbPanX = lbPanStartX + (e.clientX - lbDragStartX);
-  lbPanY = lbPanStartY + (e.clientY - lbDragStartY);
-  applyLbTransform();
+lightboxImgScrollerEl.addEventListener("pointermove", (e) => {
+  if(lbDragging){
+    lbPanX = lbPanStartX + (e.clientX - lbDragStartX);
+    lbPanY = lbPanStartY + (e.clientY - lbDragStartY);
+    applyLbTransform(lbActiveImgEl);
+    return;
+  }
+  if(lbScrollDragging){
+    lightboxImgScrollerEl.scrollLeft = lbScrollStartScroll - (e.clientX - lbScrollStartX);
+  }
 });
-function endLbDrag(){
-  lbDragging = false;
-  lightboxImgEl.classList.remove("lb-dragging");
+function endLbInteraction(){
+  if(lbDragging){
+    lbDragging = false;
+    if(lbActiveImgEl) lbActiveImgEl.classList.remove("lb-dragging");
+  }
+  if(lbScrollDragging){
+    lbScrollDragging = false;
+    lightboxImgScrollerEl.classList.remove("dragging");
+    const w = lightboxImgScrollerEl.clientWidth || 1;
+    const idx = Math.round(lightboxImgScrollerEl.scrollLeft / w);
+    scrollToImgSlide(Math.min(Math.max(idx, 0), lightboxImages.length - 1));
+  }
 }
-lightboxImgEl.addEventListener("pointerup", endLbDrag);
-lightboxImgEl.addEventListener("pointercancel", endLbDrag);
-lightboxImgEl.addEventListener("pointerleave", endLbDrag);
-
-/* 手機觸控滑動：手指左右滑動切換上一張／下一張照片。
-   PDF 頁面本身就是原生橫向捲動（見上方 pdfScroller），不需要額外處理。
-   放大檢視時滑動是用來平移畫面（見上面的 pointer 拖曳邏輯），
-   所以只有在「沒有放大」時才啟用滑動切換，避免兩種手勢互相干擾。 */
-let lbTouchStartX = 0, lbTouchStartY = 0, lbTouchDX = 0, lbSwiping = false, lbJustSwiped = false;
-const LB_SWIPE_THRESHOLD = 45; // px，滑動距離要超過這個門檻才視為「切換照片」，避免跟點擊放大誤觸
-
-lightboxImgEl.addEventListener("touchstart", (e) => {
-  if(lbZoomed || e.touches.length !== 1) return;
-  lbTouchStartX = e.touches[0].clientX;
-  lbTouchStartY = e.touches[0].clientY;
-  lbTouchDX = 0;
-  lbSwiping = false;
-}, { passive:true });
-
-lightboxImgEl.addEventListener("touchmove", (e) => {
-  if(lbZoomed || e.touches.length !== 1) return;
-  const dx = e.touches[0].clientX - lbTouchStartX;
-  const dy = e.touches[0].clientY - lbTouchStartY;
-  if(!lbSwiping){
-    if(Math.abs(dx) < 10) return;
-    if(Math.abs(dx) <= Math.abs(dy)) return; // 偏垂直方向的手勢不當作切換照片
-    lbSwiping = true;
-    lightboxImgEl.style.transition = "none";
-  }
-  lbTouchDX = dx;
-  lightboxImgEl.style.transform = `translateX(${dx}px)`;
-  e.preventDefault();
-}, { passive:false });
-
-lightboxImgEl.addEventListener("touchend", () => {
-  if(!lbSwiping) return;
-  lbSwiping = false;
-  lightboxImgEl.style.transition = "";
-  if(Math.abs(lbTouchDX) >= LB_SWIPE_THRESHOLD && lightboxImages.length > 1){
-    lbJustSwiped = true; // 避免手勢結束後緊接著觸發的 click 事件被誤判為「點擊放大」
-    if(lbTouchDX < 0) lightboxNext(); else lightboxPrev();
-  } else {
-    lightboxImgEl.style.transform = "";
-  }
-});
-lightboxImgEl.addEventListener("touchcancel", () => {
-  lbSwiping = false;
-  lightboxImgEl.style.transition = "";
-  lightboxImgEl.style.transform = "";
-});
+lightboxImgScrollerEl.addEventListener("pointerup", endLbInteraction);
+lightboxImgScrollerEl.addEventListener("pointercancel", endLbInteraction);
+lightboxImgScrollerEl.addEventListener("pointerleave", endLbInteraction);
 
 pdfPageRangeEl.addEventListener("input", () => {
   isDraggingPdfSlider = true;
