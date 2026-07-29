@@ -146,9 +146,9 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   .home-button-br { right: 20px; bottom: 20px; }
   .slide-caption { font-size: 14px; }
   .home-view-all-btn { padding: 8px 16px; font-size: 12px; }
-  .home-arrow{ width: 36px; height: 36px; font-size: 18px; }
-  .home-arrow-left{ left: 10px; }
-  .home-arrow-right{ right: 10px; }
+  /* 手機板改用手指左右滑動切換輪播圖（見下方新增的 touch 手勢邏輯），
+     不再顯示左右箭頭按鈕 */
+  .home-arrow{ display:none !important; }
 }
 
 /* ---------------- work list ---------------- */
@@ -700,8 +700,10 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 }
 @media (max-width:600px){
   .lightbox-overlay{ padding:16px; }
-  .lightbox-nav{ width:40px; height:40px; font-size:22px; }
   .lightbox-close{ top:14px; right:16px; font-size:26px; }
+  /* 手機板改用手指滑動（軌道本身已是原生 scroll-snap 橫向捲動），
+     不再顯示左右箭頭按鈕，避免與滑動手勢重複、也節省畫面空間 */
+  .lightbox-nav{ display:none !important; }
 }
 
 .more-work{ margin-top:90px; padding-top:34px; border-top:1px solid var(--line); }
@@ -1722,7 +1724,9 @@ function renderLanding(){
   `;
 
   const hero = document.getElementById("homeHero");
+  let heroSwiped = false;
   hero.addEventListener("click", (e) => {
+    if(heroSwiped){ heroSwiped = false; return; } // 剛滑動完，這次點擊不視為「進入專案頁」
     if(e.target.closest(".home-view-all-btn") || e.target.closest(".home-arrow")) return;
     const activeSlide = hero.querySelector(".home-slide.active");
     if(activeSlide && activeSlide.dataset.id){
@@ -1734,6 +1738,30 @@ function renderLanding(){
   const rightArrow = document.getElementById("homeArrowRight");
   if(leftArrow) leftArrow.addEventListener("click", (e) => { e.stopPropagation(); navHomeSlide(-1); });
   if(rightArrow) rightArrow.addEventListener("click", (e) => { e.stopPropagation(); navHomeSlide(1); });
+
+  /* 手機板：手指左右滑動切換輪播圖（取代箭頭按鈕，桌機用滑鼠點擊圖片本身不受影響） */
+  (function enableHeroSwipe(){
+    let startX = 0, startY = 0, tracking = false;
+    hero.addEventListener("touchstart", (e) => {
+      if(e.touches.length !== 1) return;
+      tracking = true;
+      heroSwiped = false;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    }, { passive:true });
+    hero.addEventListener("touchend", (e) => {
+      if(!tracking) return;
+      tracking = false;
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      const diffX = endX - startX;
+      const diffY = endY - startY;
+      if(Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)){
+        heroSwiped = true;
+        navHomeSlide(diffX > 0 ? -1 : 1);
+      }
+    }, { passive:true });
+  })();
 
   startHomeSlideshow();
 }
