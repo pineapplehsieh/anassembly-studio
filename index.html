@@ -2462,6 +2462,7 @@ function lbMaxScale(){
 lightboxImgEl.addEventListener("click", (e) => {
   e.stopPropagation();
   if(lbDragging) return;
+  if(lbJustSwiped){ lbJustSwiped = false; return; }
   const rect = lightboxImgEl.getBoundingClientRect();
   if(!lbZoomed){
     const targetScale = lbMaxScale();
@@ -2521,6 +2522,53 @@ function endLbDrag(){
 lightboxImgEl.addEventListener("pointerup", endLbDrag);
 lightboxImgEl.addEventListener("pointercancel", endLbDrag);
 lightboxImgEl.addEventListener("pointerleave", endLbDrag);
+
+/* 手機觸控滑動：手指左右滑動切換上一張／下一張照片。
+   PDF 頁面本身就是原生橫向捲動（見上方 pdfScroller），不需要額外處理。
+   放大檢視時滑動是用來平移畫面（見上面的 pointer 拖曳邏輯），
+   所以只有在「沒有放大」時才啟用滑動切換，避免兩種手勢互相干擾。 */
+let lbTouchStartX = 0, lbTouchStartY = 0, lbTouchDX = 0, lbSwiping = false, lbJustSwiped = false;
+const LB_SWIPE_THRESHOLD = 45; // px，滑動距離要超過這個門檻才視為「切換照片」，避免跟點擊放大誤觸
+
+lightboxImgEl.addEventListener("touchstart", (e) => {
+  if(lbZoomed || e.touches.length !== 1) return;
+  lbTouchStartX = e.touches[0].clientX;
+  lbTouchStartY = e.touches[0].clientY;
+  lbTouchDX = 0;
+  lbSwiping = false;
+}, { passive:true });
+
+lightboxImgEl.addEventListener("touchmove", (e) => {
+  if(lbZoomed || e.touches.length !== 1) return;
+  const dx = e.touches[0].clientX - lbTouchStartX;
+  const dy = e.touches[0].clientY - lbTouchStartY;
+  if(!lbSwiping){
+    if(Math.abs(dx) < 10) return;
+    if(Math.abs(dx) <= Math.abs(dy)) return; // 偏垂直方向的手勢不當作切換照片
+    lbSwiping = true;
+    lightboxImgEl.style.transition = "none";
+  }
+  lbTouchDX = dx;
+  lightboxImgEl.style.transform = `translateX(${dx}px)`;
+  e.preventDefault();
+}, { passive:false });
+
+lightboxImgEl.addEventListener("touchend", () => {
+  if(!lbSwiping) return;
+  lbSwiping = false;
+  lightboxImgEl.style.transition = "";
+  if(Math.abs(lbTouchDX) >= LB_SWIPE_THRESHOLD && lightboxImages.length > 1){
+    lbJustSwiped = true; // 避免手勢結束後緊接著觸發的 click 事件被誤判為「點擊放大」
+    if(lbTouchDX < 0) lightboxNext(); else lightboxPrev();
+  } else {
+    lightboxImgEl.style.transform = "";
+  }
+});
+lightboxImgEl.addEventListener("touchcancel", () => {
+  lbSwiping = false;
+  lightboxImgEl.style.transition = "";
+  lightboxImgEl.style.transform = "";
+});
 
 pdfPageRangeEl.addEventListener("input", () => {
   isDraggingPdfSlider = true;
