@@ -419,8 +419,9 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   .series-pedigree-title{ font-size:15.5px; }
 }
 
-/* gallery — 改用多欄（masonry）瀑布流排列：每張圖片依自己的比例往下堆疊，
-   不再用固定格數的網格去「跨欄跨列」，所以不會再留下像截圖那樣的空白區塊 */
+/* gallery — Pinterest 式多欄瀑布流：每張圖片依自己的比例往下堆疊，
+   不用固定格數的網格去「跨欄跨列」，所以不會留下空白區塊。
+   手機版維持至少 2 欄，不會變成單欄「一張一張」條列。 */
 .gallery-grid{
   column-count: 3;
   column-gap: 12px;
@@ -448,14 +449,14 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 @media (max-width: 750px) {
   .gallery-grid{ column-count: 2; }
 }
-@media (max-width: 500px) {
-  .gallery-grid{ column-count: 1; }
+@media (max-width: 420px) {
+  .gallery-grid{ column-gap: 8px; }
+  .gallery-item{ margin-bottom: 8px; }
 }
 
-/* drawings — 改用 CSS Grid（而非 column-count 瀑布流），讓圖片依照原本資料順序
-   由左到右、由上到下排列（橫向閱讀順序），不會像多欄排版那樣先直著往下排滿一欄。
-   large 橫式佔滿整列、small 橫式一列兩張、tiny 一列三張；
-   加上 .portrait 修飾字可切換為直式圖片：large-portrait 一列兩張、small-portrait 一列三張 */
+/* drawings — 桌機維持原本的網格排版（large 佔滿整列、small 一列2張、tiny 一列3張）。
+   手機版另外改用跟 gallery 一樣的 Pinterest 多欄瀑布流，避免手機上變成整張圖佔一列、
+   一張一張往下排的條列式版面。 */
 .drawing-grid{
   display:grid;
   grid-template-columns: repeat(6, 1fr);
@@ -483,14 +484,21 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .drawing-item.small.portrait img{ aspect-ratio: 3 / 4; object-fit:cover; }
 
 @media (max-width: 750px) {
-  .drawing-item.small{ grid-column: span 6; }
-  .drawing-item.small.portrait{ grid-column: span 3; }
+  .drawing-grid{
+    display:block;
+    column-count: 2;
+    column-gap: 12px;
+  }
+  .drawing-item{
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    margin-bottom: 12px;
+  }
+  .drawing-item img{ height:auto; }
 }
-@media (max-width: 600px) {
-  .drawing-grid{ grid-template-columns: repeat(3, 1fr); }
-  .drawing-item.large, .drawing-item.small{ grid-column: span 3; }
-  .drawing-item.large.portrait, .drawing-item.small.portrait{ grid-column: span 3; }
-  .drawing-item.tiny{ grid-column: span 1; }
+@media (max-width: 420px) {
+  .drawing-grid{ column-gap: 8px; }
+  .drawing-item{ margin-bottom: 8px; }
 }
 
 
