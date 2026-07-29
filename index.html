@@ -454,6 +454,34 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   .gallery-item{ margin-bottom: 8px; }
 }
 
+/* JS 強制多欄瀑布流：CSS 的 column-count 在手機 Safari 上做「欄高平衡」時，
+   常常算不準，導致第二欄的第一張圖片沒辦法跟第一欄切齊頂端、上方留一截空白。
+   等版面渲染完成後，JS 會依照圖片實際比例把項目分配進真正獨立的欄位 div
+   （.masonry-col），改用 flex 排版；因為每一欄都是各自獨立堆疊，
+   欄位裡的第一個項目必定貼齊最上方，兩欄自然對齊。 */
+.gallery-grid.js-columns{
+  display:flex;
+  align-items:flex-start;
+  column-count:initial;
+  column-gap:initial;
+  gap:12px;
+}
+.gallery-grid.js-columns .masonry-col{
+  display:flex;
+  flex-direction:column;
+  flex:1 1 0;
+  min-width:0;
+  gap:12px;
+}
+.gallery-grid.js-columns .gallery-item{
+  margin-bottom:0;
+  break-inside:auto;
+}
+@media (max-width: 420px) {
+  .gallery-grid.js-columns{ gap:8px; }
+  .gallery-grid.js-columns .masonry-col{ gap:8px; }
+}
+
 /* drawings — 桌機維持原本的網格排版（large 佔滿整列、small 一列2張、tiny 一列3張）。
    手機版另外改用跟 gallery 一樣的 Pinterest 多欄瀑布流，避免手機上變成整張圖佔一列、
    一張一張往下排的條列式版面。 */
@@ -499,6 +527,31 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 @media (max-width: 420px) {
   .drawing-grid{ column-gap: 8px; }
   .drawing-item{ margin-bottom: 8px; }
+}
+
+/* 同 .gallery-grid：手機版改用 JS 分配的真正欄位 div，避免 column-count
+   在 Safari 上把第二欄的第一張圖往下擠，跟第一欄頂端對不齊。 */
+.drawing-grid.js-columns{
+  display:flex;
+  align-items:flex-start;
+  column-count:initial;
+  column-gap:initial;
+  gap:12px;
+}
+.drawing-grid.js-columns .masonry-col{
+  display:flex;
+  flex-direction:column;
+  flex:1 1 0;
+  min-width:0;
+  gap:12px;
+}
+.drawing-grid.js-columns .drawing-item{
+  margin-bottom:0;
+  break-inside:auto;
+}
+@media (max-width: 420px) {
+  .drawing-grid.js-columns{ gap:8px; }
+  .drawing-grid.js-columns .masonry-col{ gap:8px; }
 }
 
 
@@ -1726,6 +1779,78 @@ function drawingOrientationClass(item){
   return (typeof item === "object" && item.orientation === "portrait") ? "portrait" : "";
 }
 
+/* ---------------- JS 瀑布流欄位對齊 ----------------
+   CSS 的 column-count 排版（Pinterest 式瀑布流）在手機 Safari 上有個已知問題：
+   瀏覽器會嘗試「平衡」各欄的總高度，但計算常常不準，導致第二欄的第一張圖片
+   沒辦法跟第一欄的第一張圖片切齊頂端，上方多出一截空白。
+   解法：改用 JS 把項目依序分配進真正獨立的欄位 <div>（每欄用 flex-direction:column
+   各自往下堆疊），這樣每一欄的第一個項目必定貼齊最上方，兩欄自然對齊。
+   分配時用「目前最矮的那一欄」演算法，依照 large/small/wide/tiny 各自的
+   長寬比粗估高度，讓兩欄整體高度盡量平均。 */
+function estimateItemHeightRatio(item){
+  if(item.classList.contains("large")) return 4 / 3; // 直式照片，較高
+  if(item.classList.contains("wide")) return 2 / 3;  // 橫式照片，較扁
+  if(item.classList.contains("tiny")) return 1;
+  return 3 / 4; // small（預設），中等高度
+}
+
+function applyMasonryColumns(grid, itemSelector, columnCount, indexAttr){
+  if(!grid) return;
+  const items = Array.from(grid.querySelectorAll(itemSelector))
+    .sort((a, b) => Number(a.dataset[indexAttr] || 0) - Number(b.dataset[indexAttr] || 0));
+  if(!items.length) return;
+
+  if(!columnCount || columnCount <= 1){
+    grid.classList.remove("js-columns");
+    items.forEach(it => grid.appendChild(it));
+    grid.querySelectorAll(":scope > .masonry-col").forEach(col => col.remove());
+    return;
+  }
+
+  grid.classList.add("js-columns");
+  const cols = [];
+  for(let i = 0; i < columnCount; i++){
+    const col = document.createElement("div");
+    col.className = "masonry-col";
+    cols.push(col);
+  }
+  const colHeights = new Array(columnCount).fill(0);
+  items.forEach(item => {
+    let shortest = 0;
+    for(let i = 1; i < columnCount; i++){
+      if(colHeights[i] < colHeights[shortest]) shortest = i;
+    }
+    cols[shortest].appendChild(item);
+    colHeights[shortest] += estimateItemHeightRatio(item);
+  });
+  grid.innerHTML = "";
+  cols.forEach(col => grid.appendChild(col));
+}
+
+function refreshMasonry(){
+  const w = window.innerWidth;
+  const galleryCols = w <= 750 ? 2 : 3;
+  document.querySelectorAll(".gallery-grid").forEach(g => {
+    applyMasonryColumns(g, ".gallery-item", galleryCols, "galleryIndex");
+  });
+  // drawing-grid 桌機版用固定的 CSS grid（span 排版），不套用 JS 瀑布流，
+  // 只有手機版（原本會切換成 column-count 瀑布流的寬度）才需要 JS 接手。
+  const drawingCols = w <= 750 ? 2 : 0;
+  document.querySelectorAll(".drawing-grid").forEach(g => {
+    applyMasonryColumns(g, ".drawing-item", drawingCols, "drawingIndex");
+  });
+}
+
+function debounce(fn, wait){
+  let t;
+  return function(...args){
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), wait);
+  };
+}
+
+window.addEventListener("resize", debounce(refreshMasonry, 150));
+
 function renderProject(id){
   const p = PROJECTS.find(x => x.id === id);
   if(!p){ renderWork(); return; }
@@ -1822,6 +1947,8 @@ function renderProject(id){
   app.querySelectorAll("[data-goto]").forEach(el => {
     el.addEventListener("click", () => { location.hash = "#/project/" + el.dataset.goto; });
   });
+
+  refreshMasonry();
 
   if(p.gallery && p.gallery.length){
     const galleryImages = p.gallery.map(item => ({ src: galleryItemSrc(item), alt: p.title }));
