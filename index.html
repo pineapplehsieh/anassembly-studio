@@ -55,6 +55,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   position:relative; width:100%; height:82vh; min-height:460px;
   overflow:hidden; background:#1c1b19; cursor:pointer;
 }
+.home-hero-media{ position:absolute; inset:0; }
 .home-slides{ position:absolute; inset:0; }
 .home-slide{ position:absolute; inset:0; opacity:0; transition:opacity 1.4s ease; }
 .home-slide.active{ opacity:1; }
@@ -69,7 +70,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .home-caption-bl {
   position: absolute;
   left: 28px;
-  right: 160px;
+  right: 28px;
   bottom: 28px;
   z-index: 10;
   pointer-events: none;
@@ -141,14 +142,38 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 }
 
 @media (max-width:700px){
-  .home-hero{ height:64vh; min-height:380px; }
-  .home-caption-bl { left: 20px; right: 20px; bottom: 70px; }
-  .home-button-br { right: 20px; bottom: 20px; }
+  .home-hero{ height:auto; min-height:unset; overflow:visible; display:flex; flex-direction:column; }
+  .home-hero-media{ position:relative; inset:auto; aspect-ratio: 4 / 5; background:#1c1b19; overflow:hidden; }
+  .home-slide img{ object-fit:contain; }
+  .home-caption-bl { left: 16px; right: 16px; bottom: 16px; }
+  .home-button-br { position:static; display:flex; justify-content:center; padding:16px 16px 0; }
   .slide-caption { font-size: 14px; }
-  .home-view-all-btn { padding: 8px 16px; font-size: 12px; }
+  .home-view-all-btn { padding: 8px 16px; font-size: 12px; width:100%; text-align:center; }
   /* 手機板改用手指左右滑動切換輪播圖（見下方新增的 touch 手勢邏輯），
      不再顯示左右箭頭按鈕 */
   .home-arrow{ display:none !important; }
+}
+
+/* 手機板首頁卡片列表（取代輪播），仿 rshp.com 風格：
+   大圖 + 下方標題資訊，直向排列，讓使用者自由上下滑動瀏覽 */
+.home-mobile-list{
+  display:flex; flex-direction:column;
+}
+.home-mobile-card{
+  display:block; cursor:pointer;
+  border-bottom:1px solid var(--line);
+}
+.home-mobile-media{
+  width:100%; aspect-ratio:4/5; overflow:hidden; background:#efece5;
+}
+.home-mobile-media img{ width:100%; height:100%; object-fit:cover; display:block; }
+.home-mobile-caption{ padding:16px 20px 24px; }
+.home-mobile-title{ font-size:19px; margin-bottom:6px; line-height:1.25; }
+.home-mobile-meta{ color:var(--muted); font-size:13px; }
+
+.home-view-all-wrap{
+  display:flex; justify-content:center;
+  padding:24px 20px 8px;
 }
 
 /* ---------------- work list ---------------- */
@@ -1696,27 +1721,37 @@ function cardHtml(p){
 }
 
 function renderLanding(){
+  if(window.matchMedia("(max-width:700px)").matches){
+    renderLandingMobile();
+  } else {
+    renderLandingDesktop();
+  }
+}
+
+function renderLandingDesktop(){
   const slides = collectHomeSlides();
   homeSlideIdx = 0;
   app.innerHTML = `
     <div class="home-hero" id="homeHero">
-      <div class="home-slides" style="position:absolute; inset:0; width:100%; height:100%;">
-        ${slides.map((s, i) => s.type === "image"
-          ? `<div class="home-slide${i === 0 ? " active" : ""}" data-id="${esc(s.id)}" data-title="${esc(s.alt || "")}" style="position:absolute; inset:0;">
-              <img decoding="async" src="${esc(s.src)}" alt="${esc(s.alt || "")}" loading="${i === 0 ? "eager" : "lazy"}" ${i === 0 ? 'fetchpriority="high"' : ''} style="width:100%; height:100%; object-fit:cover; object-position:${esc(s.position || "center")};">
-             </div>`
-          : `<div class="home-slide placeholder-slide${i === 0 ? " active" : ""}" data-id="${esc(s.id)}" data-title="${esc(s.label || "")}" style="position:absolute; inset:0;">
-              <span>${esc(s.label)}</span>
-             </div>`
-        ).join("")}
+      <div class="home-hero-media">
+        <div class="home-slides" style="position:absolute; inset:0; width:100%; height:100%;">
+          ${slides.map((s, i) => s.type === "image"
+            ? `<div class="home-slide${i === 0 ? " active" : ""}" data-id="${esc(s.id)}" data-title="${esc(s.alt || "")}" style="position:absolute; inset:0;">
+                <img decoding="async" src="${esc(s.src)}" alt="${esc(s.alt || "")}" loading="${i === 0 ? "eager" : "lazy"}" ${i === 0 ? 'fetchpriority="high"' : ''} style="width:100%; height:100%; object-position:${esc(s.position || "center")};">
+               </div>`
+            : `<div class="home-slide placeholder-slide${i === 0 ? " active" : ""}" data-id="${esc(s.id)}" data-title="${esc(s.label || "")}" style="position:absolute; inset:0;">
+                <span>${esc(s.label)}</span>
+               </div>`
+          ).join("")}
+        </div>
+        <div class="home-caption-bl">
+          <div class="slide-caption" id="slideCaption">${esc(slides[0] ? (slides[0].alt || slides[0].label) : "")}</div>
+        </div>
       </div>
       ${slides.length > 1 ? `
       <button type="button" class="home-arrow home-arrow-left" id="homeArrowLeft" aria-label="Previous slide">‹</button>
       <button type="button" class="home-arrow home-arrow-right" id="homeArrowRight" aria-label="Next slide">›</button>
       ` : ""}
-      <div class="home-caption-bl">
-        <div class="slide-caption" id="slideCaption">${esc(slides[0] ? (slides[0].alt || slides[0].label) : "")}</div>
-      </div>
       <div class="home-button-br">
         <a href="#/work" class="home-view-all-btn">VIEW ALL PROJECTS →</a>
       </div>
@@ -1764,6 +1799,35 @@ function renderLanding(){
   })();
 
   startHomeSlideshow();
+}
+
+/* 手機板首頁：不再用自動輪播的幻燈片，改成像 RSHP 官網一樣，
+   直向排列約 5 個隨機案子的大圖卡片，讓使用者自由上下滑動瀏覽，
+   全部滑完後在最底部放 VIEW ALL PROJECTS 按鈕 */
+function renderLandingMobile(){
+  const picks = shuffleArray(PROJECTS.filter(p => p.cover)).slice(0, 5);
+  app.innerHTML = `
+    <div class="home-mobile-list">
+      ${picks.map(p => `
+        <article class="home-mobile-card" data-goto="${esc(p.id)}">
+          <div class="home-mobile-media">
+            <img decoding="async" src="${esc(p.cover)}" alt="${esc(p.title)}" loading="lazy" style="object-position:${esc(p.coverPosition || "center")}">
+          </div>
+          <div class="home-mobile-caption">
+            <h3 class="home-mobile-title">${esc(p.title)}</h3>
+            <p class="home-mobile-meta">${esc(p.category)} · ${esc(p.year)}</p>
+          </div>
+        </article>
+      `).join("")}
+    </div>
+    <div class="home-view-all-wrap">
+      <a href="#/work" class="home-view-all-btn">VIEW ALL PROJECTS →</a>
+    </div>
+  `;
+
+  app.querySelectorAll("[data-goto]").forEach(el => {
+    el.addEventListener("click", () => { location.hash = "#/project/" + el.dataset.goto; });
+  });
 }
 
 function workRowHtml(p){
