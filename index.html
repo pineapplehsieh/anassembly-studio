@@ -213,6 +213,13 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   .work-title{ font-size:17px; }
   .work-year{ width:40px; font-size:12.5px; }
 }
+@media (max-width:700px){
+  /* 手機板觸控點擊會讓 :hover 狀態卡住顯示黃色底色，因此手機板取消這個 hover 效果 */
+  .work-row:hover{ background:none; }
+  .work-row:hover .work-thumb img{ transform:none; }
+  /* About 頁面在手機板應保留左右留白（沿用 .wrap 的間距，避免被 .about 的 padding:0 覆蓋掉） */
+  .about{ padding-left:28px; padding-right:28px; }
+}
 
 /* header */
 .site-header{ padding:36px 0 20px; }
