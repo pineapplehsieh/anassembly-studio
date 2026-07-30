@@ -217,8 +217,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   /* 手機板觸控點擊會讓 :hover 狀態卡住顯示黃色底色，因此手機板取消這個 hover 效果 */
   .work-row:hover{ background:none; }
   .work-row:hover .work-thumb img{ transform:none; }
-  /* About 頁面在手機板應保留左右留白（沿用 .wrap 的間距，避免被 .about 的 padding:0 覆蓋掉） */
-  .about{ padding-left:28px; padding-right:28px; }
+  /* About 頁面手機板左右留白修正見下方 .about 區塊 */
 }
 
 /* header */
@@ -762,6 +761,11 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .about .contact{ margin-top:28px; font-size:14.5px; color:var(--muted); }
 .about .contact a{ color:var(--ink); border-bottom:1px solid var(--line); }
 .about .contact a:hover{ border-color:var(--ink); }
+@media (max-width:700px){
+  /* .about 的 padding:50px 0 100px 把左右設成 0，蓋掉外層 .wrap 原本的 28px 留白，
+     手機板螢幕窄時就會貼齊邊緣，這裡補回來 */
+  .about{ padding-left:28px; padding-right:28px; }
+}
 
 /* books */
 .book-grid{
@@ -2338,10 +2342,10 @@ let lbBuiltForImages = null;
 function openLightbox(images, index){
   lightboxImages = images;
   lightboxIndex = index;
-  updateLightbox();
   lightboxEl.classList.add("active");
   lightboxEl.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
+  updateLightbox();
 }
 
 function resetLbZoom(img){
