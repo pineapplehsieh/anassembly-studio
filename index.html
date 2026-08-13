@@ -2578,8 +2578,33 @@ async function buildPdfFlipbook(loadId){
     updateLightboxNav();
     renderPdfPagesAround(pdfCurrentPage, loadId);
   });
+  // "flip" 事件要等翻頁動畫完全播完才會觸發，若只靠它才開始畫下一頁，
+  // 畫面就會變成「動畫翻完了、內容才跳出來」。這裡改聽 StPageFlip 內部
+  // 進入 "flipping" 狀態的當下（動畫剛開始播放的那一刻）就提前渲染，
+  // 讓內容有機會在翻頁動畫播放期間就先畫好。
+  pdfFlip.on("changeState", (e) => {
+    if(e.data === "flipping"){
+      renderPdfPagesAround(pdfFlip.getCurrentPageIndex() + 1, loadId);
+    }
+  });
 
   renderPdfPagesAround(1, loadId);
+  // 上面只先畫目前這幾頁；剩下的頁面在背景慢慢、依序補畫（利用瀏覽器閒置時間，
+  // 一次只畫一頁，避免佔用主執行緒卡住互動），這樣照正常速度往後翻的時候，
+  // 頁面幾乎都已經提前畫好，不會再看到「翻完才跳出內容」的空白畫面。
+  renderPdfPagesProgressively(loadId);
+}
+
+async function renderPdfPagesProgressively(loadId){
+  for(let num = 1; num <= pdfPageCount; num++){
+    if(loadId !== pdfLoadId) return;
+    const pageEl = pdfFlipbookEl.querySelector(`.flip-page[data-page-num="${num}"]`);
+    if(pageEl && pageEl.dataset.rendered !== "1"){
+      // await 本身就足夠讓出主執行緒給互動與畫面更新，不需要再額外插入
+      // requestIdleCallback 的等待，否則反而拖慢背景補畫的總時間
+      await renderPdfPageInto(pageEl, num, loadId);
+    }
+  }
 }
 
 async function renderPdfPageInto(pageEl, num, loadId){
