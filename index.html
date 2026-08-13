@@ -674,32 +674,25 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   position:relative;
   width:min(92vw, 1200px); height:86vh;
 }
-.pdf-scroller{
-  display:flex;
+/* Issuu 風格翻書：StPageFlip 接管容器內的排版與拖曳／捲曲動畫，
+   這裡只需要負責外層置中與每一頁裡 canvas 的填滿方式 */
+.pdf-flipbook-wrap{
   width:100%; height:100%;
-  overflow-x:auto; overflow-y:hidden;
-  scroll-snap-type:x mandatory;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
-  cursor:grab;
-}
-.pdf-scroller::-webkit-scrollbar{ display:none; }
-.pdf-scroller.dragging{ cursor:grabbing; scroll-snap-type:none; }
-.pdf-page{
-  flex:0 0 100%;
-  scroll-snap-align:center;
   display:flex; align-items:center; justify-content:center;
-  height:100%;
   user-select:none;
 }
-.pdf-page canvas{
-  display:block; background:#fff; border-radius:2px;
-  box-shadow:0 10px 40px rgba(0,0,0,0.45);
-  max-width:100%; max-height:100%;
+.pdf-flipbook{
+  filter:drop-shadow(0 20px 46px rgba(0,0,0,0.5));
+}
+.pdf-flipbook .flip-page{
+  background:#fff; overflow:hidden;
+}
+.pdf-flipbook .flip-page canvas{
+  display:block; width:100%; height:100%;
   opacity:1; transition:opacity .25s ease;
   pointer-events:none;
 }
-.pdf-page.pending canvas{ opacity:0; }
+.pdf-flipbook .flip-page.pending canvas{ opacity:0; }
 .lightbox-pdf-loading{
   display:none; position:absolute; color:rgba(255,255,255,0.85);
   font-size:13px; letter-spacing:0.04em; font-family:var(--f-heading);
@@ -831,7 +824,9 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   </div>
   <div class="lightbox-zoom-hint" id="lightboxZoomHint">點擊或滾輪放大檢視原始細節</div>
   <div class="lightbox-pdf-viewer" id="lightboxPdfViewer">
-    <div class="pdf-scroller" id="pdfScroller"></div>
+    <div class="pdf-flipbook-wrap" id="pdfFlipbookWrap">
+      <div class="pdf-flipbook" id="pdfFlipbook"></div>
+    </div>
     <div class="lightbox-pdf-loading" id="lightboxPdfLoading">載入中…</div>
     <div class="lightbox-pdf-error" id="lightboxPdfError">
       PDF 暫時無法預覽。<br>
@@ -852,6 +847,8 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
     pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
   }
 </script>
+<!-- Issuu 風格的翻書效果：由 StPageFlip 提供逼真的頁面捲曲動畫與拖曳翻頁手感 -->
+<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
 <script>
 /* ============================================================
    PROJECT DATA (可在此處修改各專案的照片路徑)
@@ -2312,7 +2309,8 @@ const lightboxImgViewerEl = document.getElementById("lightboxImgViewer");
 const lightboxImgScrollerEl = document.getElementById("lightboxImgScroller");
 const lightboxZoomHintEl = document.getElementById("lightboxZoomHint");
 const lightboxPdfViewerEl = document.getElementById("lightboxPdfViewer");
-const pdfScrollerEl = document.getElementById("pdfScroller");
+const pdfFlipbookWrapEl = document.getElementById("pdfFlipbookWrap");
+const pdfFlipbookEl = document.getElementById("pdfFlipbook");
 const lightboxPdfErrorEl = document.getElementById("lightboxPdfError");
 const lightboxPdfErrorLinkEl = document.getElementById("lightboxPdfErrorLink");
 const lightboxCounterEl = document.getElementById("lightboxCounter");
@@ -2322,14 +2320,15 @@ const lightboxPdfSliderEl = document.getElementById("lightboxPdfSlider");
 const pdfPageRangeEl = document.getElementById("pdfPageRange");
 let isDraggingPdfSlider = false;
 
-/* PDF 書頁狀態：每一頁都是一張獨立的 canvas，並排放在一條可橫向滑動、
-   有 scroll-snap 的軌道上 — 像連續滑動相片一樣翻頁，不跳新分頁，
-   也不使用瀏覽器原生的 PDF 檢視器。 */
+/* PDF 書頁狀態：每一頁都是一張獨立的 canvas，交給 StPageFlip（page-flip 套件）
+   接管排版與翻頁動畫，呈現跟 Issuu 一樣的紙頁捲曲、可拖曳頁角的翻書效果。
+   canvas 內容由 pdf.js 依需要（目前頁與前後幾頁）延遲繪製。 */
 let pdfDoc = null;
 let pdfPageCount = 0;
 let pdfCurrentPage = 1;
 let pdfLoadId = 0;
-let pdfObserver = null;
+let pdfFlip = null;
+let pdfPageBoxSize = { w: 400, h: 560 };
 
 /* 一般照片瀏覽也採用跟 PDF 書頁完全相同的機制：把每張照片放進同一條
    有 scroll-snap 的橫向軌道，讓瀏覽器原生處理滑動手勢與慣性動畫，
@@ -2370,8 +2369,8 @@ function closeLightbox(){
 function resetPdfViewer(){
   pdfDoc = null;
   pdfLoadId++;
-  if(pdfObserver){ pdfObserver.disconnect(); pdfObserver = null; }
-  pdfScrollerEl.innerHTML = "";
+  if(pdfFlip){ try{ pdfFlip.destroy(); }catch(e){} pdfFlip = null; }
+  pdfFlipbookEl.innerHTML = "";
   isDraggingPdfSlider = false;
   lightboxPdfSliderEl.style.display = "none";
 }
@@ -2383,7 +2382,7 @@ function resetImgScroller(){
   lbActiveImgEl = null;
 }
 
-/* 建立照片滑動軌道：每張照片各自一格（跟 .pdf-page 結構相同），
+/* 建立照片滑動軌道：每張照片各自一格，
    用 IntersectionObserver 偵測哪一格滑到畫面中央超過一半，
    就把它視為「目前這一張」，同步索引、計數器與放大狀態。 */
 function buildImgSlides(){
@@ -2480,9 +2479,8 @@ async function loadPdfDocument(src){
   pdfDoc = null;
   pdfPageCount = 0;
   pdfCurrentPage = 1;
-  if(pdfObserver){ pdfObserver.disconnect(); pdfObserver = null; }
-  pdfScrollerEl.innerHTML = "";
-  pdfScrollerEl.scrollLeft = 0;
+  if(pdfFlip){ try{ pdfFlip.destroy(); }catch(e){} pdfFlip = null; }
+  pdfFlipbookEl.innerHTML = "";
   lightboxPdfViewerEl.classList.add("loading");
   updateLightboxNav();
 
@@ -2491,13 +2489,19 @@ async function loadPdfDocument(src){
     showPdfError(src, "PDF 元件載入失敗（pdf.js 未載入，請確認網路連線）");
     return;
   }
+  if(!window.St || !window.St.PageFlip){
+    lightboxPdfViewerEl.classList.remove("loading");
+    showPdfError(src, "翻頁元件載入失敗（page-flip 未載入，請確認網路連線）");
+    return;
+  }
   try{
     // encodeURI 避免路徑中的中文檔名或空白造成讀取失敗
     const doc = await pdfjsLib.getDocument(encodeURI(src)).promise;
     if(loadId !== pdfLoadId) return; // 使用者已切換到別的項目
     pdfDoc = doc;
     pdfPageCount = doc.numPages;
-    buildPdfPages(loadId);
+    await buildPdfFlipbook(loadId);
+    if(loadId !== pdfLoadId) return;
     lightboxPdfViewerEl.classList.remove("loading");
     updateLightboxNav();
   }catch(err){
@@ -2515,34 +2519,59 @@ function showPdfError(src, reason){
   if(reasonEl) reasonEl.textContent = reason || "";
 }
 
-/* 建立每一頁的容器並排放進捲動軌道；用 IntersectionObserver 偵測哪一頁
-   正進入畫面，即時渲染該頁（並順便預先渲染相鄰頁面），滑動起來才會順暢。 */
-function buildPdfPages(loadId){
+/* 建立每一頁的 canvas 容器，交給 StPageFlip 排版成雙頁對開的翻書。
+   第一頁單獨當封面（showCover），之後每兩頁組成一個跨頁，
+   使用者可以直接拖曳頁角，或點擊左右側邊緣，做出捲曲翻頁的動畫。 */
+async function buildPdfFlipbook(loadId){
+  const firstPage = await pdfDoc.getPage(1);
+  if(loadId !== pdfLoadId) return;
+  const unscaled = firstPage.getViewport({ scale: 1 });
+  const pageAspect = unscaled.width / unscaled.height;
+
   const frag = document.createDocumentFragment();
   for(let i = 1; i <= pdfPageCount; i++){
     const pageEl = document.createElement("div");
-    pageEl.className = "pdf-page pending";
+    pageEl.className = "flip-page pending";
     pageEl.dataset.pageNum = String(i);
     pageEl.appendChild(document.createElement("canvas"));
     frag.appendChild(pageEl);
   }
-  pdfScrollerEl.appendChild(frag);
+  pdfFlipbookEl.appendChild(frag);
 
-  pdfObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      const pageEl = entry.target;
-      const num = parseInt(pageEl.dataset.pageNum, 10);
-      if(entry.isIntersecting){
-        renderPdfPageInto(pageEl, num, loadId);
-        if(entry.intersectionRatio > 0.5){
-          pdfCurrentPage = num;
-          updateLightboxNav();
-        }
-      }
-    });
-  }, { root: pdfScrollerEl, threshold: [0, 0.5, 1] });
+  // 依照容器可用空間與 PDF 頁面比例，算出單頁尺寸；
+  // 若雙頁並排會超出可用寬度，改以寬度為準反推高度，確保跨頁不溢出畫面。
+  const availW = pdfFlipbookWrapEl.clientWidth || Math.min(window.innerWidth * 0.92, 1200);
+  const availH = pdfFlipbookWrapEl.clientHeight || window.innerHeight * 0.86;
+  let pageH = availH;
+  let pageW = pageH * pageAspect;
+  if(pageW * 2 > availW){ pageW = availW / 2; pageH = pageW / pageAspect; }
+  pageW = Math.round(pageW);
+  pageH = Math.round(pageH);
+  pdfPageBoxSize = { w: pageW, h: pageH };
 
-  pdfScrollerEl.querySelectorAll(".pdf-page").forEach(el => pdfObserver.observe(el));
+  pdfFlip = new St.PageFlip(pdfFlipbookEl, {
+    width: pageW,
+    height: pageH,
+    size: "stretch",
+    minWidth: 200,
+    minHeight: 260,
+    maxWidth: Math.max(pageW * 2, 900),
+    maxHeight: Math.max(pageH * 2, 1200),
+    maxShadowOpacity: 0.5,
+    showCover: true,
+    mobileScrollSupport: false,
+    useMouseEvents: true,
+    flippingTime: 700,
+  });
+  pdfFlip.loadFromHTML(pdfFlipbookEl.querySelectorAll(".flip-page"));
+
+  pdfFlip.on("flip", (e) => {
+    pdfCurrentPage = e.data + 1;
+    updateLightboxNav();
+    renderPdfPagesAround(pdfCurrentPage, loadId);
+  });
+
+  renderPdfPagesAround(1, loadId);
 }
 
 async function renderPdfPageInto(pageEl, num, loadId){
@@ -2553,9 +2582,9 @@ async function renderPdfPageInto(pageEl, num, loadId){
     const page = await pdfDoc.getPage(num);
     if(loadId !== pdfLoadId) return;
     const unscaled = page.getViewport({ scale: 1 });
-    const maxW = Math.min(window.innerWidth * 0.92, 1200);
-    const maxH = window.innerHeight * 0.86;
-    const fitScale = Math.min(maxW / unscaled.width, maxH / unscaled.height);
+    const boxW = pageEl.clientWidth || pdfPageBoxSize.w;
+    const boxH = pageEl.clientHeight || pdfPageBoxSize.h;
+    const fitScale = Math.min(boxW / unscaled.width, boxH / unscaled.height);
     // 建築線稿常有很多密集的細線，用一般螢幕解析度渲染會讓線條糊成一片。
     // 這裡刻意把「畫布實際像素」拉高到遠超過螢幕顯示尺寸（至少 2 倍，
     // Retina 螢幕再加倍），瀏覽器縮小顯示時線條才會維持銳利、不會擠在一起。
@@ -2565,8 +2594,6 @@ async function renderPdfPageInto(pageEl, num, loadId){
     const canvas = pageEl.querySelector("canvas");
     canvas.width = Math.floor(viewport.width * outputScale);
     canvas.height = Math.floor(viewport.height * outputScale);
-    canvas.style.width = viewport.width + "px";
-    canvas.style.height = viewport.height + "px";
     const ctx = canvas.getContext("2d");
     const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined;
 
@@ -2581,27 +2608,31 @@ async function renderPdfPageInto(pageEl, num, loadId){
   }
 }
 
-function scrollToPdfPage(num){
-  const pageEl = pdfScrollerEl.querySelector(`.pdf-page[data-page-num="${num}"]`);
-  if(pageEl) pageEl.scrollIntoView({ behavior:"smooth", inline:"center", block:"nearest" });
+/* 渲染目前頁面周圍的幾頁（往前一頁、往後兩頁），
+   讓翻頁當下左右兩面與下一個跨頁都已經畫好，動畫才會流暢不閃爍 */
+function renderPdfPagesAround(centerPage, loadId){
+  const targets = new Set([centerPage - 1, centerPage, centerPage + 1, centerPage + 2]);
+  targets.forEach(num => {
+    if(num < 1 || num > pdfPageCount) return;
+    const pageEl = pdfFlipbookEl.querySelector(`.flip-page[data-page-num="${num}"]`);
+    if(pageEl) renderPdfPageInto(pageEl, num, loadId);
+  });
 }
 
-/* 滑桿拖曳跳頁：直接跳過去，不做平滑捲動動畫，
-   避免拖到很遠的頁面時要把中間每一頁都滑過一遍、速度變慢 */
+/* 滑桿拖曳跳頁：直接跳過去、不播放翻頁動畫，
+   避免拖到很遠的頁面時要把中間每一頁都翻過一遍、速度變慢 */
 function jumpToPdfPageInstant(num){
-  pdfCurrentPage = num;
+  const target = Math.min(Math.max(num, 1), pdfPageCount || 1);
+  pdfCurrentPage = target;
   lightboxCounterEl.textContent = pdfPageCount ? `${pdfCurrentPage} / ${pdfPageCount}` : "";
-  const pageEl = pdfScrollerEl.querySelector(`.pdf-page[data-page-num="${num}"]`);
-  if(pageEl) pageEl.scrollIntoView({ behavior:"auto", inline:"center", block:"nearest" });
+  if(pdfFlip) pdfFlip.turnToPage(target - 1);
+  renderPdfPagesAround(target, pdfLoadId);
 }
 
 function lightboxPrev(){
   const item = lightboxImages[lightboxIndex];
   if(item.type === "pdf"){
-    if(pdfPageCount > 1){
-      const prevPage = pdfCurrentPage > 1 ? pdfCurrentPage - 1 : pdfPageCount;
-      scrollToPdfPage(prevPage);
-    }
+    if(pdfFlip && pdfPageCount > 1) pdfFlip.flipPrev();
     return;
   }
   const newIndex = (lightboxIndex - 1 + lightboxImages.length) % lightboxImages.length;
@@ -2611,44 +2642,12 @@ function lightboxPrev(){
 function lightboxNext(){
   const item = lightboxImages[lightboxIndex];
   if(item.type === "pdf"){
-    if(pdfPageCount > 1){
-      const nextPage = pdfCurrentPage < pdfPageCount ? pdfCurrentPage + 1 : 1;
-      scrollToPdfPage(nextPage);
-    }
+    if(pdfFlip && pdfPageCount > 1) pdfFlip.flipNext();
     return;
   }
   const newIndex = (lightboxIndex + 1) % lightboxImages.length;
   scrollToImgSlide(newIndex);
 }
-
-/* 桌機滑鼠拖曳翻頁（觸控裝置本來就能直接用手指滑動） */
-(function enablePdfDragScroll(){
-  let isDown = false, startX = 0, startScroll = 0;
-
-  pdfScrollerEl.addEventListener("pointerdown", (e) => {
-    if(e.pointerType === "touch") return;
-    isDown = true;
-    pdfScrollerEl.classList.add("dragging");
-    startX = e.clientX;
-    startScroll = pdfScrollerEl.scrollLeft;
-    pdfScrollerEl.setPointerCapture(e.pointerId);
-  });
-  pdfScrollerEl.addEventListener("pointermove", (e) => {
-    if(!isDown) return;
-    pdfScrollerEl.scrollLeft = startScroll - (e.clientX - startX);
-  });
-  function endDrag(){
-    if(!isDown) return;
-    isDown = false;
-    pdfScrollerEl.classList.remove("dragging");
-    const w = pdfScrollerEl.clientWidth || 1;
-    const idx = Math.round(pdfScrollerEl.scrollLeft / w) + 1;
-    scrollToPdfPage(Math.min(Math.max(idx, 1), pdfPageCount));
-  }
-  pdfScrollerEl.addEventListener("pointerup", endDrag);
-  pdfScrollerEl.addEventListener("pointercancel", endDrag);
-  pdfScrollerEl.addEventListener("pointerleave", endDrag);
-})();
 
 lightboxEl.addEventListener("click", (e) => {
   if(e.target === lightboxEl) closeLightbox();
@@ -2718,9 +2717,9 @@ lightboxImgScrollerEl.addEventListener("wheel", (e) => {
   applyLbTransform(img);
 }, { passive:false });
 
-/* 照片切換手勢跟 PDF 頁面共用同一套機制：原生 scroll-snap 橫向捲動
-   （見上面的 .lightbox-img-scroller），觸控裝置本來就能直接用手指滑動；
-   這裡只額外補上桌機滑鼠拖曳翻頁（跟 enablePdfDragScroll 一致），
+/* 照片瀏覽維持原本的橫向滑動軌道機制（跟 PDF 翻書是各自獨立的兩套邏輯：
+   PDF 現在交給 StPageFlip 處理拖曳與捲曲動畫，照片則仍用原生 scroll-snap）：
+   觸控裝置本來就能直接用手指滑動，這裡只額外補上桌機滑鼠拖曳，
    並保留放大後用拖曳平移看細節的功能——兩者用同一個 pointerdown
    判斷要走哪一種，避免手勢互相干擾。 */
 let lbScrollDragging = false, lbScrollStartX = 0, lbScrollStartScroll = 0;
