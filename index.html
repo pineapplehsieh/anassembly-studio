@@ -2366,11 +2366,20 @@ function closeLightbox(){
   resetImgScroller();
 }
 
+/* StPageFlip 的 destroy() 其實會把傳進去的容器元素本身從畫面上整個移除
+   （不只是清空內容），所以每次收掉翻頁本之後，如果那個容器元素已經被拔掉，
+   要記得先把它接回 pdfFlipbookWrapEl，下一次開新的書才「看得到」，
+   不然畫面會整個空白、要重新整理頁面才會恢復。 */
+function destroyPdfFlip(){
+  if(pdfFlip){ try{ pdfFlip.destroy(); }catch(e){} pdfFlip = null; }
+  if(!pdfFlipbookEl.isConnected){ pdfFlipbookWrapEl.appendChild(pdfFlipbookEl); }
+  pdfFlipbookEl.innerHTML = "";
+}
+
 function resetPdfViewer(){
   pdfDoc = null;
   pdfLoadId++;
-  if(pdfFlip){ try{ pdfFlip.destroy(); }catch(e){} pdfFlip = null; }
-  pdfFlipbookEl.innerHTML = "";
+  destroyPdfFlip();
   isDraggingPdfSlider = false;
   lightboxPdfSliderEl.style.display = "none";
 }
@@ -2479,8 +2488,7 @@ async function loadPdfDocument(src){
   pdfDoc = null;
   pdfPageCount = 0;
   pdfCurrentPage = 1;
-  if(pdfFlip){ try{ pdfFlip.destroy(); }catch(e){} pdfFlip = null; }
-  pdfFlipbookEl.innerHTML = "";
+  destroyPdfFlip();
   lightboxPdfViewerEl.classList.add("loading");
   updateLightboxNav();
 
