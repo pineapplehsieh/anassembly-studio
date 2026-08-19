@@ -1,0 +1,119 @@
+backend:
+  name: github
+  repo: pineapplehsieh/anassembly-studio
+  branch: main
+  base_url: https://api.netlify.com
+
+# 這個網站沒有「建置」流程（存檔＝直接上線），所以這裡關掉編輯模式，
+# 每次存檔都會直接 commit 到 main、幾分鐘內 GitHub Pages 就會更新。
+publish_mode: simple
+
+media_folder: "uploads"
+public_folder: "uploads"
+
+locale: "zh_Hant"
+
+collections:
+  - name: "projects"
+    label: "作品 Work"
+    label_singular: "作品"
+    files:
+      - name: "projects"
+        label: "所有作品"
+        file: "content/projects.json"
+        format: "json"
+        fields:
+          - label: "作品列表"
+            name: "items"
+            widget: "list"
+            summary: "{{fields.title}} — {{fields.year}}"
+            fields:
+              - { label: "代碼 ID", name: "id", widget: "string", hint: "唯一代碼，不會顯示在網站上，例如 A-18（接續現有最大號碼即可）" }
+              - { label: "標題", name: "title", widget: "text", hint: "可以按 Enter 換行，例如中文標題放第一行、英文標題放第二行" }
+              - { label: "分類", name: "category", widget: "string", hint: "現有分類：Tectonic、Surreal、Public、Housing、Study、Detail，也可以直接打新的分類名稱" }
+              - { label: "年份", name: "year", widget: "string" }
+              - { label: "地點", name: "location", widget: "string" }
+              - { label: "狀態", name: "status", widget: "string", hint: "例如：1:1 Full-scale Construction、Concept design、Architectural design" }
+              - { label: "封面照片", name: "cover", widget: "image" }
+              - { label: "封面對齊位置（選填）", name: "coverPosition", widget: "string", required: false, hint: "例如 50% 30%，不填則自動置中" }
+              - label: "文字介紹"
+                name: "description"
+                widget: "text"
+                hint: "直接打字、按 Enter 換行、空一行分段即可（中文段落、英文段落中間空一行）"
+              - label: "相簿 Gallery"
+                name: "gallery"
+                widget: "list"
+                required: false
+                summary: "{{fields.src}}"
+                fields:
+                  - { label: "照片", name: "src", widget: "image" }
+                  - { label: "版型大小", name: "size", widget: "select", options: ["large", "small", "wide"], default: "small", hint: "large=直式較大／small=方形／wide=橫式" }
+                  - { label: "對齊位置（選填）", name: "position", widget: "string", required: false, hint: "例如 50% 30%，不填則置中" }
+                  - { label: "裁切方式（選填）", name: "fit", widget: "select", options: ["cover", "contain"], required: false, hint: "預設 cover（裁切填滿）；選 contain 則完整顯示不裁切" }
+              - label: "圖說 / 圖面 Drawings"
+                name: "drawings"
+                widget: "list"
+                required: false
+                summary: "{{fields.src}}"
+                fields:
+                  - { label: "圖片", name: "src", widget: "image" }
+                  - { label: "版型大小", name: "size", widget: "select", options: ["large", "small", "tiny"], default: "small" }
+                  - { label: "直式圖片？", name: "orientation", widget: "select", options: ["portrait"], required: false, hint: "圖片是直式（長邊朝上）才選 portrait，橫式圖留空" }
+                  - { label: "裁切方式（選填）", name: "fit", widget: "select", options: ["cover", "contain"], required: false }
+                  - { label: "對齊位置（選填）", name: "position", widget: "string", required: false }
+              - label: "所屬系列（選填）"
+                name: "series"
+                widget: "list"
+                required: false
+                summary: "{{fields.id}} (part {{fields.part}})"
+                fields:
+                  - { label: "系列代碼", name: "id", widget: "string", hint: "填入「系列 Series」裡已建立的代碼，例如 Series-R" }
+                  - { label: "在系列中的順序", name: "part", widget: "number", value_type: "int", default: 1 }
+              - label: "相關書籍（選填）"
+                name: "books"
+                widget: "list"
+                required: false
+                hint: "填入「書籍 Books」裡的代碼，例如 b02"
+              - { label: "工作團隊 Credits", name: "credits", widget: "text", required: false, hint: "換行請用 <br>，例如：謝政庭, 謝廷威<br>黃郁翔, 廖昱衡" }
+              - { label: "簡短摘要（選填，目前網站未實際顯示）", name: "summary", widget: "text", required: false }
+
+  - name: "books"
+    label: "書籍 Books"
+    label_singular: "書籍"
+    files:
+      - name: "books"
+        label: "所有書籍"
+        file: "content/books.json"
+        format: "json"
+        fields:
+          - label: "書籍列表"
+            name: "items"
+            widget: "list"
+            summary: "{{fields.title}} — {{fields.year}}"
+            fields:
+              - { label: "代碼 ID", name: "id", widget: "string", hint: "唯一代碼，例如 b05" }
+              - { label: "書名", name: "title", widget: "text", hint: "可按 Enter 換行" }
+              - { label: "年份", name: "year", widget: "string" }
+              - { label: "封面照片", name: "cover", widget: "image" }
+              - { label: "PDF 檔案", name: "file", widget: "file", hint: "上傳實體 PDF 檔案" }
+              - { label: "簡短描述（選填，目前網站未實際顯示）", name: "description", widget: "text", required: false }
+
+  - name: "series"
+    label: "系列 Series"
+    label_singular: "系列"
+    files:
+      - name: "series"
+        label: "所有系列"
+        file: "content/series.json"
+        format: "json"
+        fields:
+          - label: "系列列表"
+            name: "items"
+            widget: "list"
+            summary: "{{fields.title}} ({{fields.id}})"
+            fields:
+              - { label: "代碼 ID", name: "id", widget: "string", hint: "唯一代碼，例如 Series-F。之後要把某個作品加入這個系列時，要在該作品的「所屬系列」欄位填入一樣的代碼" }
+              - { label: "系列名稱", name: "title", widget: "string" }
+              - { label: "主視覺封面", name: "cover", widget: "image" }
+              - { label: "目錄縮圖（選填）", name: "thumb", widget: "image", required: false, hint: "不填則自動使用上面的主視覺封面" }
+              - { label: "文字介紹", name: "description", widget: "text", hint: "直接打字、按 Enter 換行、空一行分段即可" }

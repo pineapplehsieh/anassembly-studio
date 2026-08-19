@@ -1,0 +1,36 @@
+{
+  "items": [
+    {
+      "id": "b01",
+      "title": "Inter-(potential)-Field: Architecture design booklet",
+      "year": "2026",
+      "cover": "images/inter-(potential)-field.jpg",
+      "file": "images2/loop. studio final booklet.pdf",
+      "description": "A compiled record of site studies, massing iterations, and final drawings for the project."
+    },
+    {
+      "id": "b02",
+      "title": "Methods of Assembly:Between Parts and Whole.\n(selected works 2023-2026)",
+      "year": "2026",
+      "cover": "images/作品集 暫時完整版1_頁面_01.jpg",
+      "file": "images3/作品集 暫時完整版.pdf",
+      "description": "A short collection of research notes and precedent studies developed alongside the thesis project."
+    },
+    {
+      "id": "b03",
+      "title": "NCKU Architecture News v.114",
+      "year": "2025",
+      "cover": "images/189_file_1 (1)_頁面_01.jpg",
+      "file": "images/成大建築簡訊114.pdf",
+      "description": "A short collection of research notes and precedent studies developed alongside the thesis project."
+    },
+    {
+      "id": "b04",
+      "title": "FURNITURE CONSTRUCTION WORKSHOP worksheet",
+      "year": "2026",
+      "cover": "images/2026春 建築系期初實構築工作坊 題單-1.jpeg",
+      "file": "images/2026春 建築系期初實構築工作坊 題單 (1).pdf",
+      "description": "A short collection of research notes and precedent studies developed alongside the thesis project."
+    }
+  ]
+}

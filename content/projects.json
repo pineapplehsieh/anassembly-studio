@@ -1,0 +1,1272 @@
+{
+  "items": [
+    {
+      "id": "A-01",
+      "title": "循環材聖誕樹\nRecycling Christmas Tree",
+      "category": "Tectonic",
+      "year": "2024",
+      "location": "Department of Architecture, NCKU, Taiwan",
+      "status": "1:1 Full-scale Construction",
+      "cover": "images/CHRISTMAS TREE COVER PAGE.jpg",
+      "coverPosition": "0% 55%",
+      "gallery": [
+        {
+          "src": "images/北展展場展場模式.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/天幕與構架線條複層交疊下產生動態紋理變化.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/圖騰開口光影變化.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/8769DAB2-8307-442F-BA7B-D41C9FBA9FE9.png",
+          "size": "small"
+        },
+        {
+          "src": "images/CC486BDF-C5C5-49CB-9A2E-412AA23F0FF8.png",
+          "size": "small",
+          "position": "30% 90%"
+        },
+        {
+          "src": "images/7BDE9233-0E4D-4E73-9C56-03276853C7AC.png",
+          "size": "small"
+        },
+        {
+          "src": "images/E1717749-9426-4269-903D-D88A37845070.png",
+          "size": "large"
+        },
+        {
+          "src": "images/IMG_1104.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/70AC7914-250C-4D33-82C2-67C9907FFFC4.png",
+          "size": "large",
+          "position": "42% 40%"
+        },
+        {
+          "src": "images/IMG_1134.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/BC64D58E-6FAA-41B2-8DFD-7AC1478813FA.png",
+          "size": "large",
+          "position": "42% 0%"
+        }
+      ],
+      "series": [
+        {
+          "id": "Series-R",
+          "part": 1
+        }
+      ],
+      "books": [],
+      "summary": "A housing scheme stitched into the fine-grained fabric of an old city block.",
+      "description": "成大建築系八十週年展嘉年華落幕後，原先作為屋頂裝置的弧形鋼構曲架與其餘構件被遺留於現場，並在活動結束後被賦予了「廢棄物」的新身分。我們嘗試重新理解其構造邏輯與組構方式，並以再利用的角度提出一項新的裝置提案。<br>適逢聖誕節，我們選擇以聖誕樹作為裝置主體，結合系上材料銀行所保存的剩餘木料，以木角材作為主要結構骨架，並將原有的弧形鋼構曲架轉化為樹冠的構成元素。當曲架環繞主結構組裝一周後，藉由其接合節點與曲率的幾何特性，意外形成了一座具有旋轉動態感的圓錐體，使原本被視為廢棄的構件，在新的結構關係中展現出截然不同的空間表現與生命力。<br><br>Following the carnival celebrating the 80th Anniversary of the Department of Architecture at National Cheng Kung University, the curved steel roof frames and other installation components were left behind on site, taking on a new identity as 'waste.' Rather than treating them as discarded materials, we re-examined their structural logic and assembly system, proposing a new installation through the act of reuse.Coinciding with the Christmas season, we adopted the form of a Christmas tree as the primary concept. Reclaimed timber from the department's material bank was used to construct the main structural frame, while the salvaged curved steel members were reassembled to form the tree's canopy. As the steel frames were connected in a continuous ring around the structure, the geometry of their joints and inherent curvature unexpectedly generated a spiraling conical form. This unforeseen spatial quality transformed the discarded components into a new architectural expression, demonstrating how existing materials can acquire renewed meaning and structural potential through reinterpretation and reassembly.",
+      "credits": "謝政庭, 謝廷威, 蕭本亮<br>黃郁翔, 廖昱衡, 方韋程, 郭柏辰, 胡鳴宏"
+    },
+    {
+      "id": "A-02",
+      "title": "家具實構築\nFurniture Construction Workshop",
+      "category": "Tectonic",
+      "year": "2026",
+      "location": "Department of Architecture, NCKU, Taiwan",
+      "status": "1:1 Full-scale Construction",
+      "cover": "images/實構築工作坊.jpg",
+      "series": [
+        {
+          "id": "Series-S",
+          "part": 2
+        },
+        {
+          "id": "Series-R",
+          "part": 2
+        }
+      ],
+      "gallery": [
+        {
+          "src": "images/IMG_E9867.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_E9801.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_9841.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_9817.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_9616.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/IMG_9971.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_E9986.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_E9941.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_9861.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/IMG_9881.jpg",
+          "size": "small"
+        }
+      ],
+      "drawings": [
+        {
+          "src": "images/2026實構築工作坊(休閒導向組)A1海報.jpg",
+          "size": "small",
+          "orientation": "portrait"
+        },
+        {
+          "src": "images/2026實構築工作坊(討論導向組)A1海報.jpg",
+          "size": "small",
+          "orientation": "portrait"
+        },
+        {
+          "src": "images/2026實構築工作坊(模型展示組)A1海報.jpg",
+          "size": "small",
+          "orientation": "portrait"
+        }
+      ],
+      "books": [
+        "b04"
+      ],
+      "summary": "A museum whose galleries open and close with the rhythm of the tide.",
+      "description": "第一次將專案計畫向大家開放，以工作坊的形式來尋找符合當今建築系學生所迫切需要的機能支持：<br>位於設計教室之間、寬約三米的夾擠空間，隨時間推移與教學體制變遷，其使用方式亦不斷轉換：從最初規劃的模型室，逐漸成為儲藏室與系雅圖，直至今日，面向主要走廊的兩面牆體被拆除，隱於後方的樓梯間完全敞開，形成新的公共剖面，串聯一樓至二樓、連接大一至大三，成為同時支撐課間活動與教學成果交流的共享場所。<br>與教學體制同步變化的，也體現在系館家具之上。現今僅存於大一設計教室的圖桌，實為建築系遷入現址後購置的第一批家具，曾長期服務於各年級使用，隨後逐步被紙材工作桌、角鋼工作桌等取代。在教學空間型態產生巨大轉變的同時，這些長期堆置的圖桌架，或許也能重新被視為新的物件，並在考量現況需求後賦予其新的功能與意義。 最終，空間與物件皆在不斷被重新理解與再利用的過程中，持續回應教學與使用者的需求，也讓既有環境在轉變中生成新的公共可能。<br>本工作坊的實作課程為「空間家具製作」。空間家具單元則以現成物與既有框架為基礎，透過組裝與配置，製作可移動、具多元用途的家具系統，回應不同使用情境。藉由實作活動進行，從施工到組裝，探索空間如何在操作中被重新定義。<br><br>In this workshop, we opened the project to students, creating a space that meets the urgent needs of architecture students today. The narrow space between the design studios, approximately three meters wide, has evolved over time with changes in the educational system. Initially planned as a model room, it gradually became a storage area and a gallery for student work. Today, with the removal of walls facing the main corridor and the opening of the staircase area, it has become a new public section connecting the first and second floors and linking first-year to third-year students, supporting both class activities and the exchange of teaching outcomes.<br>The evolution of the educational system is also reflected in the department's furniture. The remaining drawing tables in the first-year design studio were part of the first batch of furniture purchased when the architecture department moved to its current location. They served all year levels for a long time before being replaced by paper work tables and angle steel work tables. As teaching spaces have undergone significant changes, these long-stored drawing table frames can be reconsidered as new objects, given new functions and meanings based on current needs. Ultimately, both space and objects continue to respond to teaching and user needs through ongoing reinterpretation and reuse, allowing existing environments to generate new public possibilities through transformation.<br>The practical course of this workshop is \"Space Furniture Making.\" The space furniture unit is based on ready-made objects and existing frameworks, assembled and configured to create movable furniture systems with multiple uses, responding to different usage scenarios. Through hands-on activities from construction to assembly, we explore how space can be redefined through operation.",
+      "credits": "楊詩弘(教授), 謝政庭, 王子銘, 高宏奕<br>詹昀庭, 陳韋廷, 許博勛, 宋滙僑, 陳稷和,<br>張雅婷, 梁大祐, 于毓彤, 翁敏翎, 陳希, 黃駿揚"
+    },
+    {
+      "id": "A-03",
+      "title": "大一工作室展架\nYear1 Studio Exhibition Installation",
+      "category": "Tectonic",
+      "year": "2025",
+      "location": "Department of Architecture, NCKU, Taiwan",
+      "status": "1:1 Full-scale Construction",
+      "cover": "images/大一展架1cover.jpg",
+      "coverPosition": "0% 20%",
+      "series": [
+        {
+          "id": "Series-S",
+          "part": 1
+        },
+        {
+          "id": "Series-R",
+          "part": 3
+        }
+      ],
+      "gallery": [
+        {
+          "src": "images/IMG_7794.jpg",
+          "size": "large",
+          "position": "50% 85%"
+        },
+        {
+          "src": "images/IMG_7401.jpg",
+          "size": "large",
+          "position": "50% 70%"
+        },
+        {
+          "src": "images/IMG_6981.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_6988.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_6965.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_0207.JPG",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_6993.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/IMG_7029.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_6744.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_E7009.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/IMG_0205.JPG",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_0206.JPG",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_7023.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_7407.jpg",
+          "size": "small"
+        }
+      ],
+      "drawings": [
+        {
+          "src": "images/20260325143647.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/層架.jpg",
+          "size": "small"
+        }
+      ],
+      "books": [
+        "b02",
+        "b03"
+      ],
+      "summary": "A traditional market re-organized as a vertical stack of stalls and courtyards.",
+      "description": "接續剖面計畫的制定出來的具有分級的展示交流模式，因為意識到我們日常的模型產出會具有明顯的生面週期，這關聯到這個模型對自己是否仍有用處，若以他人論，自身認為已經沒有用處的作品，似乎仍有很高的參考性，不論是技法、材質、構成邏輯等。因為模型生命週期，同時也牽扯著實際工作室空間的收納機能，所以如果以一個較非正式性的展覽呈現方式，以收納為主要目的，並同時在工作室中創造討論交流的節點。<br><br>Following the sectional project, a tiered system of display and exchange is developed in response to the lifecycle of models. As models lose value for their creators, they often remain valuable references for others—in technique, material, and spatial logic.<br>Recognizing this, the project adopts an informal exhibition approach centered on storage, addressing studio needs while creating moments for discussion and exchange within the workspace.",
+      "credits": "謝政庭, 蕭本亮<br>謝廷威, 王子銘, 郭柏辰, 黃郁翔, 黃郁芯, 林語珩, 游承燁"
+    },
+    {
+      "id": "A-04",
+      "title": "Recalibration",
+      "category": "Surreal",
+      "year": "2024",
+      "location": "Non",
+      "status": "Concept design",
+      "cover": "images/物件轉益cover.jpg",
+      "gallery": [
+        {
+          "src": "images/S__31113268_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/S__31113262_0.jpg",
+          "size": "small",
+          "position": "50% 45%"
+        },
+        {
+          "src": "images/S__31113266_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/S__31113282_0.jpg",
+          "size": "small",
+          "position": "50% 35%"
+        },
+        {
+          "src": "images/S__31113273_0.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/S__31113246_0.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/物件轉益cover.jpg",
+          "size": "small"
+        }
+      ],
+      "drawings": [
+        {
+          "src": "images/S__30359571_0.jpg",
+          "size": "tiny",
+          "fit": "contain"
+        },
+        {
+          "src": "images/S__30359572_0.jpg",
+          "size": "tiny",
+          "fit": "contain"
+        },
+        {
+          "src": "images/S__30359577_0.jpg",
+          "size": "tiny",
+          "fit": "contain"
+        },
+        {
+          "src": "images/S__30359576_0.jpg",
+          "size": "tiny",
+          "fit": "contain"
+        },
+        {
+          "src": "images/S__30359574_0.jpg",
+          "size": "tiny",
+          "fit": "contain"
+        },
+        {
+          "src": "images/S__30359566_0.jpg",
+          "size": "tiny",
+          "fit": "contain"
+        },
+        {
+          "src": "images/20241229192526_page-0001.jpg",
+          "size": "tiny"
+        },
+        {
+          "src": "images/S__30359578_0.jpg",
+          "size": "tiny",
+          "fit": "contain"
+        },
+        {
+          "src": "images/S__30359580_0.jpg",
+          "size": "tiny",
+          "fit": "contain"
+        },
+        {
+          "src": "images/S__30359573_0.jpg",
+          "size": "small",
+          "orientation": "portrait"
+        },
+        {
+          "src": "images/S__30359570_0.jpg",
+          "size": "small",
+          "orientation": "portrait"
+        },
+        {
+          "src": "images/S__30359579_0.jpg",
+          "size": "small",
+          "orientation": "portrait"
+        },
+        {
+          "src": "images/elevation front_page-0001.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/elevation back_page-0001.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/S__30359588_0.jpg",
+          "size": "large",
+          "fit": "contain"
+        },
+        {
+          "src": "images/S__30359587_0.jpg",
+          "size": "large",
+          "fit": "contain"
+        },
+        {
+          "src": "images/S__30359585_0.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/S__30359583_0.jpg",
+          "size": "small",
+          "fit": "contain"
+        }
+      ],
+      "series": [
+        {
+          "id": "Series-A",
+          "part": 1
+        }
+      ],
+      "books": [
+        "b02"
+      ],
+      "summary": "「回應對立的自由介面」。<br>外在試圖控制的亮暗對比；內裏由彈簧與金屬片構成簡單機械目的的電流通斷路，而以一平實塑膠塊體與可動護蓋總括流程。內部的目的是瞬間性的；而內部的設計是要求固定的：塑料突起是盡力地將各部件留在原位，而金屬組件是追求動起來，進而達成控制，在這樣矛盾之下，電燈開關是一種在既定秩序下的動態紀錄體，然而這兩者並非並置(juxtaposition) 而是時刻相互影響的「 秩序」 與「新秩序」 與「秩序使然」 迴圈（Oscillation）。",
+      "description": "「回應對立的自由介面」。<br>外在試圖控制的亮暗對比；內裏由彈簧與金屬片構成簡單機械目的的電流通斷路，而以一平實塑膠塊體與可動護蓋總括流程。內部的目的是瞬間性的；而內部的設計是要求固定的：塑料突起是盡力地將各部件留在原位，而金屬組件是追求動起來，進而達成控制，在這樣矛盾之下，電燈開關是一種在既定秩序下的動態紀錄體，然而這兩者並非並置(juxtaposition) 而是時刻相互影響的「 秩序」 與「新秩序」 與「秩序使然」 迴圈（Oscillation）。<br><br>Externally, the switch mediates light and dark; internally, springs and metal plates open or close the circuit within a simple plastic casing. While plastic fixes components in place, metal parts must move to control flow. From this tension, the switch becomes a dynamic act within a fixed structure—an ongoing cycle of order, new order, and oscillation.",
+      "credits": "謝政庭"
+    },
+    {
+      "id": "A-05",
+      "title": "光室\nLight Room",
+      "category": "Tectonic",
+      "year": "2026",
+      "location": "Department of Architecture, NCKU, Taiwan",
+      "status": "1:1 Full-scale Construction",
+      "cover": "images/IMG_9926.jpg",
+      "series": [
+        {
+          "id": "Series-S",
+          "part": 1
+        },
+        {
+          "id": "Series-R",
+          "part": 4
+        }
+      ],
+      "gallery": [
+        {
+          "src": "images/ChatGPT Image 2026年7月9日 下午04_10_20.png",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_6667.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_E9930.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_0086.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/IMG_0087.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/S__45711433_0.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/S__45711434_0.jpg",
+          "size": "wide"
+        },
+        {
+          "src": "images/IMG_0069.JPG",
+          "size": "small"
+        },
+        {
+          "src": "images/S__45711435_0.jpg",
+          "size": "wide"
+        },
+        {
+          "src": "images/S__45711431_0.jpg",
+          "size": "small",
+          "position": "35% 50%"
+        },
+        {
+          "src": "images/S__45711432_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_0077.JPG",
+          "size": "large"
+        },
+        {
+          "src": "images/IMG_9907.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/S__45711430_0.jpg",
+          "size": "small"
+        }
+      ],
+      "drawings": [
+        {
+          "src": "images/光桌01 [轉換].jpg",
+          "size": "small",
+          "orientation": "portrait"
+        }
+      ],
+      "books": [
+        "b02"
+      ],
+      "summary": "A small, largely open-air reading room testing shelter with minimal means.",
+      "description": "意識到於現行建築設計課的教育中，手繪又重為主要的溝通媒介，而光桌便成為一個重要資源，我們也試圖將剖面計畫中的樓梯下方空間，原先為系上雜物、垃圾囤積空間已有逾十年，我們於計畫中將空間重新整理，使其恢復到可以被使用的狀態，並將其機能定為光室。同時改造系上現有家具使光桌的使用能更符合人體尺度。<br><br>Recognizing that hand drawing remains a primary communication medium in current architectural education, the light table has become an important resource. We also sought to reclaim the space beneath the staircase in the sectional project, which had been used for storage and waste accumulation for over a decade. In our plan, we reorganized the space to restore its usability and designated it as a light room. Additionally, we modified existing furniture in the department to better accommodate the use of light tables.",
+      "credits": "蕭本亮, 謝政庭, 王子銘, 謝廷威, 郭柏辰"
+    },
+    {
+      "id": "A-06",
+      "title": "Waste",
+      "category": "Surreal",
+      "year": "2025",
+      "location": "Department of Architecture, NCKU, Taiwan",
+      "status": "Record",
+      "cover": "images/IMG_6676.jpg",
+      "coverPosition": "50% 70%",
+      "series": [
+        {
+          "id": "Series-S",
+          "part": 1
+        }
+      ],
+      "gallery": [
+        {
+          "src": "images/ChatGPT Image 2026年7月9日 下午04_10_20.png",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_6667.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_6692.jpg",
+          "size": "small"
+        }
+      ],
+      "books": [],
+      "summary": "A full-scale bamboo pavilion exploring traditional lashing techniques.",
+      "description": "它就是個超過10年的垃圾。<br><br>It is a waste that has been accumulating for over 10 years.",
+      "credits": "謝政庭, 謝廷威, 蕭本亮"
+    },
+    {
+      "id": "A-07",
+      "title": "Built as A Machine for Happening.",
+      "category": "Public",
+      "year": "2025",
+      "location": "Tainan, Taiwan",
+      "status": "Architectural design",
+      "cover": "images/S__33906821_0.jpg",
+      "gallery": [
+        {
+          "src": "images/S__33906786_0.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/S__33906825_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/S__33906846_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/S__33906814_0.jpg",
+          "size": "wide"
+        },
+        {
+          "src": "images/S__33906806_0.jpg",
+          "size": "wide"
+        },
+        {
+          "src": "images/S__33906794_0.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/S__33906841_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/S__33906812_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/S__33906790_0.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/S__33906770_0.jpg",
+          "size": "wide"
+        },
+        {
+          "src": "images/S__33906785_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/S__33906780_0.jpg",
+          "size": "wide"
+        }
+      ],
+      "drawings": [
+        {
+          "src": "images/level02&03 plan A1.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/level01 plan A1.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/section  A1.jpg",
+          "size": "large",
+          "fit": "contain"
+        },
+        {
+          "src": "images/site plan (1) A1.jpg",
+          "size": "large",
+          "fit": "contain"
+        },
+        {
+          "src": "images/場景透視 1 A3.jpg",
+          "size": "tiny",
+          "fit": "contain"
+        },
+        {
+          "src": "images/場景透視 2 A3.jpg",
+          "size": "tiny",
+          "fit": "contain"
+        },
+        {
+          "src": "images/level01 plan A0.jpg",
+          "size": "tiny"
+        },
+        {
+          "src": "images/01.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/02.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/03.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/04.jpg",
+          "size": "small",
+          "fit": "contain"
+        }
+      ],
+      "books": [
+        "b02"
+      ],
+      "summary": "A library, nursery, and elder space stacked around a shared atrium.",
+      "description": "不是衛生所，不是健身房，也不是市集。是一幢建築，但它不被設計來容納，而是為了讓事情發生的巨大機器。它不從基地線升起量體配置策略，而是從被建築拒絕的停車場、車道滲入。這些傳統規劃中的餘料在這裡被重新定義為構成空間的積極元素。底層挑空，讓車道徑直穿越量體；廣場不是前庭，而是延伸的動線界面。舞台車、捐血車、餐車、貨車不再被隔離於建築之外，而是成為建築的內部器官，進入、停靠、轉變其功能與關係。活動因此不再由預先的使用定義，而是由這些不斷穿梭與停駐的單位生成。懸空量體，人行車道徑直而過，實際健身房、演講廳、諮商室與衛生所的活動機能因其串聯，不宣稱中心，不穩定、不固定，不做為屹立實體，而是製造可能性出現的條件。<br><br>It is neither clinic, gym, nor marketplace. It is a building not meant to contain, but a machine enabling events to occur. Its mass does not rise from the site edge; instead, it infiltrates through parking lots and driveways typically rejected by architecture, redefining them as active spatial elements.<br>The ground floor is opened, allowing traffic to pass through; the plaza becomes circulation rather than forecourt. Mobile stages, blood donation vans, food trucks, and cargo trucks enter the building as internal organs, constantly reshaping use and relationships. Suspended volumes allow flows to cross freely, while program spaces—gym, lecture hall, counseling rooms, clinic—avoid central dominance, remaining unstable and open, creating conditions for possibilities rather than fixed functions.",
+      "credits": "謝政庭"
+    },
+    {
+      "id": "A-08",
+      "title": "Wall Gallery",
+      "category": "Public",
+      "year": "2024",
+      "location": "Tainan, Taiwan",
+      "status": "Architectural design",
+      "cover": "images/IMG_8110.jpg",
+      "series": [
+        {
+          "id": "Series-W",
+          "part": 3
+        }
+      ],
+      "gallery": [
+        {
+          "src": "images/IMG_8221.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/IMG_8094.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_8104.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_8125.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_8181.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_8160.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/IMG_8227.jpg",
+          "size": "large"
+        }
+      ],
+      "drawings": [
+        {
+          "src": "images/plan&section.jpg",
+          "size": "large",
+          "fit": "contain"
+        },
+        {
+          "src": "images/視域分析.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/imgw-618210106-1.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/視域軸線 建築軸線關係圖.jpg",
+          "size": "large",
+          "position": "bottom"
+        }
+      ],
+      "books": [
+        "b02"
+      ],
+      "summary": "A gathering hall stepped into a valley, its roofline echoing the ridge above.",
+      "description": "牆大多時候最直接地代表著阻擋與劃分，我總喜歡用冷酷來形容這樣的事件，然而出自於圍牆行為，卻總是讓人不自覺地露出微笑，倚靠牆邊擺餐桌的小吃攤販、撐高腳尖探頭想一睹牆內神祕的路人、悠閒地騎著單車自在掠過牆邊的年輕人，一道牆收錄了生活的日常。很多時候，就是有著那一道牆遮蔽了某一程度的視野，這個場域才開始變得溫馨與秘密，一種人與環境的親密感、好奇也因此繫了起來。<br><br>Walls often most directly signify blockage and division, and I like to describe this quality as cold. Yet the very act of enclosing can unexpectedly bring a smile: street vendors set up tables along a wall, passersby tiptoe to peek at its hidden interior, and young cyclists glide leisurely past its edge. A single wall collects these everyday moments of life. Often, it is precisely because a wall partially shields the view that a place becomes warm and secret—a subtle intimacy between people and their environment, where curiosity is quietly bound to the space.",
+      "credits": "謝政庭"
+    },
+    {
+      "id": "A-09",
+      "title": "Texture Recorder",
+      "category": "Tectonic",
+      "year": "2023",
+      "location": "Tainan, Taiwan",
+      "status": "1:1 Full-scale Construction",
+      "cover": "images/rubbing.jpg",
+      "gallery": [
+        {
+          "src": "images/S__26206210.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/S__26198035_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/S__40083458.jpg",
+          "size": "small"
+        }
+      ],
+      "drawings": [
+        {
+          "src": "images/S__26279956.jpg",
+          "size": "large",
+          "fit": "contain"
+        }
+      ],
+      "books": [
+        "b02"
+      ],
+      "summary": "A performance space with a folded roof that reconfigures for different shows.",
+      "description": "小從硬幣，大至整個城市，都有屬於它的獨特質地，而分辨這些肌理取決於觸覺給予的回饋，也許會是平滑、粗糙、浮凸、細膩、膨鬆、硬挺……。但是一切對於紋理的表達似乎僅存於自己的認定與衍伸出來的對話、文字，它不像視覺有相片、聽覺有音符記號，不是這麼絕對，好像也沒有一定群體間的交集，但儘管如此，對於紋理，還是可以試圖記錄下來的。拓印，將觸覺的特色某一程度上的轉移到視覺上，讓人們有更多的機會產生討論甚至是共識。<br><br>From a coin to an entire city, everything possesses its own unique texture. Our ability to distinguish these surfaces depends on tactile feedback—smooth, rough, embossed, delicate, soft, or rigid. Yet expressions of texture often remain personal, existing mainly through individual interpretation and description. Unlike vision, which has photographs, or sound, which has musical notation, texture lacks an absolute or commonly shared language. Even so, it can still be recorded. Through rubbing, tactile qualities are partially translated into visual form, creating opportunities for discussion and even shared understanding.",
+      "credits": "謝政庭"
+    },
+    {
+      "id": "A-10",
+      "title": "Whole from Parts from Whole.",
+      "category": "Housing",
+      "year": "2025",
+      "location": "Tainan, Taiwan",
+      "status": "Concept design / Architectural design",
+      "cover": "images/S__33906706_0.jpg",
+      "gallery": [
+        {
+          "src": "images/S__40108038_0.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/S__40108035_0.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/S__33906726_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/S__33906714_0.jpg",
+          "size": "wide"
+        },
+        {
+          "src": "images/S__33906736_0.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/S__33923095_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/S__33923096_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/S__33923098.jpg",
+          "size": "small"
+        }
+      ],
+      "drawings": [
+        {
+          "src": "images/site plan_page-0001.jpg",
+          "size": "small",
+          "fit": "contain",
+          "orientation": "portrait"
+        },
+        {
+          "src": "images/plan+1700 5_page-0001.jpg",
+          "size": "small",
+          "fit": "contain",
+          "orientation": "portrait"
+        },
+        {
+          "src": "images/plan+1300 4_page-0001.jpg",
+          "size": "small",
+          "fit": "contain",
+          "orientation": "portrait"
+        },
+        {
+          "src": "images/plan+920 3_page-0001.jpg",
+          "size": "small",
+          "fit": "contain",
+          "orientation": "portrait"
+        },
+        {
+          "src": "images/plan+640 2_page-0001.jpg",
+          "size": "small",
+          "fit": "contain",
+          "orientation": "portrait"
+        },
+        {
+          "src": "images/plan+350 1_page-0001.jpg",
+          "size": "small",
+          "fit": "contain",
+          "orientation": "portrait"
+        },
+        {
+          "src": "images/chamber 1_page-0001.jpg",
+          "size": "tiny",
+          "fit": "contain"
+        },
+        {
+          "src": "images/chamber 2_page-0001.jpg",
+          "size": "tiny",
+          "fit": "contain"
+        },
+        {
+          "src": "images/chamber 3_page-0001.jpg",
+          "size": "tiny",
+          "fit": "contain"
+        },
+        {
+          "src": "images/作品集 暫時完整版1_頁面_47.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/作品集 暫時完整版1_頁面_471.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/作品集 暫時完整版1_頁面_49.jpg",
+          "size": "large",
+          "fit": "contain",
+          "orientation": "portrait"
+        },
+        {
+          "src": "images/圖片1.jpg",
+          "size": "large",
+          "fit": "contain",
+          "orientation": "portrait"
+        }
+      ],
+      "books": [
+        "b02"
+      ],
+      "summary": "A rethink of Taiwan's covered arcade, caught between shops and pedestrians.",
+      "description": "一切開始於對正常集合住宅的拒絕，但出自於回應基地紋理。竹溪原先彎曲地穿越城鎮，後來被截斷並向南導出一條新的人工水線。水文被暴力地更動，不規則的街廓卻提醒其存在。曾經依河而生的聚落，今與理想秩序的棋盤街道相接，一端是工業化系統，一端是歷史的地形記憶，兩種紋理交錯產生不穩定的場域。在設計案中：一條人工水道以泳池為機能被放置在原河線周遭，離地四米，長二十六米，不試圖修復，而是選擇過度再造，對截彎取直的回應。腔室以不規則街區為原型，從數百單元，壓縮至1至2戶。它們成為建築的單位，不再是集合。棋盤街道不再存在外部而嵌入其中並串連腔室，抬升九十公分，使用被切割，活動被嵌入，好似反原本既定廊道的凸字型。所有邊界變得模糊，所有系統成為碎片，所有碎片重新生成系統。<br><br>It begins with a rejection of the conventional collective housing model, yet still responds to the site’s texture. The river once meandered through the town before being cut and redirected south into an artificial channel. Though the hydrology was forcibly altered, the irregular urban fabric continues to reveal its memory. A settlement once shaped by the river now meets the imposed order of a grid—industrial logic on one side, historical terrain on the other—producing an unstable field where two systems overlap.<br>In this project, an artificial water line reappears as a pool, placed along the former river path—elevated four meters and extending twenty-six meters. Rather than restoring, it chooses to reinterpret, responding to the act of straightening the river. Spatial chambers, derived from irregular blocks, are compressed into one- to two-unit entities, becoming the building’s fundamental units rather than a collective whole. The grid is no longer external but embedded within, linking these chambers while lifted 90 cm, fragmenting use and inserting activity—reversing the conventional corridor logic. Boundaries blur, systems fragment, and fragments recombine into a new order.",
+      "credits": "謝政庭"
+    },
+    {
+      "id": "A-11",
+      "title": "Centre Pompidou Facade Study",
+      "category": "Study",
+      "year": "2024",
+      "location": "Non",
+      "status": "Record",
+      "cover": "images/ChatGPT Image 2026年7月10日 下午09_41_47.png",
+      "gallery": [
+        {
+          "src": "images/S__30416936_0.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/S__30613560_0.jpg",
+          "size": "large"
+        }
+      ],
+      "books": [
+        ""
+      ],
+      "summary": "A performance space with a folded roof that reconfigures for different shows.",
+      "description": "龐畢度中心最大的特色，在於將原本隱藏於建築內部的結構、設備管線與交通系統移至建築外側，讓立面不只是建築的外殼，更成為建築運作方式的展現。不同顏色的管線分別代表不同的設備系統，使人們能直接從外觀理解建築的組成，也讓立面呈現出鮮明且富有秩序的特色。這樣的設計不僅提高了室內空間的使用彈性，也改變了人們對建築外觀的既有印象。<br>本次研究透過分析龐畢度中心立面的構成方式，將結構、管線、交通系統與立面框架重新整理，並以模型重現各元素之間的配置關係。在製作過程中發現，這些外露的構件並非只是視覺上的裝飾，而是共同支撐建築運作的重要部分。透過模型的重構，更能理解龐畢度中心如何運用規律的構架、鮮明的色彩與清楚的系統配置，打造出兼具功能性與辨識度的立面，也展現出高科技建築將工程技術直接轉化為建築表現的設計特色。<br><br>The most distinctive feature of the Centre Pompidou is its externalization of structural, mechanical, and circulation systems, transforming the facade into a visible expression of the building’s operational logic. Color-coded pipes represent different systems, allowing observers to understand the building’s composition at a glance, while imparting a striking and orderly aesthetic. This design not only enhances interior spatial flexibility but also challenges conventional perceptions of architectural exteriors.<br>This study analyzes the facade’s composition, reorganizing its structural, mechanical, and circulation elements and reconstructing their relationships through modeling. The process revealed that these exposed components are not mere visual embellishments but integral to the building’s functionality. By reconstructing the model, we gain insight into how the Centre Pompidou employs systematic frameworks, vivid colors, and clear configurations to create a facade that is both functional and iconic, exemplifying high-tech architecture’s translation of engineering into architectural expression.",
+      "credits": "謝政庭, 蕭本亮"
+    },
+    {
+      "id": "A-12",
+      "title": "Inter-(potential)-Field",
+      "category": "Public",
+      "year": "2026",
+      "location": "Tainan, Taiwan",
+      "status": "Architectural design",
+      "cover": "images/333.png",
+      "series": [
+        {
+          "id": "Series-I",
+          "part": 2
+        }
+      ],
+      "gallery": [
+        {
+          "src": "images/S__30416936_0.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/S__30613560_0.jpg",
+          "size": "large"
+        }
+      ],
+      "drawings": [
+        {
+          "src": "images/loop. studio architectural drawing set_頁面_02.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/loop. studio architectural drawing set_頁面_03.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/loop. studio architectural drawing set_頁面_04.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/loop. studio architectural drawing set_頁面_05.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/loop. studio architectural drawing set_頁面_06.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/loop. studio architectural drawing set_頁面_07.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/loop. studio architectural drawing set_頁面_08.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/loop. studio architectural drawing set_頁面_09.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/loop. studio architectural drawing set_頁面_10.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/loop. studio architectural drawing set_頁面_11.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/loop. studio architectural drawing set_頁面_12.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/loop. studio architectural drawing set_頁面_13.jpg",
+          "size": "small",
+          "fit": "contain"
+        }
+      ],
+      "books": [
+        "b01"
+      ],
+      "summary": "A performance space with a folded roof that reconfigures for different shows.",
+      "description": "龐畢度中心最大的特色，在於將原本隱藏於建築內部的結構、設備管線與交通系統移至建築外側，讓立面不只是建築的外殼，更成為建築運作方式的展現。不同顏色的管線分別代表不同的設備系統，使人們能直接從外觀理解建築的組成，也讓立面呈現出鮮明且富有秩序的特色。這樣的設計不僅提高了室內空間的使用彈性，也改變了人們對建築外觀的既有印象。<br>本次研究透過分析龐畢度中心立面的構成方式，將結構、管線、交通系統與立面框架重新整理，並以模型重現各元素之間的配置關係。在製作過程中發現，這些外露的構件並非只是視覺上的裝飾，而是共同支撐建築運作的重要部分。透過模型的重構，更能理解龐畢度中心如何運用規律的構架、鮮明的色彩與清楚的系統配置，打造出兼具功能性與辨識度的立面，也展現出高科技建築將工程技術直接轉化為建築表現的設計特色。<br><br>The most distinctive feature of the Centre Pompidou is its externalization of structural, mechanical, and circulation systems, transforming the facade into a visible expression of the building’s operational logic. Color-coded pipes represent different systems, allowing observers to understand the building’s composition at a glance, while imparting a striking and orderly aesthetic. This design not only enhances interior spatial flexibility but also challenges conventional perceptions of architectural exteriors.<br>This study analyzes the facade’s composition, reorganizing its structural, mechanical, and circulation elements and reconstructing their relationships through modeling. The process revealed that these exposed components are not mere visual embellishments but integral to the building’s functionality. By reconstructing the model, we gain insight into how the Centre Pompidou employs systematic frameworks, vivid colors, and clear configurations to create a facade that is both functional and iconic, exemplifying high-tech architecture’s translation of engineering into architectural expression.",
+      "credits": "謝政庭, 蕭本亮"
+    },
+    {
+      "id": "A-13",
+      "title": "Inter-(potential)-Field 'Theater Facade'",
+      "category": "Detail",
+      "year": "2026",
+      "location": "Tainan, Taiwan",
+      "status": "Detail design",
+      "cover": "images/facade drawing set-17.jpg",
+      "series": [
+        {
+          "id": "Series-I",
+          "part": 3
+        }
+      ],
+      "gallery": [
+        {
+          "src": "images/S__46153740_0.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/S__46153738_0.jpg",
+          "size": "large"
+        },
+        {
+          "src": "images/S__46153736_0.jpg",
+          "size": "large"
+        }
+      ],
+      "drawings": [
+        {
+          "src": "images/facade drawing set-02.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images/facade drawing set-12.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images/facadesection.jpg",
+          "size": "large",
+          "fit": "contain",
+          "orientation": "portrait"
+        },
+        {
+          "src": "images/facade drawing set.jpg",
+          "size": "small",
+          "fit": "contain"
+        }
+      ],
+      "books": [
+        "b01"
+      ],
+      "summary": "A performance space with a folded roof that reconfigures for different shows.",
+      "description": "作為「制度化逃離」的劇場功能，從更廣闊的視角來看，劇場仍是一種基礎設施，支撐著廣場那份真切的熱烈氛圍。這座碗狀、類似體育場的建築形式，已透過地面與牆壁實現了空間的圍合與支撐，而劇場那懸浮的體量，則構成了天空的空間邊界。<br>我們設想的天花板既具功能性，又能促進廣場層進行更多元的活動。<br>劇場中常見的走道設施，通常是最隱蔽的空間區域；當它們向外延伸至建築外皮時，劇場體量便顯得殘缺且支離破碎，反而更像一個向外擴張的基礎設施核心。<br>走道外殼在劇院體量周圍被解構，轉化為由鋼纜構成的立面。外殼與建築外牆之間預留了一條供工作人員使用的維護通道，而標準的走道設施則設置於體量基部。<br><br>As a theatrical function of “institutionalized escape,” the theater, viewed from a broader perspective, still serves as a form of infrastructure that supports the square’s state of genuine excitement. The bowl-shaped, stadium-like architectural form has already achieved the spatial enclosure and support provided by the ground and walls, while the floating volume of the theater serves as the spatial boundary of the sky.<br>We envision a ceiling that is both functional and capable of fostering a wider variety of activities on the plaza level.<br>The catwalk facilities commonly found in theaters are typically the most concealed spatial areas; when they are turned outward onto the building’s skin, the theater volume becomes incomplete and disjointed, resembling instead an outward-expanding infrastructure core.<br>The catwalk envelope is deconstructed around the theater volume into a facade composed of steel cables. A maintenance passage is left between the envelope and the building’s exterior wall for staff use, while the standard catwalk facilities are situated at the base of the volume.",
+      "credits": "謝政庭, 蕭本亮"
+    },
+    {
+      "id": "A-14",
+      "title": "Plagiarism",
+      "category": "Surreal",
+      "year": "2023",
+      "location": "Non",
+      "status": "Concept design",
+      "cover": "images/臨摹畫.jpg",
+      "fit": "contain",
+      "series": [],
+      "drawings": [
+        {
+          "src": "images/S__26181675.jpg",
+          "size": "large",
+          "fit": "contain",
+          "orientation": "portrait"
+        },
+        {
+          "src": "images/S__26181672_0.jpg",
+          "size": "large",
+          "fit": "contain",
+          "orientation": "portrait"
+        }
+      ],
+      "books": [],
+      "summary": "A performance space with a folded roof that reconfigures for different shows.",
+      "description": "複製Daniel Libeskind的The Burrow Laws, Micromegas(1979)，藉抄襲之手段，再衍生出另種用想像填充未定義區的When We Look ''The Burrow Laws, Micromegas'' From Different Side。<br><br>Copying Daniel Libeskind's The Burrow Laws, Micromegas (1979), and through the act of plagiarism, deriving another work that fills undefined areas with imagination: When We Look ''The Burrow Laws, Micromegas'' From Different Side.",
+      "credits": "謝政庭"
+    },
+    {
+      "id": "A-15",
+      "title": "Dissolving System",
+      "category": "Surreal",
+      "year": "2024",
+      "location": "Non",
+      "status": "Concept design",
+      "cover": "images4/master copy.jpg",
+      "fit": "contain",
+      "series": [
+        {
+          "id": "Series-W",
+          "part": 1
+        }
+      ],
+      "gallery": [
+        {
+          "src": "images4/IMG_7211.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images4/IMG_7234.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images4/IMG_7246.jpg",
+          "size": "small"
+        }
+      ],
+      "drawings": [
+        {
+          "src": "images4/69.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images4/未命名-1.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images4/master copy.jpg",
+          "size": "large",
+          "fit": "contain"
+        }
+      ],
+      "books": [
+        "b02"
+      ],
+      "summary": "A performance space with a folded roof that reconfigures for different shows.",
+      "description": "作為Wall Gallery的前導研究，來自於建築的建築，發掘其精神性與建築邏輯技巧並重新拆解應用。<br>St. Nicolas Church由Walter Maria Förderer設計，空間秩序源於兩套交錯45度的正交系統網，牆體、隔間與座椅位置皆由90°、135°、45°角度生成，看似隨機卻嚴謹可測。至少50公分厚的實牆板構築整體，牆高隨地勢與內部需求推移錯動，形成複雜的空間層次；光影投射出的邊界，使建築在實與虛、可觸與不可觸之間同時被理解。巨大混凝土量體置入木屋村落，隨距離主殿而逐漸消退，高度與切口設計連接道路，使其既為聚落核心，又保持親近性。秩序、邊界與感知在此交織，建築的存在在行走與停留中逐步浮現，空間不僅被安排，而是在體驗中被理解。<br><br>As a preliminary study for the Wall Gallery, this project explores the spiritual and architectural logic of architecture itself, deconstructing and reapplying its techniques.<br>St. Nicolas Church, designed by Walter Maria Förderer, derives its spatial order from two interlocking orthogonal systems at 45-degree angles. The walls, partitions, and seating positions are generated by angles of 90°, 135°, and 45°, creating a seemingly random yet rigorously measurable arrangement. The thick concrete walls, at least 50 centimeters, construct the overall structure, with wall heights shifting according to terrain and internal needs, resulting in complex spatial layers. The interplay of light and shadow casts boundaries that allow the building to be understood in terms of both tangible and intangible qualities. The massive concrete volume is inserted into a wooden village, gradually receding with distance from the main hall. Its height and cut design connect to the roads, making it both the core of the settlement and maintaining a sense of intimacy. Order, boundaries, and perception intertwine here, with the building's presence gradually emerging through walking and pausing; space is not merely arranged but understood through experience.",
+      "credits": "謝政庭"
+    },
+    {
+      "id": "A-16",
+      "title": "混血／重組",
+      "category": "Surreal",
+      "year": "2024",
+      "location": "Non",
+      "status": "Concept design",
+      "cover": "images4/mixblood.jpg",
+      "fit": "contain",
+      "series": [
+        {
+          "id": "Series-W",
+          "part": 2
+        }
+      ],
+      "gallery": [
+        {
+          "src": "images4/IMG_7852.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images4/IMG_7846.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images4/IMG_7843.jpg",
+          "size": "small"
+        }
+      ],
+      "drawings": [
+        {
+          "src": "images4/S__29057047_0.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images4/S__29057049_0.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images4/789_page-0001.jpg",
+          "size": "large",
+          "fit": "contain"
+        }
+      ],
+      "books": [
+        "b02"
+      ],
+      "summary": "A performance space with a folded roof that reconfigures for different shows.",
+      "description": "本階段為小組合作的專案項目，延續上一階段的研究成果(critical section)於連續圖紙上接圖創作，將兩個不同的case study 重新在精神與手法上再次結合，將專屬於大師傑作的片段DNA銘刻於新的集合體，繁衍出另一種精神表現，來自非生命體的生意形變。St. Nicholas Church 的網格脈絡、Salk Institute 的空間彈性，那原先決定性的規矩勢必產生新的空間排列敘事。<br><br>This phase is a collaborative project that continues the research findings from the previous stage (critical section) and creates a continuous drawing by connecting two different case studies. The project reinterprets the DNA fragments of the masterpieces of the masters, combining them in spirit and technique to create a new collective entity, resulting in a new form of expression derived from non-living entities. The grid structure of St. Nicholas Church and the spatial flexibility of the Salk Institute inevitably lead to new spatial arrangements and narratives.",
+      "credits": "謝政庭"
+    },
+    {
+      "id": "A-17",
+      "title": "We Are All Connected",
+      "category": "Public",
+      "year": "2024",
+      "location": "Tainan, Taiwan",
+      "status": "Architectural design",
+      "cover": "images4/cover.jpg",
+      "fit": "contain",
+      "series": [
+        {
+          "id": "Series-A",
+          "part": 2
+        }
+      ],
+      "gallery": [
+        {
+          "src": "images4/S__31186996_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images4/S__31187013_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images4/S__31187028_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images4/S__31187029_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images4/S__31187030_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images4/S__31187031_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images4/S__31187035_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images4/S__31203375_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "images4/S__31186977_0.jpg",
+          "size": "small"
+        }
+      ],
+      "drawings": [
+        {
+          "src": "images4/1F平面圖_page-0001.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images4/2F平面圖_page-0001.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images4/AA section_page-0001.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images4/BB section_page-0001.jpg",
+          "size": "small",
+          "fit": "contain"
+        },
+        {
+          "src": "images4/爆炸圖(手繪)_page-0001.jpg",
+          "size": "large",
+          "fit": "contain"
+        }
+      ],
+      "books": [
+        "b02"
+      ],
+      "summary": "A performance space with a folded roof that reconfigures for different shows.",
+      "description": "\"消極的面\"。東寧公園東側由一貫民房高築，牆上開了窗與門正暗示不同尺度的交流，而當窗與門被安置上了鐵籠、違章加建，卻是宣告拒絕互動。公園與民宅反映了兩種極端考量基準點，然而我不認為這只有拒絕溝通的結論。\"外部內部化\"，我在既有的民房秩序中尋找新秩序的著力點，並試圖利用\"外加物件\"進到民宅內部，將外部空間內部化，反之亦然，以公園側出入口作為主體，搭配保有民宅私人的西藥房商業行為，進而達成公共與私密間的蒙太奇。<br><br>The Negative Aspect. Along Dongning Park’s edge, residential blocks open toward the park through windows and doors, yet iron cages and illegal additions often turn these into gestures of refusal. Park and home stand as two extremes, but not simply as a breakdown of communication.<br>Externalizing the Internal. Within the existing residential order, I searched for leverage to introduce a new one—using external additions to blur inside and outside. Focusing on the park-side entrance and the pharmacy’s semi-public activity, the project seeks a montage between public and private realms.",
+      "credits": "謝政庭"
+    }
+  ]
+}
