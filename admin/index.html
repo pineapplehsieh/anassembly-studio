@@ -1,12 +1,1197 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>後台管理 — Anassembly. Studio</title>
-  <link href="config.yml" rel="cms-config-url">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>後台管理 — Anassembly. Studio</title>
+<style>
+:root{
+  --paper:   #fbfaf8;
+  --ink:     #201f1d;
+  --muted:   #8a8781;
+  --line:    #eae7e1;
+  --accent:  #6b6355;
+  --danger:  #b23b3b;
+  --f-heading: 'Trebuchet MS', 'Yu Gothic', 'Meiryo', sans-serif;
+  --f-body:    'Yu Gothic Light', 'Yu Gothic', 'Meiryo', sans-serif;
+}
+*,*::before,*::after{ box-sizing:border-box; }
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--f-body); font-size:15px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+img{ max-width:100%; display:block; }
+a{ color:inherit; }
+button{ font-family:inherit; cursor:pointer; }
+h1,h2,h3{ font-family:var(--f-heading); font-weight:700; letter-spacing:-0.01em; margin:0; }
+input,textarea,select{ font-family:inherit; font-size:14px; }
+
+.wrap{ max-width:1000px; margin:0 auto; padding:0 24px; }
+
+/* ---------- header ---------- */
+.top-bar{
+  border-bottom:1px solid var(--line); padding:18px 0; margin-bottom:28px;
+}
+.top-bar .wrap{ display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.top-bar .site-title{ font-family:var(--f-heading); font-weight:700; font-size:18px; }
+.top-bar .site-title a{ text-decoration:none; color:var(--muted); font-weight:400; font-size:13px; margin-left:10px; }
+.top-bar .user-box{ display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); }
+.top-bar .user-box img{ width:26px; height:26px; border-radius:50%; }
+.btn{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:9px 16px; border-radius:5px; border:1px solid var(--line);
+  background:#fff; color:var(--ink); font-size:13.5px; font-weight:600;
+  transition:all .15s ease;
+}
+.btn:hover{ border-color:var(--ink); }
+.btn.primary{ background:var(--ink); color:#fff; border-color:var(--ink); }
+.btn.primary:hover{ background:#000; }
+.btn.danger{ color:var(--danger); border-color:#e6c9c9; }
+.btn.danger:hover{ background:#fdf1f1; border-color:var(--danger); }
+.btn.ghost{ border-color:transparent; background:none; color:var(--muted); padding:9px 10px; }
+.btn.ghost:hover{ color:var(--ink); }
+.btn:disabled{ opacity:.5; cursor:default; }
+.btn svg{ width:15px; height:15px; flex-shrink:0; }
+
+/* ---------- login screen ---------- */
+.login-screen{
+  min-height:70vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:22px; text-align:center; padding:40px 20px;
+}
+.login-screen h1{ font-size:24px; }
+.login-screen p{ color:var(--muted); max-width:360px; font-size:14px; line-height:1.7; }
+
+/* ---------- tabs ---------- */
+.tab-nav{ display:flex; gap:6px; margin-bottom:28px; border-bottom:1px solid var(--line); }
+.tab-nav button{
+  padding:11px 18px; background:none; border:none; border-bottom:2px solid transparent;
+  font-size:14.5px; font-weight:600; color:var(--muted); margin-bottom:-1px;
+}
+.tab-nav button.active{ color:var(--ink); border-color:var(--ink); }
+.tab-nav button:hover{ color:var(--ink); }
+
+/* ---------- collection grid (list view) ---------- */
+.collection-toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:12px; flex-wrap:wrap; }
+.item-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:20px; padding-bottom:60px; }
+.item-card{
+  border:1px solid var(--line); border-radius:8px; overflow:hidden; cursor:pointer;
+  background:#fff; transition:box-shadow .15s ease, transform .15s ease;
+}
+.item-card:hover{ box-shadow:0 6px 18px rgba(32,31,29,0.1); transform:translateY(-2px); }
+.item-card .thumb{ aspect-ratio:4/3; background:#efece5; overflow:hidden; }
+.item-card .thumb img{ width:100%; height:100%; object-fit:cover; }
+.item-card .thumb.empty{ display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:12px; }
+.item-card .info{ padding:12px 14px; }
+.item-card .info .t{ font-size:14px; font-weight:600; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.item-card .info .m{ font-size:12px; color:var(--muted); }
+.add-card{
+  border:1.5px dashed var(--line); border-radius:8px; aspect-ratio:4/3;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  color:var(--muted); cursor:pointer; background:none;
+}
+.add-card:hover{ border-color:var(--ink); color:var(--ink); }
+.add-card svg{ width:26px; height:26px; }
+.add-card span{ font-size:13px; font-weight:600; }
+
+/* ---------- editor ---------- */
+.editor{ padding-bottom:80px; }
+.editor-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; gap:12px; flex-wrap:wrap; }
+.back-link{ display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:13.5px; background:none; border:none; padding:0; }
+.back-link:hover{ color:var(--ink); }
+.field-block{ margin-bottom:26px; }
+.field-block > label, .field-block > .label{
+  display:block; font-family:var(--f-heading); font-weight:700; font-size:13px;
+  letter-spacing:.02em; margin-bottom:8px; color:var(--ink);
+}
+.field-hint{ font-size:12px; color:var(--muted); margin-top:6px; line-height:1.6; }
+.field-block input[type=text], .field-block input[type=number], .field-block textarea{
+  width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:5px;
+  background:#fff; color:var(--ink); resize:vertical;
+}
+.field-block input:focus, .field-block textarea:focus{ outline:none; border-color:var(--ink); }
+.field-block textarea{ min-height:110px; line-height:1.7; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.three-col{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+@media (max-width:640px){ .two-col, .three-col{ grid-template-columns:1fr; } }
+
+/* cover drop zone */
+.cover-drop{
+  aspect-ratio:16/9; max-width:520px; border-radius:8px; overflow:hidden;
+  background:#efece5; border:1.5px dashed var(--line); position:relative; cursor:pointer;
+}
+.cover-drop.has-image{ border-style:solid; }
+.cover-drop img{ width:100%; height:100%; object-fit:cover; }
+.cover-drop .placeholder{
+  position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:8px; color:var(--muted); font-size:13px;
+}
+.cover-drop .placeholder svg{ width:26px; height:26px; }
+.cover-drop:hover{ border-color:var(--ink); }
+.cover-drop.drag-over{ border-color:var(--ink); background:rgba(107,99,85,0.08); }
+.cover-drop .replace-hint{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(20,19,17,0.55); color:#fff; font-size:12.5px; opacity:0; transition:opacity .15s ease;
+}
+.cover-drop.has-image:hover .replace-hint{ opacity:1; }
+
+/* photo tile grid (gallery / drawings) */
+.tile-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:14px; }
+.tile{
+  position:relative; aspect-ratio:4/3; border-radius:6px; overflow:hidden; background:#efece5;
+  border:1px solid var(--line);
+}
+.tile img{ width:100%; height:100%; object-fit:cover; }
+.tile .tile-controls{
+  position:absolute; left:0; right:0; bottom:0; padding:6px;
+  background:linear-gradient(to top, rgba(20,19,17,0.85), rgba(20,19,17,0));
+  display:flex; gap:4px; flex-wrap:wrap;
+}
+.tile .size-btn{
+  padding:3px 7px; font-size:10.5px; font-weight:700; border-radius:3px; border:1px solid rgba(255,255,255,0.4);
+  background:rgba(255,255,255,0.12); color:#fff;
+}
+.tile .size-btn.active{ background:#fff; color:var(--ink); border-color:#fff; }
+.tile .remove-btn{
+  position:absolute; top:5px; right:5px; width:22px; height:22px; border-radius:50%;
+  background:rgba(20,19,17,0.65); color:#fff; border:none; font-size:14px; line-height:1;
+  display:flex; align-items:center; justify-content:center;
+}
+.tile .remove-btn:hover{ background:var(--danger); }
+.tile .orient-btn{
+  position:absolute; top:5px; left:5px; padding:3px 7px; font-size:10px; font-weight:700; border-radius:3px;
+  background:rgba(20,19,17,0.65); color:#fff; border:none;
+}
+.tile .orient-btn.active{ background:#fff; color:var(--ink); }
+.add-tile{
+  aspect-ratio:4/3; border-radius:6px; border:1.5px dashed var(--line);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+  color:var(--muted); background:none;
+}
+.add-tile:hover{ border-color:var(--ink); color:var(--ink); }
+.add-tile svg{ width:20px; height:20px; }
+.add-tile span{ font-size:11.5px; font-weight:600; }
+.tile-grid-drop{ border-radius:8px; transition:background .15s ease; }
+.tile-grid-drop.drag-over{ background:rgba(107,99,85,0.08); outline:1.5px dashed var(--ink); outline-offset:6px; }
+
+/* tag picker (series / books relation) */
+.tag-picker{ display:flex; flex-wrap:wrap; gap:8px; }
+.tag-option{
+  display:flex; align-items:center; gap:8px; padding:7px 12px; border:1px solid var(--line);
+  border-radius:20px; font-size:13px; background:#fff;
+}
+.tag-option input{ margin:0; }
+.tag-option.checked{ border-color:var(--ink); background:rgba(32,31,29,0.04); font-weight:600; }
+.tag-option .part-input{
+  width:38px; padding:2px 4px; border:1px solid var(--line); border-radius:3px; font-size:12px; text-align:center;
+}
+.empty-note{ color:var(--muted); font-size:13px; font-style:italic; }
+
+/* pdf file picker */
+.file-drop{
+  border:1.5px dashed var(--line); border-radius:8px; padding:18px; display:flex; align-items:center; gap:12px;
+  cursor:pointer; max-width:520px;
+}
+.file-drop:hover{ border-color:var(--ink); }
+.file-drop svg{ width:22px; height:22px; color:var(--muted); flex-shrink:0; }
+.file-drop .name{ font-size:13px; word-break:break-all; }
+.file-drop .name.empty{ color:var(--muted); }
+
+/* save bar */
+.save-bar{
+  position:sticky; bottom:0; margin-top:32px; padding:16px 0; background:var(--paper);
+  border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;
+}
+.save-status{ font-size:12.5px; color:var(--muted); }
+.save-status.err{ color:var(--danger); }
+
+/* toast */
+#toast{
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--ink); color:#fff; padding:12px 20px; border-radius:6px; font-size:13.5px;
+  opacity:0; pointer-events:none; transition:all .25s ease; z-index:999; max-width:90vw; text-align:center;
+}
+#toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+#toast.err{ background:var(--danger); }
+
+/* loading overlay */
+#loadingOverlay{
+  position:fixed; inset:0; background:rgba(251,250,248,0.85); backdrop-filter:blur(2px);
+  display:none; align-items:center; justify-content:center; z-index:998; font-size:14px; color:var(--muted);
+}
+#loadingOverlay.show{ display:flex; }
+
+.spinner{
+  width:16px; height:16px; border-radius:50%; border:2px solid var(--line); border-top-color:var(--ink);
+  animation:spin .7s linear infinite; display:inline-block; margin-right:8px; vertical-align:-3px;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+</style>
 </head>
 <body>
-  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+
+<div id="loadingOverlay"><span class="spinner"></span><span id="loadingText">處理中…</span></div>
+<div id="toast"></div>
+<div id="app"></div>
+
+<script>
+/* ============================================================
+   設定
+   ============================================================ */
+const REPO_OWNER = "pineapplehsieh";
+const REPO_NAME = "anassembly-studio";
+const REPO_BRANCH = "main";
+const UPLOADS_DIR = "uploads";
+const AUTH_ENDPOINT = "https://sunny-kangaroo-3eb599.netlify.app/.netlify/functions/auth";
+const RAW_BASE = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/`;
+const API_BASE = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}`;
+
+function rawUrl(path){
+  if(!path) return "";
+  return RAW_BASE + path.split("/").map(encodeURIComponent).join("/");
+}
+function esc(str){
+  return String(str == null ? "" : str).replace(/[&<>"']/g, s => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[s]));
+}
+function uid(){ return Math.random().toString(36).slice(2, 9); }
+
+/* ============================================================
+   Toast / loading
+   ============================================================ */
+let toastTimer = null;
+function toast(msg, isErr){
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.toggle("err", !!isErr);
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 3200);
+}
+function setLoading(on, text){
+  document.getElementById("loadingText").textContent = text || "處理中…";
+  document.getElementById("loadingOverlay").classList.toggle("show", !!on);
+}
+
+/* ============================================================
+   Auth（跟 netlify/functions/auth.js + callback.js 溝通的協定，
+   沿用 Decap CMS 原本那一套 postMessage 握手方式，因為已經驗證過可以用）
+   ============================================================ */
+let authToken = localStorage.getItem("gh_token") || null;
+
+function login(){
+  return new Promise((resolve, reject) => {
+    const w = 600, h = 700;
+    const left = (screen.width - w) / 2, top = (screen.height - h) / 2;
+    const popup = window.open(AUTH_ENDPOINT, "github-oauth", `width=${w},height=${h},left=${left},top=${top}`);
+    if(!popup){ reject(new Error("彈出視窗被瀏覽器擋掉了，請允許彈出視窗後再試一次")); return; }
+
+    function handshake(e){
+      if(e.data === "authorizing:github"){
+        window.removeEventListener("message", handshake);
+        window.addEventListener("message", onResult);
+        popup.postMessage(e.data, e.origin);
+      }
+    }
+    function onResult(e){
+      if(typeof e.data !== "string") return;
+      if(e.data.indexOf("authorization:github:success:") === 0){
+        window.removeEventListener("message", onResult);
+        try{
+          const body = JSON.parse(e.data.slice("authorization:github:success:".length));
+          resolve(body.token);
+        }catch(err){ reject(err); }
+      } else if(e.data.indexOf("authorization:github:error:") === 0){
+        window.removeEventListener("message", onResult);
+        try{
+          const body = JSON.parse(e.data.slice("authorization:github:error:".length));
+          reject(new Error(body.message || "登入失敗"));
+        }catch(err){ reject(new Error("登入失敗")); }
+      }
+    }
+    window.addEventListener("message", handshake);
+  });
+}
+
+function logout(){
+  authToken = null;
+  localStorage.removeItem("gh_token");
+  state.user = null;
+  render();
+}
+
+/* ============================================================
+   GitHub API 小工具
+   ============================================================ */
+async function ghFetch(path, opts){
+  opts = opts || {};
+  opts.headers = Object.assign({
+    "Authorization": "token " + authToken,
+    "Accept": "application/vnd.github+json",
+  }, opts.headers || {});
+  const res = await fetch(API_BASE + path, opts);
+  if(res.status === 401){ logout(); throw new Error("登入已失效，請重新登入"); }
+  if(!res.ok){
+    let msg = res.status + " " + res.statusText;
+    try{ const j = await res.json(); if(j.message) msg = j.message; }catch(e){}
+    throw new Error(msg);
+  }
+  return res;
+}
+
+async function ghGetUser(){
+  const res = await fetch("https://api.github.com/user", { headers: { "Authorization": "token " + authToken } });
+  if(!res.ok) throw new Error("無法讀取使用者資訊");
+  return res.json();
+}
+
+// base64 編碼（處理中文檔名 / UTF-8 內容）
+function utf8ToBase64(str){
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
+async function ghGetFile(path){
+  const res = await ghFetch(`/contents/${path.split("/").map(encodeURIComponent).join("/")}?ref=${REPO_BRANCH}&_=${Date.now()}`);
+  const data = await res.json();
+  const content = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ""))));
+  return { sha: data.sha, content, json: JSON.parse(content) };
+}
+
+async function ghPutFile(path, base64Content, message, sha){
+  const body = { message, content: base64Content, branch: REPO_BRANCH };
+  if(sha) body.sha = sha;
+  const res = await ghFetch(`/contents/${path.split("/").map(encodeURIComponent).join("/")}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
+async function ghDeleteFile(path, message, sha){
+  return ghFetch(`/contents/${path.split("/").map(encodeURIComponent).join("/")}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, sha, branch: REPO_BRANCH }),
+  });
+}
+
+function readFileAsBase64(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(",")[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function sanitizeFilename(name){
+  return name.replace(/[^\w.\-一-鿿]+/g, "_");
+}
+
+/* 上傳一個檔案（圖片或 PDF）到 uploads/ 資料夾，回傳最終路徑 */
+async function uploadAsset(file){
+  const path = `${UPLOADS_DIR}/${Date.now()}-${sanitizeFilename(file.name)}`;
+  const b64 = await readFileAsBase64(file);
+  await ghPutFile(path, b64, `Upload ${file.name} via admin`);
+  return path;
+}
+
+/* ============================================================
+   全域狀態
+   ============================================================ */
+const state = {
+  user: null,
+  tab: "projects", // projects | books | series
+  projects: null, projectsSha: null,
+  books: null, booksSha: null,
+  series: null, seriesSha: null,
+  editing: null, // { type, item, isNew }
+};
+
+async function loadAllContent(){
+  const [p, b, s] = await Promise.all([
+    ghGetFile("content/projects.json"),
+    ghGetFile("content/books.json"),
+    ghGetFile("content/series.json"),
+  ]);
+  state.projects = p.json.items; state.projectsSha = p.sha;
+  state.books = b.json.items; state.booksSha = b.sha;
+  state.series = s.json.items; state.seriesSha = s.sha;
+}
+
+async function saveCollection(type){
+  const map = {
+    projects: { path: "content/projects.json", data: state.projects, shaKey: "projectsSha" },
+    books: { path: "content/books.json", data: state.books, shaKey: "booksSha" },
+    series: { path: "content/series.json", data: state.series, shaKey: "seriesSha" },
+  };
+  const info = map[type];
+  const json = JSON.stringify({ items: info.data }, null, 2) + "\n";
+  const res = await ghPutFile(info.path, utf8ToBase64(json), `Update ${type} via admin`, state[info.shaKey]);
+  state[info.shaKey] = res.content.sha;
+}
+
+/* ============================================================
+   Router / render
+   ============================================================ */
+const app = document.getElementById("app");
+
+function render(){
+  if(!authToken || !state.user){
+    renderLogin();
+    return;
+  }
+  if(state.editing){
+    renderEditor();
+  } else {
+    renderCollectionList();
+  }
+}
+
+function renderLogin(){
+  app.innerHTML = `
+    <div class="wrap">
+      <div class="login-screen">
+        <h1>後台管理</h1>
+        <p>用你的 GitHub 帳號登入，就能新增、編輯、刪除網站上的作品、書籍、系列內容。</p>
+        <button class="btn primary" id="loginBtn">使用 GitHub 帳號登入</button>
+      </div>
+    </div>
+  `;
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+    try{
+      setLoading(true, "登入中…");
+      const token = await login();
+      authToken = token;
+      localStorage.setItem("gh_token", token);
+      state.user = await ghGetUser();
+      await loadAllContent();
+      render();
+    }catch(err){
+      toast(err.message || "登入失敗", true);
+    }finally{
+      setLoading(false);
+    }
+  });
+}
+
+function renderTopBar(){
+  return `
+    <div class="top-bar">
+      <div class="wrap">
+        <div class="site-title">後台管理<a href="../" target="_blank">↗ 查看網站</a></div>
+        <div class="user-box">
+          <img src="${esc(state.user.avatar_url)}" alt="">
+          <span>${esc(state.user.login)}</span>
+          <button class="btn ghost" id="logoutBtn">登出</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderCollectionList(){
+  const tabs = [
+    { id: "projects", label: "作品 Work" },
+    { id: "books", label: "書籍 Books" },
+    { id: "series", label: "系列 Series" },
+  ];
+  app.innerHTML = `
+    ${renderTopBar()}
+    <div class="wrap">
+      <div class="tab-nav">
+        ${tabs.map(t => `<button data-tab="${t.id}" class="${state.tab === t.id ? "active" : ""}">${t.label}</button>`).join("")}
+      </div>
+      <div id="tabContent"></div>
+    </div>
+  `;
+  document.getElementById("logoutBtn").addEventListener("click", logout);
+  app.querySelectorAll(".tab-nav button").forEach(btn => {
+    btn.addEventListener("click", () => { state.tab = btn.dataset.tab; render(); });
+  });
+  renderTabContent();
+}
+
+function renderTabContent(){
+  const el = document.getElementById("tabContent");
+  if(state.tab === "projects") el.innerHTML = projectsListHtml();
+  else if(state.tab === "books") el.innerHTML = booksListHtml();
+  else el.innerHTML = seriesListHtml();
+  bindListEvents();
+}
+
+function addCardHtml(label){
+  return `
+    <button class="add-card" data-add="1">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span>${label}</span>
+    </button>
+  `;
+}
+
+function projectsListHtml(){
+  const cards = state.projects.map((p, i) => `
+    <div class="item-card" data-edit="${i}">
+      <div class="thumb ${p.cover ? "" : "empty"}">
+        ${p.cover ? `<img src="${esc(rawUrl(p.cover))}" alt="" loading="lazy">` : "尚無封面"}
+      </div>
+      <div class="info">
+        <div class="t">${esc((p.title || "").split("\n")[0] || "（未命名）")}</div>
+        <div class="m">${esc(p.category || "")} · ${esc(p.year || "")}</div>
+      </div>
+    </div>
+  `).join("");
+  return `<div class="item-grid">${cards}${addCardHtml("新增作品")}</div>`;
+}
+
+function booksListHtml(){
+  const cards = state.books.map((b, i) => `
+    <div class="item-card" data-edit="${i}">
+      <div class="thumb ${b.cover ? "" : "empty"}">
+        ${b.cover ? `<img src="${esc(rawUrl(b.cover))}" alt="" loading="lazy">` : "尚無封面"}
+      </div>
+      <div class="info">
+        <div class="t">${esc((b.title || "").split("\n")[0] || "（未命名）")}</div>
+        <div class="m">${esc(b.year || "")}</div>
+      </div>
+    </div>
+  `).join("");
+  return `<div class="item-grid">${cards}${addCardHtml("新增書籍")}</div>`;
+}
+
+function seriesListHtml(){
+  const cards = state.series.map((s, i) => `
+    <div class="item-card" data-edit="${i}">
+      <div class="thumb ${(s.thumb || s.cover) ? "" : "empty"}">
+        ${(s.thumb || s.cover) ? `<img src="${esc(rawUrl(s.thumb || s.cover))}" alt="" loading="lazy">` : "尚無縮圖"}
+      </div>
+      <div class="info">
+        <div class="t">${esc(s.title || "（未命名）")}</div>
+        <div class="m">${esc(s.id || "")}</div>
+      </div>
+    </div>
+  `).join("");
+  return `<div class="item-grid">${cards}${addCardHtml("新增系列")}</div>`;
+}
+
+function bindListEvents(){
+  const el = document.getElementById("tabContent");
+  el.querySelectorAll("[data-edit]").forEach(card => {
+    card.addEventListener("click", () => {
+      const idx = parseInt(card.dataset.edit, 10);
+      const list = state[state.tab];
+      openEditor(state.tab, JSON.parse(JSON.stringify(list[idx])), idx, false);
+    });
+  });
+  const addBtn = el.querySelector("[data-add]");
+  if(addBtn) addBtn.addEventListener("click", () => {
+    openEditor(state.tab, blankItem(state.tab), -1, true);
+  });
+}
+
+function blankItem(type){
+  if(type === "projects") return {
+    id: "", title: "", category: "", year: "", location: "", status: "",
+    cover: "", coverPosition: "", description: "", gallery: [], drawings: [],
+    series: [], books: [], credits: "", summary: "",
+  };
+  if(type === "books") return { id: "", title: "", year: "", cover: "", file: "", description: "" };
+  return { id: "", title: "", cover: "", thumb: "", description: "" };
+}
+
+function openEditor(type, item, index, isNew){
+  state.editing = { type, item, index, isNew, pendingUploads: {} };
+  render();
+}
+
+function closeEditor(){
+  state.editing = null;
+  render();
+}
+
+/* ============================================================
+   Editor：共用小元件
+   ============================================================ */
+function iconUpload(){
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>`;
+}
+function iconFile(){
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>`;
+}
+
+/* 產生一個「封面」拖拉上傳區的 HTML；imgSrc 可能是本地 blob 網址（剛選的檔案）或原始 raw url */
+function coverDropHtml(fieldPath, imgSrc){
+  return `
+    <div class="cover-drop ${imgSrc ? "has-image" : ""}" data-cover-field="${esc(fieldPath)}">
+      ${imgSrc
+        ? `<img src="${esc(imgSrc)}" alt=""><div class="replace-hint">點擊或拖曳圖片以更換</div>`
+        : `<div class="placeholder">${iconUpload()}<span>點擊或拖曳圖片到這裡</span></div>`
+      }
+      <input type="file" accept="image/*" style="display:none">
+    </div>
+  `;
+}
+
+function resolveTileSrc(editing, srcValue){
+  if(editing.pendingUploads[srcValue]) return editing.pendingUploads[srcValue].previewUrl;
+  return rawUrl(srcValue);
+}
+
+/* ============================================================
+   Editor：作品 Projects
+   ============================================================ */
+function projectEditorHtml(ed){
+  const p = ed.item;
+  const titleParts = (p.title || "").split("\n");
+  const seriesIds = (p.series || []).map(s => s.id);
+  const bookIds = p.books || [];
+
+  return `
+    <div class="editor">
+      <div class="editor-head">
+        <button class="back-link" id="backBtn">← 回到作品列表</button>
+        ${!ed.isNew ? `<button class="btn danger" id="deleteBtn">刪除這筆作品</button>` : ""}
+      </div>
+
+      <div class="field-block">
+        <div class="label">封面照片</div>
+        ${coverDropHtml("cover", resolveTileSrc(ed, p.cover))}
+        <div class="field-hint">建議使用橫式、至少 1600px 寬的照片</div>
+      </div>
+
+      <div class="field-block two-col">
+        <div>
+          <label>中文標題</label>
+          <input type="text" id="f_title_zh" value="${esc(titleParts[0] || "")}" placeholder="例如：循環材聖誕樹">
+        </div>
+        <div>
+          <label>英文標題</label>
+          <input type="text" id="f_title_en" value="${esc(titleParts[1] || "")}" placeholder="Recycling Christmas Tree">
+        </div>
+      </div>
+
+      <div class="field-block three-col">
+        <div>
+          <label>分類</label>
+          <input type="text" id="f_category" list="categoryOptions" value="${esc(p.category)}" placeholder="Tectonic">
+          <datalist id="categoryOptions">${[...new Set(state.projects.map(x=>x.category).filter(Boolean))].map(c=>`<option value="${esc(c)}">`).join("")}</datalist>
+        </div>
+        <div>
+          <label>年份</label>
+          <input type="text" id="f_year" value="${esc(p.year)}" placeholder="2026">
+        </div>
+        <div>
+          <label>狀態</label>
+          <input type="text" id="f_status" value="${esc(p.status)}" placeholder="Architectural design">
+        </div>
+      </div>
+
+      <div class="field-block">
+        <label>地點</label>
+        <input type="text" id="f_location" value="${esc(p.location)}" placeholder="Tainan, Taiwan">
+      </div>
+
+      <div class="field-block">
+        <label>文字介紹</label>
+        <textarea id="f_description" style="min-height:200px">${esc(p.description)}</textarea>
+        <div class="field-hint">直接打字、按 Enter 換行、空一行分段即可（例如中文一段、空一行、英文一段）</div>
+      </div>
+
+      <div class="field-block">
+        <div class="label">相簿 Gallery</div>
+        <div class="tile-grid-drop" id="galleryDrop">
+          <div class="tile-grid" id="galleryGrid">
+            ${(p.gallery || []).map((g, i) => galleryTileHtml(ed, g, i, "gallery")).join("")}
+            <button class="add-tile" data-add-tile="gallery">${iconUpload()}<span>新增照片</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-block">
+        <div class="label">圖說 / 圖面 Drawings</div>
+        <div class="tile-grid-drop" id="drawingsDrop">
+          <div class="tile-grid" id="drawingsGrid">
+            ${(p.drawings || []).map((g, i) => galleryTileHtml(ed, g, i, "drawings")).join("")}
+            <button class="add-tile" data-add-tile="drawings">${iconUpload()}<span>新增圖片</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-block">
+        <div class="label">所屬系列（選填）</div>
+        ${state.series.length ? `
+          <div class="tag-picker">
+            ${state.series.map(s => {
+              const entry = (p.series || []).find(x => x.id === s.id);
+              return `
+                <label class="tag-option ${entry ? "checked" : ""}" data-series-tag="${esc(s.id)}">
+                  <input type="checkbox" ${entry ? "checked" : ""} data-series-check="${esc(s.id)}">
+                  ${esc(s.title)}
+                  ${entry ? `<input type="number" class="part-input" value="${entry.part || 1}" data-series-part="${esc(s.id)}" title="順序">` : ""}
+                </label>
+              `;
+            }).join("")}
+          </div>
+        ` : `<div class="empty-note">還沒有建立任何系列，可以先到「系列 Series」分頁新增。</div>`}
+      </div>
+
+      <div class="field-block">
+        <div class="label">相關書籍（選填）</div>
+        ${state.books.length ? `
+          <div class="tag-picker">
+            ${state.books.map(b => `
+              <label class="tag-option ${bookIds.includes(b.id) ? "checked" : ""}" data-book-tag="${esc(b.id)}">
+                <input type="checkbox" ${bookIds.includes(b.id) ? "checked" : ""} data-book-check="${esc(b.id)}">
+                ${esc((b.title||"").split("\n")[0])}
+              </label>
+            `).join("")}
+          </div>
+        ` : `<div class="empty-note">還沒有建立任何書籍，可以先到「書籍 Books」分頁新增。</div>`}
+      </div>
+
+      <div class="field-block">
+        <label>工作團隊 Credits</label>
+        <textarea id="f_credits" style="min-height:70px">${esc((p.credits||"").replace(/<br>/gi,"\n"))}</textarea>
+        <div class="field-hint">一行一位／一組即可，會自動換行顯示</div>
+      </div>
+
+      <div class="save-bar">
+        <span class="save-status" id="saveStatus"></span>
+        <button class="btn primary" id="saveBtn">儲存並發布</button>
+      </div>
+    </div>
+  `;
+}
+
+function gallerySizeOptions(kind){
+  return kind === "gallery"
+    ? [["large","大"],["small","中"],["wide","寬"]]
+    : [["large","大"],["small","中"],["tiny","小"]];
+}
+
+function galleryTileHtml(ed, item, i, kind){
+  const size = item.size || "small";
+  const src = resolveTileSrc(ed, item.src);
+  const isPortrait = kind === "drawings" && item.orientation === "portrait";
+  return `
+    <div class="tile" data-tile-kind="${kind}" data-tile-index="${i}">
+      ${src ? `<img src="${esc(src)}" alt="">` : ""}
+      ${kind === "drawings" ? `<button class="orient-btn ${isPortrait ? "active" : ""}" data-orient-toggle title="直式圖片">↕ 直式</button>` : ""}
+      <button class="remove-btn" data-remove-tile title="移除">×</button>
+      <div class="tile-controls">
+        ${gallerySizeOptions(kind).map(([val,label]) => `<button class="size-btn ${size===val?"active":""}" data-set-size="${val}">${label}</button>`).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function bindProjectEditorEvents(ed){
+  document.getElementById("backBtn").addEventListener("click", closeEditor);
+
+  const deleteBtn = document.getElementById("deleteBtn");
+  if(deleteBtn) deleteBtn.addEventListener("click", () => deleteCurrentItem());
+
+  bindCoverDropEvents(ed, "cover");
+  bindTileGrid(ed, "gallery", "galleryGrid", "galleryDrop");
+  bindTileGrid(ed, "drawings", "drawingsGrid", "drawingsDrop");
+
+  app.querySelectorAll("[data-series-check]").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const id = cb.dataset.seriesCheck;
+      ed.item.series = ed.item.series || [];
+      if(cb.checked){
+        if(!ed.item.series.find(s => s.id === id)) ed.item.series.push({ id, part: ed.item.series.length + 1 });
+      } else {
+        ed.item.series = ed.item.series.filter(s => s.id !== id);
+      }
+      rerenderEditor();
+    });
+  });
+  app.querySelectorAll("[data-series-part]").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const id = inp.dataset.seriesPart;
+      const entry = (ed.item.series || []).find(s => s.id === id);
+      if(entry) entry.part = parseInt(inp.value, 10) || 1;
+    });
+  });
+  app.querySelectorAll("[data-book-check]").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const id = cb.dataset.bookCheck;
+      ed.item.books = ed.item.books || [];
+      if(cb.checked){ if(!ed.item.books.includes(id)) ed.item.books.push(id); }
+      else { ed.item.books = ed.item.books.filter(x => x !== id); }
+      rerenderEditor();
+    });
+  });
+
+  document.getElementById("saveBtn").addEventListener("click", () => saveProjectEditor(ed));
+}
+
+function bindCoverDropEvents(ed, fieldName){
+  const dropEl = app.querySelector(`[data-cover-field="${fieldName}"]`);
+  if(!dropEl) return;
+  const fileInput = dropEl.querySelector("input[type=file]");
+  dropEl.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", () => {
+    if(fileInput.files[0]) handleCoverFile(ed, fieldName, fileInput.files[0]);
+  });
+  ["dragover","dragenter"].forEach(evt => dropEl.addEventListener(evt, e => { e.preventDefault(); dropEl.classList.add("drag-over"); }));
+  ["dragleave","drop"].forEach(evt => dropEl.addEventListener(evt, e => { e.preventDefault(); dropEl.classList.remove("drag-over"); }));
+  dropEl.addEventListener("drop", e => {
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if(file && file.type.startsWith("image/")) handleCoverFile(ed, fieldName, file);
+  });
+}
+
+function handleCoverFile(ed, fieldName, file){
+  const tempKey = "PENDING::" + uid();
+  ed.pendingUploads[tempKey] = { file, previewUrl: URL.createObjectURL(file) };
+  ed.item[fieldName] = tempKey;
+  rerenderEditor();
+}
+
+function bindTileGrid(ed, kind, gridId, dropId){
+  const grid = document.getElementById(gridId);
+  const dropZone = document.getElementById(dropId);
+  if(!grid) return;
+
+  grid.querySelectorAll(`[data-tile-kind="${kind}"]`).forEach(tile => {
+    const i = parseInt(tile.dataset.tileIndex, 10);
+    tile.querySelector("[data-remove-tile]").addEventListener("click", () => {
+      ed.item[kind].splice(i, 1);
+      rerenderEditor();
+    });
+    tile.querySelectorAll("[data-set-size]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        ed.item[kind][i].size = btn.dataset.setSize;
+        rerenderEditor();
+      });
+    });
+    const orientBtn = tile.querySelector("[data-orient-toggle]");
+    if(orientBtn) orientBtn.addEventListener("click", () => {
+      const cur = ed.item[kind][i];
+      cur.orientation = cur.orientation === "portrait" ? "" : "portrait";
+      if(!cur.orientation) delete cur.orientation;
+      rerenderEditor();
+    });
+  });
+
+  const addBtn = grid.querySelector(`[data-add-tile="${kind}"]`);
+  const fileInput = document.createElement("input");
+  fileInput.type = "file"; fileInput.accept = "image/*"; fileInput.multiple = true; fileInput.style.display = "none";
+  addBtn.after(fileInput);
+  addBtn.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", () => addTileFiles(ed, kind, Array.from(fileInput.files)));
+
+  if(dropZone){
+    ["dragover","dragenter"].forEach(evt => dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.add("drag-over"); }));
+    ["dragleave","drop"].forEach(evt => dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.remove("drag-over"); }));
+    dropZone.addEventListener("drop", e => {
+      const files = Array.from(e.dataTransfer.files || []).filter(f => f.type.startsWith("image/"));
+      if(files.length) addTileFiles(ed, kind, files);
+    });
+  }
+}
+
+function addTileFiles(ed, kind, files){
+  ed.item[kind] = ed.item[kind] || [];
+  files.forEach(file => {
+    const tempKey = "PENDING::" + uid();
+    ed.pendingUploads[tempKey] = { file, previewUrl: URL.createObjectURL(file) };
+    ed.item[kind].push({ src: tempKey, size: "small" });
+  });
+  rerenderEditor();
+}
+
+function rerenderEditor(){
+  render();
+}
+
+/* 把 editing.item 裡所有指向 pendingUploads 的暫時 key，實際上傳到 GitHub，換成正式路徑 */
+async function flushPendingUploads(ed){
+  const keys = Object.keys(ed.pendingUploads);
+  for(let i = 0; i < keys.length; i++){
+    const key = keys[i];
+    setLoading(true, `上傳圖片中… (${i+1}/${keys.length})`);
+    const finalPath = await uploadAsset(ed.pendingUploads[key].file);
+    replaceValueDeep(ed.item, key, finalPath);
+    delete ed.pendingUploads[key];
+  }
+}
+function replaceValueDeep(obj, oldVal, newVal){
+  if(Array.isArray(obj)){ obj.forEach(v => replaceValueDeep(v, oldVal, newVal)); return; }
+  if(obj && typeof obj === "object"){
+    Object.keys(obj).forEach(k => {
+      if(obj[k] === oldVal) obj[k] = newVal;
+      else if(typeof obj[k] === "object") replaceValueDeep(obj[k], oldVal, newVal);
+    });
+  }
+}
+
+async function saveProjectEditor(ed){
+  const p = ed.item;
+  const zh = document.getElementById("f_title_zh").value.trim();
+  const en = document.getElementById("f_title_en").value.trim();
+  p.title = [zh, en].filter(Boolean).join("\n");
+  p.category = document.getElementById("f_category").value.trim();
+  p.year = document.getElementById("f_year").value.trim();
+  p.status = document.getElementById("f_status").value.trim();
+  p.location = document.getElementById("f_location").value.trim();
+  p.description = document.getElementById("f_description").value;
+  p.credits = document.getElementById("f_credits").value.trim().replace(/\n/g, "<br>");
+
+  if(!p.title){ toast("請至少填寫標題", true); return; }
+
+  try{
+    setLoading(true, "儲存中…");
+    await flushPendingUploads(ed);
+    if(!p.id) p.id = generateId(state.projects, "A");
+    if(ed.isNew) state.projects.push(p);
+    else state.projects[ed.index] = p;
+    await saveCollection("projects");
+    toast("已發布，網站幾分鐘內會更新");
+    closeEditor();
+  }catch(err){
+    toast("儲存失敗：" + err.message, true);
+  }finally{
+    setLoading(false);
+  }
+}
+
+function generateId(list, prefix, sep){
+  sep = sep === undefined ? "-" : sep;
+  const re = new RegExp("^[A-Za-z]+" + sep.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(\\d+)$");
+  let max = 0;
+  list.forEach(x => {
+    const m = re.exec(x.id || "");
+    if(m) max = Math.max(max, parseInt(m[1], 10));
+  });
+  return `${prefix}${sep}${String(max + 1).padStart(2, "0")}`;
+}
+
+async function deleteCurrentItem(){
+  if(!confirm("確定要刪除這一筆嗎？這個動作沒辦法復原。")) return;
+  const ed = state.editing;
+  try{
+    setLoading(true, "刪除中…");
+    state[ed.type].splice(ed.index, 1);
+    await saveCollection(ed.type);
+    toast("已刪除");
+    closeEditor();
+  }catch(err){
+    toast("刪除失敗：" + err.message, true);
+  }finally{
+    setLoading(false);
+  }
+}
+
+/* ============================================================
+   Editor：書籍 Books
+   ============================================================ */
+function bookEditorHtml(ed){
+  const b = ed.item;
+  const titleParts = (b.title || "").split("\n");
+  return `
+    <div class="editor">
+      <div class="editor-head">
+        <button class="back-link" id="backBtn">← 回到書籍列表</button>
+        ${!ed.isNew ? `<button class="btn danger" id="deleteBtn">刪除這本書</button>` : ""}
+      </div>
+
+      <div class="field-block">
+        <div class="label">封面照片</div>
+        ${coverDropHtml("cover", resolveTileSrc(ed, b.cover))}
+      </div>
+
+      <div class="field-block two-col">
+        <div>
+          <label>書名</label>
+          <input type="text" id="f_title" value="${esc(titleParts[0] || "")}">
+        </div>
+        <div>
+          <label>年份</label>
+          <input type="text" id="f_year" value="${esc(b.year)}">
+        </div>
+      </div>
+
+      <div class="field-block">
+        <div class="label">PDF 檔案</div>
+        <div class="file-drop" id="pdfDrop">
+          ${iconFile()}
+          <span class="name ${b.file ? "" : "empty"}" id="pdfName">${b.file ? esc(b.file.split("/").pop()) : "點擊選擇 PDF 檔案"}</span>
+          <input type="file" accept="application/pdf" style="display:none">
+        </div>
+      </div>
+
+      <div class="save-bar">
+        <span class="save-status" id="saveStatus"></span>
+        <button class="btn primary" id="saveBtn">儲存並發布</button>
+      </div>
+    </div>
+  `;
+}
+
+function bindBookEditorEvents(ed){
+  document.getElementById("backBtn").addEventListener("click", closeEditor);
+  const deleteBtn = document.getElementById("deleteBtn");
+  if(deleteBtn) deleteBtn.addEventListener("click", () => deleteCurrentItem());
+  bindCoverDropEvents(ed, "cover");
+
+  const pdfDrop = document.getElementById("pdfDrop");
+  const pdfInput = pdfDrop.querySelector("input[type=file]");
+  pdfDrop.addEventListener("click", () => pdfInput.click());
+  pdfInput.addEventListener("change", () => {
+    const file = pdfInput.files[0];
+    if(!file) return;
+    const tempKey = "PENDING::" + uid();
+    ed.pendingUploads[tempKey] = { file, previewUrl: file.name };
+    ed.item.file = tempKey;
+    document.getElementById("pdfName").textContent = file.name;
+    document.getElementById("pdfName").classList.remove("empty");
+  });
+
+  document.getElementById("saveBtn").addEventListener("click", () => saveBookEditor(ed));
+}
+
+async function saveBookEditor(ed){
+  const b = ed.item;
+  b.title = document.getElementById("f_title").value.trim();
+  b.year = document.getElementById("f_year").value.trim();
+  if(!b.title){ toast("請至少填寫書名", true); return; }
+
+  try{
+    setLoading(true, "儲存中…");
+    await flushPendingUploads(ed);
+    if(!b.id) b.id = generateId(state.books, "b", "");
+    if(ed.isNew) state.books.push(b);
+    else state.books[ed.index] = b;
+    await saveCollection("books");
+    toast("已發布，網站幾分鐘內會更新");
+    closeEditor();
+  }catch(err){
+    toast("儲存失敗：" + err.message, true);
+  }finally{
+    setLoading(false);
+  }
+}
+
+/* ============================================================
+   Editor：系列 Series
+   ============================================================ */
+function seriesEditorHtml(ed){
+  const s = ed.item;
+  return `
+    <div class="editor">
+      <div class="editor-head">
+        <button class="back-link" id="backBtn">← 回到系列列表</button>
+        ${!ed.isNew ? `<button class="btn danger" id="deleteBtn">刪除這個系列</button>` : ""}
+      </div>
+
+      <div class="field-block">
+        <div class="label">主視覺封面</div>
+        ${coverDropHtml("cover", resolveTileSrc(ed, s.cover))}
+      </div>
+
+      <div class="field-block">
+        <div class="label">目錄縮圖（選填，不填則使用主視覺封面）</div>
+        ${coverDropHtml("thumb", resolveTileSrc(ed, s.thumb))}
+      </div>
+
+      <div class="field-block">
+        <label>系列名稱</label>
+        <input type="text" id="f_title" value="${esc(s.title)}">
+      </div>
+
+      <div class="field-block">
+        <label>文字介紹</label>
+        <textarea id="f_description" style="min-height:160px">${esc(s.description)}</textarea>
+        <div class="field-hint">直接打字、按 Enter 換行、空一行分段即可</div>
+      </div>
+
+      <div class="save-bar">
+        <span class="save-status" id="saveStatus"></span>
+        <button class="btn primary" id="saveBtn">儲存並發布</button>
+      </div>
+    </div>
+  `;
+}
+
+function bindSeriesEditorEvents(ed){
+  document.getElementById("backBtn").addEventListener("click", closeEditor);
+  const deleteBtn = document.getElementById("deleteBtn");
+  if(deleteBtn) deleteBtn.addEventListener("click", () => deleteCurrentItem());
+  bindCoverDropEvents(ed, "cover");
+  bindCoverDropEvents(ed, "thumb");
+  document.getElementById("saveBtn").addEventListener("click", () => saveSeriesEditor(ed));
+}
+
+async function saveSeriesEditor(ed){
+  const s = ed.item;
+  s.title = document.getElementById("f_title").value.trim();
+  s.description = document.getElementById("f_description").value;
+  if(!s.title){ toast("請至少填寫系列名稱", true); return; }
+
+  try{
+    setLoading(true, "儲存中…");
+    await flushPendingUploads(ed);
+    if(!s.id) s.id = "Series-" + generateSeriesLetter();
+    if(ed.isNew) state.series.push(s);
+    else state.series[ed.index] = s;
+    await saveCollection("series");
+    toast("已發布，網站幾分鐘內會更新");
+    closeEditor();
+  }catch(err){
+    toast("儲存失敗：" + err.message, true);
+  }finally{
+    setLoading(false);
+  }
+}
+function generateSeriesLetter(){
+  const used = new Set(state.series.map(s => (s.id||"").replace("Series-","")));
+  for(let i = 0; i < 26; i++){
+    const letter = String.fromCharCode(65 + i);
+    if(!used.has(letter)) return letter;
+  }
+  return uid().toUpperCase();
+}
+
+/* ============================================================
+   Editor：總入口
+   ============================================================ */
+function renderEditor(){
+  const ed = state.editing;
+  app.innerHTML = `
+    ${renderTopBar()}
+    <div class="wrap">
+      ${ed.type === "projects" ? projectEditorHtml(ed) : ed.type === "books" ? bookEditorHtml(ed) : seriesEditorHtml(ed)}
+    </div>
+  `;
+  document.getElementById("logoutBtn").addEventListener("click", logout);
+  if(ed.type === "projects") bindProjectEditorEvents(ed);
+  else if(ed.type === "books") bindBookEditorEvents(ed);
+  else bindSeriesEditorEvents(ed);
+}
+
+/* ============================================================
+   啟動
+   ============================================================ */
+(async function init(){
+  if(authToken){
+    try{
+      setLoading(true, "載入中…");
+      state.user = await ghGetUser();
+      await loadAllContent();
+    }catch(err){
+      authToken = null;
+      localStorage.removeItem("gh_token");
+    }finally{
+      setLoading(false);
+    }
+  }
+  render();
+})();
+</script>
 </body>
 </html>
