@@ -1312,7 +1312,16 @@
           "size": "small"
         }
       ],
-      "drawings": [],
+      "drawings": [
+        {
+          "src": "uploads/1787155292591-elevation.jpg",
+          "size": "large"
+        },
+        {
+          "src": "uploads/1787155295302-elevation2.jpg",
+          "size": "large"
+        }
+      ],
       "series": [],
       "books": [
         "b02"
