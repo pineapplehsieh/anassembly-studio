@@ -872,12 +872,18 @@ function getSeriesInfo(id){
 }
 
 async function loadContent(){
-  // 每個 JSON 檔案外層都包了一個 { items: [...] }，這是後台（Decap CMS）
+  // 每個 JSON 檔案外層都包了一個 { items: [...] }，這是後台管理介面
   // 管理「單一檔案內的一份清單」時所需要的固定格式，這裡讀取後直接把 items 展開。
+  //
+  // GitHub Pages 會幫這些檔案加上 10 分鐘的瀏覽器／CDN 快取（Cache-Control: max-age=600），
+  // 這是平台本身的固定行為、沒辦法關掉。這裡在每次讀取時加上以目前時間產生的查詢參數，
+  // 讓瀏覽器把它當成「不同的網址」重新抓取，後台發布的新內容才能立刻反映在網站上，
+  // 不用等快取過期。
+  const cb = "?v=" + Date.now();
   const [projects, series, books] = await Promise.all([
-    fetch("content/projects.json").then(r => r.json()).then(d => d.items),
-    fetch("content/series.json").then(r => r.json()).then(d => d.items),
-    fetch("content/books.json").then(r => r.json()).then(d => d.items),
+    fetch("content/projects.json" + cb).then(r => r.json()).then(d => d.items),
+    fetch("content/series.json" + cb).then(r => r.json()).then(d => d.items),
+    fetch("content/books.json" + cb).then(r => r.json()).then(d => d.items),
   ]);
   PROJECTS = projects;
   SERIES_INFO = series;
