@@ -905,7 +905,37 @@ function addTileFiles(ed, kind, files){
   rerenderEditor();
 }
 
+/* 選照片、調整版型、勾系列/書籍…這些動作都會整個重畫編輯畫面，
+   如果重畫的時候還沒把目前表單欄位（標題、文字介紹…）目前打的內容
+   寫回 state.editing.item，重畫出來的欄位就會用回「上一次重畫時」的
+   舊內容，看起來就像打的字自己不見了。所以每次重畫前，先把目前畫面上
+   看得到的欄位內容同步進資料裡，再重畫。 */
+function syncEditorFieldsToItem(){
+  const ed = state.editing;
+  if(!ed) return;
+  const item = ed.item;
+  const val = (id) => { const el = document.getElementById(id); return el ? el.value : undefined; };
+
+  if(ed.type === "projects"){
+    const zh = val("f_title_zh"), en = val("f_title_en");
+    if(zh !== undefined) item.title = [zh.trim(), (en || "").trim()].filter(Boolean).join("\n");
+    if(val("f_category") !== undefined) item.category = val("f_category").trim();
+    if(val("f_year") !== undefined) item.year = val("f_year").trim();
+    if(val("f_status") !== undefined) item.status = val("f_status").trim();
+    if(val("f_location") !== undefined) item.location = val("f_location").trim();
+    if(val("f_description") !== undefined) item.description = val("f_description");
+    if(val("f_credits") !== undefined) item.credits = val("f_credits");
+  } else if(ed.type === "books"){
+    if(val("f_title") !== undefined) item.title = val("f_title").trim();
+    if(val("f_year") !== undefined) item.year = val("f_year").trim();
+  } else if(ed.type === "series"){
+    if(val("f_title") !== undefined) item.title = val("f_title").trim();
+    if(val("f_description") !== undefined) item.description = val("f_description");
+  }
+}
+
 function rerenderEditor(){
+  syncEditorFieldsToItem();
   render();
 }
 
