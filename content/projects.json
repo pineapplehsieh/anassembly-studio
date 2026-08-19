@@ -1270,18 +1270,53 @@
     },
     {
       "id": "A-18",
-      "title": "Massing",
-      "category": "Surreal",
+      "title": "Bay Corner",
+      "category": "Public",
       "year": "2023",
       "location": "",
-      "status": "Concept Design",
-      "cover": "uploads/1787150093832-S__26157157_0.jpg",
+      "status": "Architectural Design",
+      "cover": "uploads/1787155013608-S__26394656_0.jpg",
       "coverPosition": "",
       "description": "",
-      "gallery": [],
+      "gallery": [
+        {
+          "src": "uploads/1787155015867-489228758613229604.jpg",
+          "size": "small"
+        },
+        {
+          "src": "uploads/1787155018326-S__26394694_0.jpg",
+          "size": "wide"
+        },
+        {
+          "src": "uploads/1787155020101-S__26394651_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "uploads/1787155022316-S__26394659_0.jpg",
+          "size": "large"
+        },
+        {
+          "src": "uploads/1787155025246-S__26394638_0.png",
+          "size": "small"
+        },
+        {
+          "src": "uploads/1787155030683-S__26394655_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "uploads/1787155037042-S__26394660_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "uploads/1787155039174-S__26394681_0.jpg",
+          "size": "small"
+        }
+      ],
       "drawings": [],
       "series": [],
-      "books": [],
+      "books": [
+        "b02"
+      ],
       "credits": "謝政庭",
       "summary": ""
     }
