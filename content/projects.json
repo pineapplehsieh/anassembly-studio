@@ -1270,18 +1270,62 @@
     },
     {
       "id": "A-18",
-      "title": "Massing",
-      "category": "Surreal",
+      "title": "Bay Corner",
+      "category": "Public",
       "year": "2023",
-      "location": "",
-      "status": "Concept Design",
-      "cover": "uploads/1787150093832-S__26157157_0.jpg",
+      "location": "Tainan, Taiwan",
+      "status": "Architectural Design",
+      "cover": "uploads/1787155013608-S__26394656_0.jpg",
       "coverPosition": "",
-      "description": "",
-      "gallery": [],
-      "drawings": [],
+      "description": "延續自石膏體、紙版面到金屬線的形式找尋歷程，最終加諸於單一建築構造體上。這次專案的基地選定於漁光島海灘外側的土丘，基地的北、西側都是台灣海峽，構成由海水圍繞出的L型景觀，以創造讓人感到舒適的角落為主要意圖，保持歷程所建構出的空間配置，並利用空間的抬升、錯位、簡化來達成整個建築與基地、與人的活動的對話。以折板斜面的樣態作為地舖面，以之字形的折疊方式來連接不同的樓高，創造出從最低層至最高層的連續動線，交疊的斜面間、牆面的凹凸排列，製造了孔隙，適合人的角落。\n\nContinuing the journey of exploring forms—from plaster to paper to metal wire—the design ultimately takes shape on a single architectural structure. The site for this project is situated on a hillock just beyond the beach on Yuguang Island. With the Taiwan Strait to the north and west, the site forms an L-shaped landscape surrounded by seawater. The primary intention is to create a comfortable space, preserving the spatial configuration developed through this journey while utilizing elevation, offset, and simplification to facilitate a dialogue between the entire building, the site, and human activity. \nFolded, sloping planes serve as the floor surfaces, connected by a zigzag-like folding pattern that links different floor levels, creating a continuous circulation path from the lowest to the highest level. The overlapping sloping planes and the alternating concave-convex arrangement of the walls create voids—intimate corners suited for human presence.",
+      "gallery": [
+        {
+          "src": "uploads/1787155015867-489228758613229604.jpg",
+          "size": "small"
+        },
+        {
+          "src": "uploads/1787155018326-S__26394694_0.jpg",
+          "size": "wide"
+        },
+        {
+          "src": "uploads/1787155020101-S__26394651_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "uploads/1787155022316-S__26394659_0.jpg",
+          "size": "large"
+        },
+        {
+          "src": "uploads/1787155025246-S__26394638_0.png",
+          "size": "small"
+        },
+        {
+          "src": "uploads/1787155030683-S__26394655_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "uploads/1787155037042-S__26394660_0.jpg",
+          "size": "small"
+        },
+        {
+          "src": "uploads/1787155039174-S__26394681_0.jpg",
+          "size": "small"
+        }
+      ],
+      "drawings": [
+        {
+          "src": "uploads/1787155292591-elevation.jpg",
+          "size": "large"
+        },
+        {
+          "src": "uploads/1787155295302-elevation2.jpg",
+          "size": "large"
+        }
+      ],
       "series": [],
-      "books": [],
+      "books": [
+        "b02"
+      ],
       "credits": "謝政庭",
       "summary": ""
     }
