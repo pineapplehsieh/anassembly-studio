@@ -403,22 +403,25 @@ async function uploadAsset(file){
    ============================================================ */
 const state = {
   user: null,
-  tab: "projects", // projects | books | series
+  tab: "projects", // projects | books | series | about
   projects: null, projectsSha: null,
   books: null, booksSha: null,
   series: null, seriesSha: null,
+  about: null, aboutSha: null,
   editing: null, // { type, item, isNew }
 };
 
 async function loadAllContent(){
-  const [p, b, s] = await Promise.all([
+  const [p, b, s, a] = await Promise.all([
     ghGetFile("content/projects.json"),
     ghGetFile("content/books.json"),
     ghGetFile("content/series.json"),
+    ghGetFile("content/about.json"),
   ]);
   state.projects = p.json.items; state.projectsSha = p.sha;
   state.books = b.json.items; state.booksSha = b.sha;
   state.series = s.json.items; state.seriesSha = s.sha;
+  state.about = a.json; state.aboutSha = a.sha;
 }
 
 async function saveCollection(type){
@@ -431,6 +434,12 @@ async function saveCollection(type){
   const json = JSON.stringify({ items: info.data }, null, 2) + "\n";
   const res = await ghPutFile(info.path, utf8ToBase64(json), `Update ${type} via admin`, state[info.shaKey]);
   state[info.shaKey] = res.content.sha;
+}
+
+async function saveAbout(){
+  const json = JSON.stringify(state.about, null, 2) + "\n";
+  const res = await ghPutFile("content/about.json", utf8ToBase64(json), "Update about via admin", state.aboutSha);
+  state.aboutSha = res.content.sha;
 }
 
 /* ============================================================
@@ -497,7 +506,14 @@ function renderCollectionList(){
     { id: "projects", label: "作品 Work" },
     { id: "books", label: "書籍 Books" },
     { id: "series", label: "系列 Series" },
+    { id: "about", label: "關於 About" },
   ];
+  // 「關於 About」不是清單（只有一筆資料），點進去直接開編輯畫面，
+  // 不會經過「列表 → 點一筆 → 編輯」這個流程。
+  if(state.tab === "about"){
+    openEditor("about", JSON.parse(JSON.stringify(state.about)), -1, false);
+    return;
+  }
   app.innerHTML = `
     ${renderTopBar()}
     <div class="wrap">
@@ -509,7 +525,11 @@ function renderCollectionList(){
   `;
   document.getElementById("logoutBtn").addEventListener("click", logout);
   app.querySelectorAll(".tab-nav button").forEach(btn => {
-    btn.addEventListener("click", () => { state.tab = btn.dataset.tab; render(); });
+    btn.addEventListener("click", () => {
+      state.editing = null;
+      state.tab = btn.dataset.tab;
+      render();
+    });
   });
   renderTabContent();
 }
@@ -931,6 +951,11 @@ function syncEditorFieldsToItem(){
   } else if(ed.type === "series"){
     if(val("f_title") !== undefined) item.title = val("f_title").trim();
     if(val("f_description") !== undefined) item.description = val("f_description");
+  } else if(ed.type === "about"){
+    if(val("f_bio") !== undefined) item.bio = val("f_bio");
+    if(val("f_email") !== undefined) item.email = val("f_email").trim();
+    if(val("f_linkedin") !== undefined) item.linkedin = val("f_linkedin").trim();
+    if(val("f_instagram") !== undefined) item.instagram = val("f_instagram").trim();
   }
 }
 
@@ -1188,19 +1213,105 @@ function generateSeriesLetter(){
 }
 
 /* ============================================================
+   Editor：關於 About（只有一筆資料，沒有列表、沒有刪除）
+   ============================================================ */
+function aboutEditorHtml(ed){
+  const a = ed.item;
+  return `
+    <div class="editor">
+      <div class="field-block">
+        <div class="label">大頭照</div>
+        ${coverDropHtml("photo", resolveTileSrc(ed, a.photo))}
+      </div>
+
+      <div class="field-block">
+        <label>自我介紹</label>
+        <textarea id="f_bio" style="min-height:140px">${esc(a.bio)}</textarea>
+        <div class="field-hint">直接打字、按 Enter 換行、空一行分段即可</div>
+      </div>
+
+      <div class="field-block two-col">
+        <div>
+          <label>Email</label>
+          <input type="text" id="f_email" value="${esc(a.email)}" placeholder="you@example.com">
+        </div>
+        <div>
+          <label>LinkedIn 網址（選填）</label>
+          <input type="text" id="f_linkedin" value="${esc(a.linkedin)}" placeholder="https://linkedin.com/in/...">
+        </div>
+      </div>
+      <div class="field-block">
+        <label>Instagram 網址（選填）</label>
+        <input type="text" id="f_instagram" value="${esc(a.instagram)}" placeholder="https://www.instagram.com/...">
+      </div>
+
+      <div class="save-bar">
+        <span class="save-status" id="saveStatus"></span>
+        <button class="btn primary" id="saveBtn">儲存並發布</button>
+      </div>
+    </div>
+  `;
+}
+
+function bindAboutEditorEvents(ed){
+  bindCoverDropEvents(ed, "photo");
+  document.getElementById("saveBtn").addEventListener("click", () => saveAboutEditor(ed));
+}
+
+async function saveAboutEditor(ed){
+  const a = ed.item;
+  a.bio = document.getElementById("f_bio").value;
+  a.email = document.getElementById("f_email").value.trim();
+  a.linkedin = document.getElementById("f_linkedin").value.trim();
+  a.instagram = document.getElementById("f_instagram").value.trim();
+
+  try{
+    setLoading(true, "儲存中…");
+    await flushPendingUploads(ed);
+    state.about = a;
+    await saveAbout();
+    toast("已發布，網站幾分鐘內會更新");
+  }catch(err){
+    toast("儲存失敗：" + err.message, true);
+  }finally{
+    setLoading(false);
+  }
+}
+
+/* ============================================================
    Editor：總入口
    ============================================================ */
 function renderEditor(){
   const ed = state.editing;
+  const aboutTabNav = ed.type === "about" ? `
+    <div class="tab-nav">
+      ${[["projects","作品 Work"],["books","書籍 Books"],["series","系列 Series"],["about","關於 About"]]
+        .map(([id,label]) => `<button data-tab="${id}" class="${id==="about"?"active":""}">${label}</button>`).join("")}
+    </div>
+  ` : "";
   app.innerHTML = `
     ${renderTopBar()}
     <div class="wrap">
-      ${ed.type === "projects" ? projectEditorHtml(ed) : ed.type === "books" ? bookEditorHtml(ed) : seriesEditorHtml(ed)}
+      ${aboutTabNav}
+      ${ed.type === "projects" ? projectEditorHtml(ed)
+        : ed.type === "books" ? bookEditorHtml(ed)
+        : ed.type === "about" ? aboutEditorHtml(ed)
+        : seriesEditorHtml(ed)}
     </div>
   `;
   document.getElementById("logoutBtn").addEventListener("click", logout);
+  if(ed.type === "about"){
+    app.querySelectorAll(".tab-nav button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.editing = null;
+        state.tab = btn.dataset.tab;
+        render();
+      });
+    });
+  }
   if(ed.type === "projects") bindProjectEditorEvents(ed);
   else if(ed.type === "books") bindBookEditorEvents(ed);
+  else if(ed.type === "about") bindAboutEditorEvents(ed);
   else bindSeriesEditorEvents(ed);
 }
 
