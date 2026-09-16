@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portfolio — Architectural Work</title>
 <meta name="description" content="A personal portfolio of architectural design work">
+<!-- 訪客統計（GoatCounter，不用 cookie、不用同意橫幅），資料可以在後台的「訪客統計」分頁看。
+     這個網站是用 # 網址做單頁式切換（不會真的重新載入頁面），所以關掉自動記錄第一次載入
+     （no_onload），改成在 route() 裡每次換頁都手動記一次，這樣「作品 A-01」「work列表」
+     「about」才會在統計裡被視為不同的頁面，而不是全部都算同一個「/」。 -->
+<script>window.goatcounter = { no_onload: true };</script>
+<script data-goatcounter="https://anassembly.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 <style>
 :root{
   --paper:   #fbfaf8;
@@ -1667,6 +1673,9 @@ function route(){
   stopHomeSlideshow();
   if(typeof closeLightbox === "function") closeLightbox();
   const hash = location.hash || "#/";
+  if(window.goatcounter && window.goatcounter.count){
+    window.goatcounter.count({ path: hash });
+  }
   if(hash === "#/about"){
     currentCategory = "All";
     currentYearFilter = null;
