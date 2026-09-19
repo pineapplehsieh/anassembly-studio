@@ -7,5 +7,7 @@
   # （之前就是因為這樣額度提早用完、新的部署被暫停）。
   # 所以這裡設定：只有 netlify.toml 或 netlify/ 資料夾有異動時才真的部署，
   # 其他內容異動（content/、uploads/、index.html、admin/ 等）一律跳過。
-  # 指令結束代碼 0 = 沒有異動 → 略過這次部署；1 = 有異動 → 照常部署。
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- netlify.toml netlify/"
+  # 指令結束代碼 0 = 沒有異動 → 略過這次部署；非 0 = 有異動或無法判斷 → 照常部署。
+  # 注意：如果 Netlify 沒有提供 CACHED_COMMIT_REF（上一次成功部署的版本），
+  # 沒有比較基準就必須照常部署，不能誤判成「沒有異動」而跳過。
+  ignore = '[ -n "$CACHED_COMMIT_REF" ] && git diff --quiet "$CACHED_COMMIT_REF" "$COMMIT_REF" -- netlify.toml netlify/'
