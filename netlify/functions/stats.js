@@ -42,10 +42,20 @@ async function gcFetch(site, token, path, params){
   }
 }
 
+// 後台頁面在 pineapplehsieh.github.io，這支函式在 netlify.app，是不同網域，
+// 瀏覽器會要求回應帶 CORS 許可標頭才肯把內容交給頁面，沒有的話後台只會看到
+// 「Failed to fetch」。只開放給自己的網站網域，不對所有人開放。
+const ALLOWED_ORIGIN = "https://pineapplehsieh.github.io";
+
 function json(statusCode, body){
   return {
     statusCode,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+      "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+      "Vary": "Origin",
+    },
     body: JSON.stringify(body),
   };
 }
