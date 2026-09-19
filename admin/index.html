@@ -1281,7 +1281,9 @@ async function loadAndRenderStats(el){
               `).join("")}
             </tbody>
           </table>
-        ` : `<div class="empty-note">還沒有資料</div>`}
+        ` : `<div class="empty-note">${data.topPagesError
+          ? `熱門頁面暫時讀不到（${esc(data.topPagesError)}）`
+          : "還沒有資料（網站剛開始統計，有訪客之後就會出現）"}</div>`}
       </div>
       ${data.dashboardUrl ? `<div class="field-hint" style="margin-top:20px;"><a href="${esc(data.dashboardUrl)}" target="_blank" rel="noopener">在 GoatCounter 看更詳細的統計 ↗</a></div>` : ""}
     `;

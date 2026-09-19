@@ -2,7 +2,15 @@
 // API token 放在環境變數裡、不會暴露給瀏覽器：
 //   GOATCOUNTER_SITE       — GoatCounter 網站代碼（例如 mysite，對應 mysite.goatcounter.com）
 //   GOATCOUNTER_API_TOKEN  — GoatCounter 帳號設定裡產生的 API key
+//
+// GoatCounter 的 API 限制「每秒最多 4 個請求」，超過會回 429。所以這裡的請求一律
+// 排隊、間隔至少 MIN_GAP_MS 才送下一個，被限流時也會依照對方建議的等待時間自動重試。
 const FAR_PAST = "2020-01-01T00:00:00Z";
+const MIN_GAP_MS = 300;
+const MAX_TRIES = 4;
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+let lastRequestAt = 0;
 
 function isoDaysAgo(days){
   const d = new Date();
@@ -14,12 +22,32 @@ function isoDaysAgo(days){
 async function gcFetch(site, token, path, params){
   const qs = new URLSearchParams(params || {});
   const url = `https://${site}.goatcounter.com/api/v0${path}?${qs.toString()}`;
-  const res = await fetch(url, { headers: { Authorization: "Bearer " + token } });
-  if(!res.ok){
+
+  for(let attempt = 1; attempt <= MAX_TRIES; attempt++){
+    const wait = lastRequestAt + MIN_GAP_MS - Date.now();
+    if(wait > 0) await sleep(wait);
+    lastRequestAt = Date.now();
+
+    const res = await fetch(url, { headers: { Authorization: "Bearer " + token } });
+    if(res.ok) return res.json();
+
     const text = await res.text().catch(() => "");
-    throw new Error(`GoatCounter ${path} ${res.status}: ${text.slice(0, 200)}`);
+    if(res.status === 429 && attempt < MAX_TRIES){
+      const m = /try again in ([\d.]+)\s*ms/i.exec(text);
+      await sleep(Math.max(m ? Math.ceil(parseFloat(m[1])) + 100 : 0, 600));
+      continue;
+    }
+    const brief = text.replace(/\s+/g, " ").slice(0, 160);
+    throw new Error(`GoatCounter ${path} ${res.status}: ${brief}`);
   }
-  return res.json();
+}
+
+function json(statusCode, body){
+  return {
+    statusCode,
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+    body: JSON.stringify(body),
+  };
 }
 
 exports.handler = async () => {
@@ -27,46 +55,38 @@ exports.handler = async () => {
   const token = process.env.GOATCOUNTER_API_TOKEN;
 
   if(!site || !token){
-    return {
-      statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "缺少環境變數 GOATCOUNTER_SITE / GOATCOUNTER_API_TOKEN" }),
-    };
+    return json(500, { error: "缺少環境變數 GOATCOUNTER_SITE / GOATCOUNTER_API_TOKEN" });
   }
 
   try{
     const now = new Date().toISOString();
-    const [today, last7, last30, allTime, topPages] = await Promise.all([
-      gcFetch(site, token, "/stats/total", { start: isoDaysAgo(0), end: now }),
-      gcFetch(site, token, "/stats/total", { start: isoDaysAgo(7), end: now }),
-      gcFetch(site, token, "/stats/total", { start: isoDaysAgo(30), end: now }),
-      gcFetch(site, token, "/stats/total", { start: FAR_PAST, end: now }),
-      gcFetch(site, token, "/stats/hits", { start: FAR_PAST, end: now, limit: 10 }),
-    ]);
 
-    const body = {
+    // 上面四個數字是核心，任何一個失敗就整個回報錯誤。
+    const today = await gcFetch(site, token, "/stats/total", { start: isoDaysAgo(0), end: now });
+    const last7 = await gcFetch(site, token, "/stats/total", { start: isoDaysAgo(7), end: now });
+    const last30 = await gcFetch(site, token, "/stats/total", { start: isoDaysAgo(30), end: now });
+    const allTime = await gcFetch(site, token, "/stats/total", { start: FAR_PAST, end: now });
+
+    // 熱門頁面是附加資訊，失敗的話不要拖垮上面的數字，只把原因帶回去給後台顯示。
+    let topPages = [];
+    let topPagesError = null;
+    try{
+      const hits = await gcFetch(site, token, "/stats/hits", { start: FAR_PAST, end: now, limit: 10 });
+      topPages = (hits.hits || []).map(h => ({ path: h.path, title: h.title, count: h.count }));
+    }catch(err){
+      topPagesError = err.message;
+    }
+
+    return json(200, {
       today: today.total,
       last7Days: last7.total,
       last30Days: last30.total,
       allTime: allTime.total,
-      topPages: (topPages.hits || []).map(h => ({
-        path: h.path,
-        title: h.title,
-        count: h.count,
-      })),
+      topPages,
+      topPagesError,
       dashboardUrl: `https://${site}.goatcounter.com`,
-    };
-
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-      body: JSON.stringify(body),
-    };
+    });
   }catch(err){
-    return {
-      statusCode: 502,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: err.message }),
-    };
+    return json(502, { error: err.message });
   }
 };
