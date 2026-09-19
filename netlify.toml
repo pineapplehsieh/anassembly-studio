@@ -1,3 +1,11 @@
 [build]
   functions = "netlify/functions"
   publish = "."
+  # 這個網站本身是 GitHub Pages 在提供的，Netlify 在這裡只負責執行 netlify/functions 底下
+  # 那幾支登入／統計用的小函式。後台每新增一筆作品、每上傳一張照片，都會變成一次
+  # git push，如果每次都讓 Netlify 重新部署，會白白燒掉 Netlify 的免費額度
+  # （之前就是因為這樣額度提早用完、新的部署被暫停）。
+  # 所以這裡設定：只有 netlify.toml 或 netlify/ 資料夾有異動時才真的部署，
+  # 其他內容異動（content/、uploads/、index.html、admin/ 等）一律跳過。
+  # 指令結束代碼 0 = 沒有異動 → 略過這次部署；1 = 有異動 → 照常部署。
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- netlify.toml netlify/"
