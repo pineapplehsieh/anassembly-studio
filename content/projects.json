@@ -898,28 +898,19 @@
     },
     {
       "id": "A-12",
-      "title": "Inter-(potential)-Field",
+      "title": "間差場\nInter-(potential)-Field",
       "category": "Public",
       "year": "2026",
       "location": "Tainan, Taiwan",
       "status": "Architectural design",
-      "cover": "images/333.png",
+      "cover": "uploads/1790434656183-图片_1__AI_Albedo.png",
       "series": [
         {
           "id": "Series-I",
           "part": 2
         }
       ],
-      "gallery": [
-        {
-          "src": "images/S__30416936_0.jpg",
-          "size": "large"
-        },
-        {
-          "src": "images/S__30613560_0.jpg",
-          "size": "large"
-        }
-      ],
+      "gallery": [],
       "drawings": [
         {
           "src": "images/loop. studio architectural drawing set_頁面_02.jpg",
