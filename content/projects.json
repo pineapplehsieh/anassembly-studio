@@ -910,12 +910,7 @@
           "part": 2
         }
       ],
-      "gallery": [
-        {
-          "src": "uploads/1790437763269-ChatGPT_Image_2026年9月26日_下午11_44_26.png",
-          "size": "wide"
-        }
-      ],
+      "gallery": [],
       "drawings": [
         {
           "src": "images/loop. studio architectural drawing set_頁面_02.jpg",
@@ -983,7 +978,13 @@
       ],
       "summary": "A performance space with a folded roof that reconfigures for different shows.",
       "description": "龐畢度中心最大的特色，在於將原本隱藏於建築內部的結構、設備管線與交通系統移至建築外側，讓立面不只是建築的外殼，更成為建築運作方式的展現。不同顏色的管線分別代表不同的設備系統，使人們能直接從外觀理解建築的組成，也讓立面呈現出鮮明且富有秩序的特色。這樣的設計不僅提高了室內空間的使用彈性，也改變了人們對建築外觀的既有印象。<br>本次研究透過分析龐畢度中心立面的構成方式，將結構、管線、交通系統與立面框架重新整理，並以模型重現各元素之間的配置關係。在製作過程中發現，這些外露的構件並非只是視覺上的裝飾，而是共同支撐建築運作的重要部分。透過模型的重構，更能理解龐畢度中心如何運用規律的構架、鮮明的色彩與清楚的系統配置，打造出兼具功能性與辨識度的立面，也展現出高科技建築將工程技術直接轉化為建築表現的設計特色。<br><br>The most distinctive feature of the Centre Pompidou is its externalization of structural, mechanical, and circulation systems, transforming the facade into a visible expression of the building’s operational logic. Color-coded pipes represent different systems, allowing observers to understand the building’s composition at a glance, while imparting a striking and orderly aesthetic. This design not only enhances interior spatial flexibility but also challenges conventional perceptions of architectural exteriors.<br>This study analyzes the facade’s composition, reorganizing its structural, mechanical, and circulation elements and reconstructing their relationships through modeling. The process revealed that these exposed components are not mere visual embellishments but integral to the building’s functionality. By reconstructing the model, we gain insight into how the Centre Pompidou employs systematic frameworks, vivid colors, and clear configurations to create a facade that is both functional and iconic, exemplifying high-tech architecture’s translation of engineering into architectural expression.",
-      "credits": "謝政庭, 蕭本亮"
+      "credits": "謝政庭, 蕭本亮",
+      "renders": [
+        {
+          "src": "uploads/1790441360988-ChatGPT_Image_2026年9月26日_下午11_44_26.png",
+          "size": "large"
+        }
+      ]
     },
     {
       "id": "A-13",
