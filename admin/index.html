@@ -756,6 +756,17 @@ function projectEditorHtml(ed){
       </div>
 
       <div class="field-block">
+        <div class="label">Render 渲染圖（選填）</div>
+        <div class="tile-grid-drop" id="rendersDrop">
+          <div class="tile-grid" id="rendersGrid">
+            ${(p.renders || []).map((g, i) => galleryTileHtml(ed, g, i, "renders")).join("")}
+            <button class="add-tile" data-add-tile="renders">${iconUpload()}<span>新增圖片</span></button>
+          </div>
+        </div>
+        <div class="field-hint">版型設定跟上面的圖說一樣（大／中／小、直式）。沒有放任何圖片的話，網站上就不會出現 Render 這個區塊。網站上的顯示順序是：圖說 → Render → 相簿。</div>
+      </div>
+
+      <div class="field-block">
         <div class="label">所屬系列（選填）</div>
         ${state.series.length ? `
           <div class="tag-picker">
@@ -810,11 +821,13 @@ function gallerySizeOptions(kind){
 function galleryTileHtml(ed, item, i, kind){
   const size = item.size || "small";
   const src = resolveTileSrc(ed, item.src);
-  const isPortrait = kind === "drawings" && item.orientation === "portrait";
+  // 圖說 drawings 與 Render 用同一套版型（大／中／小＋直式），相簿 gallery 才是另一套
+  const drawingLike = kind === "drawings" || kind === "renders";
+  const isPortrait = drawingLike && item.orientation === "portrait";
   return `
     <div class="tile" data-tile-kind="${kind}" data-tile-index="${i}">
       ${src ? `<img src="${esc(src)}" alt="">` : ""}
-      ${kind === "drawings" ? `<button class="orient-btn ${isPortrait ? "active" : ""}" data-orient-toggle title="直式圖片">↕ 直式</button>` : ""}
+      ${drawingLike ? `<button class="orient-btn ${isPortrait ? "active" : ""}" data-orient-toggle title="直式圖片">↕ 直式</button>` : ""}
       <button class="remove-btn" data-remove-tile title="移除">×</button>
       <div class="tile-controls">
         ${gallerySizeOptions(kind).map(([val,label]) => `<button class="size-btn ${size===val?"active":""}" data-set-size="${val}">${label}</button>`).join("")}
@@ -832,6 +845,7 @@ function bindProjectEditorEvents(ed){
   bindCoverDropEvents(ed, "cover");
   bindTileGrid(ed, "gallery", "galleryGrid", "galleryDrop");
   bindTileGrid(ed, "drawings", "drawingsGrid", "drawingsDrop");
+  bindTileGrid(ed, "renders", "rendersGrid", "rendersDrop");
 
   app.querySelectorAll("[data-series-check]").forEach(cb => {
     cb.addEventListener("change", () => {
@@ -1014,6 +1028,10 @@ async function saveProjectEditor(ed){
   p.credits = document.getElementById("f_credits").value.trim().replace(/\n/g, "<br>");
 
   if(!p.title){ toast("請至少填寫標題", true); return; }
+
+  // Render 是選填：沒有任何圖片就不要寫這個欄位（網站對「沒有欄位」跟「空陣列」都是不顯示，
+  // 但不寫可以讓沒用到的作品資料保持乾淨）。
+  if(!p.renders || !p.renders.length) delete p.renders;
 
   try{
     setLoading(true, "儲存中…");

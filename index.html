@@ -410,8 +410,8 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 
 .project-gallery{ margin-top:56px; }
 .project-gallery h3{ font-size:18px; margin-bottom:20px; color:var(--muted); font-weight:400; }
-.project-drawings{ margin-top:56px; }
-.project-drawings h3{ font-size:18px; margin-bottom:20px; color:var(--muted); font-weight:400; }
+.project-drawings, .project-renders{ margin-top:56px; }
+.project-drawings h3, .project-renders h3{ font-size:18px; margin-bottom:20px; color:var(--muted); font-weight:400; }
 
 /* ---------------- series — 系列縮圖＋譜系彈窗 ----------------
    Gallery 和 More work 之間只放「這個系列」單一一張正方形縮圖（圖片由你自己製作、放到 images/ 底下，
@@ -1450,16 +1450,22 @@ function renderProject(id){
       </div>`
     : "";
 
-  const drawingHtml = (p.drawings && p.drawings.length)
+  // Drawings 與 Render 共用同一套版型（class 都是 drawing-grid / drawing-item，
+  // 大小、直式、裁切、手機瀑布流完全相同），只是各自一個區塊、各自一份圖片清單。
+  // data-drawing-index 這個屬性名稱也共用，因為瀑布流排序（refreshMasonry）是靠它。
+  const drawingLikeHtml = (items, heading, sectionClass) => (items && items.length)
     ? `
-      <div class="project-drawings">
-        <h3>Drawings</h3>
-        <div class="drawing-grid">${p.drawings.map((item, i) => `
+      <div class="${sectionClass}">
+        <h3>${heading}</h3>
+        <div class="drawing-grid">${items.map((item, i) => `
           <div class="drawing-item ${gallerySizeClass(item)} ${drawingOrientationClass(item)}" data-drawing-index="${i}">
             <img decoding="async" src="${esc(galleryItemSrc(item))}" alt="${esc(p.title)}" loading="lazy" style="object-position:${esc(galleryItemPosition(item))}; object-fit:${esc(galleryItemFit(item))}">
           </div>`).join("")}</div>
       </div>`
     : "";
+  const drawingHtml = drawingLikeHtml(p.drawings, "Drawings", "project-drawings");
+  // Render 是選填：沒有這個欄位、或是空陣列，就完全不會顯示這個區塊
+  const renderHtml = drawingLikeHtml(p.renders, "Render", "project-renders");
   
   const sideInfo = `
     <div class="side-info">
@@ -1488,6 +1494,7 @@ function renderProject(id){
         ${sideInfo}
       </div>
       ${drawingHtml}
+      ${renderHtml}
       ${galleryHtml}
       ${relatedBooks.length ? `
         <div class="related-books">
@@ -1515,14 +1522,17 @@ function renderProject(id){
       });
     });
   }
-  if(p.drawings && p.drawings.length){
-    const drawingImages = p.drawings.map(item => ({ src: galleryItemSrc(item), alt: p.title }));
-    app.querySelectorAll(".drawing-item").forEach(el => {
+  // Drawings 與 Render 的圖片元素 class 相同，所以要限定在各自的區塊底下綁定，
+  // 否則點 Render 的圖會打開 Drawings 那份清單。
+  [[p.drawings, ".project-drawings"], [p.renders, ".project-renders"]].forEach(([items, sel]) => {
+    if(!(items && items.length)) return;
+    const images = items.map(item => ({ src: galleryItemSrc(item), alt: p.title }));
+    app.querySelectorAll(sel + " .drawing-item").forEach(el => {
       el.addEventListener("click", () => {
-        openLightbox(drawingImages, parseInt(el.dataset.drawingIndex, 10));
+        openLightbox(images, parseInt(el.dataset.drawingIndex, 10));
       });
     });
-  }
+  });
   app.querySelectorAll("[data-series-goto]").forEach(el => {
     el.addEventListener("click", () => { location.hash = "#/series/" + encodeURIComponent(el.dataset.seriesGoto); });
   });
