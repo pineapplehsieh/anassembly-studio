@@ -910,7 +910,12 @@
           "part": 2
         }
       ],
-      "gallery": [],
+      "gallery": [
+        {
+          "src": "uploads/1790437763269-ChatGPT_Image_2026年9月26日_下午11_44_26.png",
+          "size": "large"
+        }
+      ],
       "drawings": [
         {
           "src": "images/loop. studio architectural drawing set_頁面_02.jpg",
