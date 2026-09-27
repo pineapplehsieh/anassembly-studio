@@ -496,6 +496,10 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
    不使用 column-span 跨欄，才能真正無縫融入瀑布流（跨欄會強制斷版造成空白，
    Pinterest 本身也是靠「同欄寬、高度不同」達到無縫排列，並沒有跨欄的圖） */
 .gallery-item.wide img{ aspect-ratio: 3 / 2; object-fit:cover; }
+/* full：完全不裁切、維持照片原始比例、獨佔一整行（不塞進某一欄）。
+   靠 JS 瀑布流（下面 .js-columns 那套）把它拆成獨立一行；這裡的 column-span
+   只是給「JS 還沒跑之前」或 JS 失效時的原生多欄排版當退場備援。 */
+.gallery-item.full{ column-span: all; }
 
 @media (max-width: 750px) {
   .gallery-grid{ column-count: 2; }
@@ -509,12 +513,20 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
    常常算不準，導致第二欄的第一張圖片沒辦法跟第一欄切齊頂端、上方留一截空白。
    等版面渲染完成後，JS 會依照圖片實際比例把項目分配進真正獨立的欄位 div
    （.masonry-col），改用 flex 排版；因為每一欄都是各自獨立堆疊，
-   欄位裡的第一個項目必定貼齊最上方，兩欄自然對齊。 */
+   欄位裡的第一個項目必定貼齊最上方，兩欄自然對齊。
+   外層改成直向堆疊「一批欄位（.masonry-row）」與「全幅圖片」交錯排列，
+   遇到 full 版型的圖片時，前面那批欄位就地收尾、圖片自己獨佔一整行，
+   後面接著重新開始下一批欄位的高度平衡，不會因為硬跨欄而留下大片空白。 */
 .gallery-grid.js-columns{
   display:flex;
-  align-items:flex-start;
+  flex-direction:column;
   column-count:initial;
   column-gap:initial;
+  gap:12px;
+}
+.gallery-grid.js-columns .masonry-row{
+  display:flex;
+  align-items:flex-start;
   gap:12px;
 }
 .gallery-grid.js-columns .masonry-col{
@@ -528,8 +540,12 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   margin-bottom:0;
   break-inside:auto;
 }
+.gallery-grid.js-columns .gallery-item.full{
+  column-span:initial;
+}
 @media (max-width: 420px) {
   .gallery-grid.js-columns{ gap:8px; }
+  .gallery-grid.js-columns .masonry-row{ gap:8px; }
   .gallery-grid.js-columns .masonry-col{ gap:8px; }
 }
 
@@ -1290,7 +1306,7 @@ function galleryItemSrc(item){
 }
 function gallerySizeClass(item){
   const size = typeof item === "string" ? "small" : (item.size || "small");
-  return ["large", "small", "tiny", "wide"].includes(size) ? size : "small";
+  return ["large", "small", "tiny", "wide", "full"].includes(size) ? size : "small";
 }
 function galleryItemPosition(item){
   return (typeof item === "object" && item.position) ? item.position : "center";
@@ -1326,19 +1342,45 @@ function applyMasonryColumns(grid, itemSelector, columnCount, indexAttr){
   if(!columnCount || columnCount <= 1){
     grid.classList.remove("js-columns");
     items.forEach(it => grid.appendChild(it));
-    grid.querySelectorAll(":scope > .masonry-col").forEach(col => col.remove());
+    grid.querySelectorAll(":scope > .masonry-row, :scope > .masonry-col").forEach(el => el.remove());
     return;
   }
 
   grid.classList.add("js-columns");
-  const cols = [];
-  for(let i = 0; i < columnCount; i++){
-    const col = document.createElement("div");
-    col.className = "masonry-col";
-    cols.push(col);
+  const frag = document.createDocumentFragment();
+  let cols = null;
+  let colHeights = null;
+
+  function startNewRow(){
+    cols = Array.from({ length: columnCount }, () => {
+      const col = document.createElement("div");
+      col.className = "masonry-col";
+      return col;
+    });
+    colHeights = new Array(columnCount).fill(0);
   }
-  const colHeights = new Array(columnCount).fill(0);
+  function flushRow(){
+    if(!cols) return;
+    if(cols.some(c => c.children.length > 0)){
+      const row = document.createElement("div");
+      row.className = "masonry-row";
+      cols.forEach(c => row.appendChild(c));
+      frag.appendChild(row);
+    }
+    cols = null;
+  }
+
+  startNewRow();
   items.forEach(item => {
+    // full 版型的圖片要獨佔一整行、維持原始比例不裁切：遇到它就把目前這批
+    // 欄位收尾（沒有內容的話就直接省略，不留空行），圖片本身直接接在後面，
+    // 再重新開始下一批欄位的高度平衡計算，前後兩段各自獨立、不會產生空白。
+    if(item.classList.contains("full")){
+      flushRow();
+      frag.appendChild(item);
+      startNewRow();
+      return;
+    }
     let shortest = 0;
     for(let i = 1; i < columnCount; i++){
       if(colHeights[i] < colHeights[shortest]) shortest = i;
@@ -1346,8 +1388,10 @@ function applyMasonryColumns(grid, itemSelector, columnCount, indexAttr){
     cols[shortest].appendChild(item);
     colHeights[shortest] += estimateItemHeightRatio(item);
   });
+  flushRow();
+
   grid.innerHTML = "";
-  cols.forEach(col => grid.appendChild(col));
+  grid.appendChild(frag);
 }
 
 function refreshMasonry(){
