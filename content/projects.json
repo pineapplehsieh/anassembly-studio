@@ -918,6 +918,10 @@
       ],
       "drawings": [
         {
+          "src": "uploads/1790513453864-diagram.jpg",
+          "size": "large"
+        },
+        {
           "src": "images/loop. studio architectural drawing set_頁面_02.jpg",
           "size": "small",
           "fit": "contain"
@@ -976,10 +980,6 @@
           "src": "images/loop. studio architectural drawing set_頁面_13.jpg",
           "size": "small",
           "fit": "contain"
-        },
-        {
-          "src": "uploads/1790513453864-diagram.jpg",
-          "size": "large"
         }
       ],
       "books": [
