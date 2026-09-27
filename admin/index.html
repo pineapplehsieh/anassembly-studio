@@ -761,6 +761,7 @@ function projectEditorHtml(ed){
             <button class="add-tile" data-add-tile="drawings">${iconUpload()}<span>新增圖片</span></button>
           </div>
         </div>
+        <div class="field-hint">大／中／小都會裁切成固定比例；選「全幅」則完全不裁切、維持照片原始比例，並獨佔一整行。</div>
       </div>
 
       <div class="field-block">
@@ -771,7 +772,7 @@ function projectEditorHtml(ed){
             <button class="add-tile" data-add-tile="renders">${iconUpload()}<span>新增圖片</span></button>
           </div>
         </div>
-        <div class="field-hint">版型設定跟上面的圖說一樣（大／中／小、直式）。沒有放任何圖片的話，網站上就不會出現 Render 這個區塊。網站上的顯示順序是：圖說 → Render → 相簿。</div>
+        <div class="field-hint">版型設定跟上面的圖說一樣（大／中／小、全幅、直式）。沒有放任何圖片的話，網站上就不會出現 Render 這個區塊。網站上的顯示順序是：圖說 → Render → 相簿。</div>
       </div>
 
       <div class="field-block">
@@ -823,7 +824,7 @@ function projectEditorHtml(ed){
 function gallerySizeOptions(kind){
   return kind === "gallery"
     ? [["large","大"],["small","中"],["wide","寬"],["full","全幅"]]
-    : [["large","大"],["small","中"],["tiny","小"]];
+    : [["large","大"],["small","中"],["tiny","小"],["full","全幅"]];
 }
 
 function galleryTileHtml(ed, item, i, kind, total){

@@ -567,6 +567,11 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .drawing-item.tiny{ grid-column: span 2; }
 .drawing-item.large.portrait{ grid-column: span 3; }
 .drawing-item.small.portrait{ grid-column: span 2; }
+/* full：跟 gallery 的全幅版型意思一樣——完全不裁切、維持照片原始比例、
+   獨佔整行（grid-column 跟 large 一樣是 span 6）。這裡是固定的 CSS grid，
+   一張圖佔滿一整行本來就會自動換行，不需要像 gallery 瀑布流那樣另外
+   處理「跨欄斷版」的問題。 */
+.drawing-item.full{ grid-column: span 6; }
 .drawing-item img{
   width:100%; height:100%; display:block;
   transition:transform .4s ease;
@@ -577,6 +582,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .drawing-item.tiny img{ aspect-ratio: 2 / 1; object-fit:cover; }
 .drawing-item.large.portrait img{ aspect-ratio: 2 / 3; object-fit:cover; }
 .drawing-item.small.portrait img{ aspect-ratio: 3 / 4; object-fit:cover; }
+.drawing-item.full img{ height:auto; object-fit:contain; }
 
 @media (max-width: 420px) {
   .drawing-grid{ gap:8px; }
