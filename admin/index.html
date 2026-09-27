@@ -152,6 +152,13 @@ input,textarea,select{ font-family:inherit; font-size:14px; }
   background:rgba(255,255,255,0.12); color:#fff;
 }
 .tile .size-btn.active{ background:#fff; color:var(--ink); border-color:#fff; }
+.tile .move-btn{
+  padding:3px 7px; font-size:12px; font-weight:700; line-height:1; border-radius:3px; border:1px solid rgba(255,255,255,0.4);
+  background:rgba(255,255,255,0.12); color:#fff;
+}
+.tile .move-btn:hover{ background:rgba(255,255,255,0.32); }
+.tile .move-btn:disabled{ opacity:0.25; cursor:default; }
+.tile .move-btn:disabled:hover{ background:rgba(255,255,255,0.12); }
 .tile .remove-btn{
   position:absolute; top:5px; right:5px; width:22px; height:22px; border-radius:50%;
   background:rgba(20,19,17,0.65); color:#fff; border:none; font-size:14px; line-height:1;
@@ -739,7 +746,7 @@ function projectEditorHtml(ed){
         <div class="label">相簿 Gallery</div>
         <div class="tile-grid-drop" id="galleryDrop">
           <div class="tile-grid" id="galleryGrid">
-            ${(p.gallery || []).map((g, i) => galleryTileHtml(ed, g, i, "gallery")).join("")}
+            ${(p.gallery || []).map((g, i) => galleryTileHtml(ed, g, i, "gallery", (p.gallery || []).length)).join("")}
             <button class="add-tile" data-add-tile="gallery">${iconUpload()}<span>新增照片</span></button>
           </div>
         </div>
@@ -750,7 +757,7 @@ function projectEditorHtml(ed){
         <div class="label">圖說 / 圖面 Drawings</div>
         <div class="tile-grid-drop" id="drawingsDrop">
           <div class="tile-grid" id="drawingsGrid">
-            ${(p.drawings || []).map((g, i) => galleryTileHtml(ed, g, i, "drawings")).join("")}
+            ${(p.drawings || []).map((g, i) => galleryTileHtml(ed, g, i, "drawings", (p.drawings || []).length)).join("")}
             <button class="add-tile" data-add-tile="drawings">${iconUpload()}<span>新增圖片</span></button>
           </div>
         </div>
@@ -760,7 +767,7 @@ function projectEditorHtml(ed){
         <div class="label">Render 渲染圖（選填）</div>
         <div class="tile-grid-drop" id="rendersDrop">
           <div class="tile-grid" id="rendersGrid">
-            ${(p.renders || []).map((g, i) => galleryTileHtml(ed, g, i, "renders")).join("")}
+            ${(p.renders || []).map((g, i) => galleryTileHtml(ed, g, i, "renders", (p.renders || []).length)).join("")}
             <button class="add-tile" data-add-tile="renders">${iconUpload()}<span>新增圖片</span></button>
           </div>
         </div>
@@ -819,7 +826,7 @@ function gallerySizeOptions(kind){
     : [["large","大"],["small","中"],["tiny","小"]];
 }
 
-function galleryTileHtml(ed, item, i, kind){
+function galleryTileHtml(ed, item, i, kind, total){
   const size = item.size || "small";
   const src = resolveTileSrc(ed, item.src);
   // 圖說 drawings 與 Render 用同一套版型（大／中／小＋直式），相簿 gallery 才是另一套
@@ -831,7 +838,9 @@ function galleryTileHtml(ed, item, i, kind){
       ${drawingLike ? `<button class="orient-btn ${isPortrait ? "active" : ""}" data-orient-toggle title="直式圖片">↕ 直式</button>` : ""}
       <button class="remove-btn" data-remove-tile title="移除">×</button>
       <div class="tile-controls">
+        <button class="move-btn" data-move="-1" title="往前移" ${i === 0 ? "disabled" : ""}>‹</button>
         ${gallerySizeOptions(kind).map(([val,label]) => `<button class="size-btn ${size===val?"active":""}" data-set-size="${val}">${label}</button>`).join("")}
+        <button class="move-btn" data-move="1" title="往後移" ${i === total - 1 ? "disabled" : ""}>›</button>
       </div>
     </div>
   `;
@@ -926,6 +935,15 @@ function bindTileGrid(ed, kind, gridId, dropId){
       cur.orientation = cur.orientation === "portrait" ? "" : "portrait";
       if(!cur.orientation) delete cur.orientation;
       rerenderEditor();
+    });
+    tile.querySelectorAll("[data-move]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const arr = ed.item[kind];
+        const j = i + parseInt(btn.dataset.move, 10);
+        if(j < 0 || j >= arr.length) return;
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+        rerenderEditor();
+      });
     });
   });
 
