@@ -533,9 +533,9 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   .gallery-grid.js-columns .masonry-col{ gap:8px; }
 }
 
-/* drawings — 桌機維持原本的網格排版（large 佔滿整列、small 一列2張、tiny 一列3張）。
-   手機版另外改用跟 gallery 一樣的 Pinterest 多欄瀑布流，避免手機上變成整張圖佔一列、
-   一張一張往下排的條列式版面。 */
+/* drawings（Render 共用同一套）— 手機版維持跟桌機版同一套「large 佔滿整列、
+   small 一列2張、tiny 一列3張」網格排版，不像 gallery 那樣在手機上改成瀑布流，
+   單純把欄距在窄螢幕縮小一點。 */
 .drawing-grid{
   display:grid;
   grid-template-columns: repeat(6, 1fr);
@@ -562,47 +562,8 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .drawing-item.large.portrait img{ aspect-ratio: 2 / 3; object-fit:cover; }
 .drawing-item.small.portrait img{ aspect-ratio: 3 / 4; object-fit:cover; }
 
-@media (max-width: 750px) {
-  .drawing-grid{
-    display:block;
-    column-count: 2;
-    column-gap: 12px;
-  }
-  .drawing-item{
-    break-inside: avoid;
-    -webkit-column-break-inside: avoid;
-    margin-bottom: 12px;
-  }
-  .drawing-item img{ height:auto; }
-}
 @media (max-width: 420px) {
-  .drawing-grid{ column-gap: 8px; }
-  .drawing-item{ margin-bottom: 8px; }
-}
-
-/* 同 .gallery-grid：手機版改用 JS 分配的真正欄位 div，避免 column-count
-   在 Safari 上把第二欄的第一張圖往下擠，跟第一欄頂端對不齊。 */
-.drawing-grid.js-columns{
-  display:flex;
-  align-items:flex-start;
-  column-count:initial;
-  column-gap:initial;
-  gap:12px;
-}
-.drawing-grid.js-columns .masonry-col{
-  display:flex;
-  flex-direction:column;
-  flex:1 1 0;
-  min-width:0;
-  gap:12px;
-}
-.drawing-grid.js-columns .drawing-item{
-  margin-bottom:0;
-  break-inside:auto;
-}
-@media (max-width: 420px) {
-  .drawing-grid.js-columns{ gap:8px; }
-  .drawing-grid.js-columns .masonry-col{ gap:8px; }
+  .drawing-grid{ gap:8px; }
 }
 
 
@@ -1395,11 +1356,10 @@ function refreshMasonry(){
   document.querySelectorAll(".gallery-grid").forEach(g => {
     applyMasonryColumns(g, ".gallery-item", galleryCols, "galleryIndex");
   });
-  // drawing-grid 桌機版用固定的 CSS grid（span 排版），不套用 JS 瀑布流，
-  // 只有手機版（原本會切換成 column-count 瀑布流的寬度）才需要 JS 接手。
-  const drawingCols = w <= 750 ? 2 : 0;
+  // drawing-grid（Drawings／Render）不管桌機還是手機，都用固定的 CSS grid
+  // span 排版（large 佔滿整列、small 一列2張、tiny 一列3張），不套用 JS 瀑布流。
   document.querySelectorAll(".drawing-grid").forEach(g => {
-    applyMasonryColumns(g, ".drawing-item", drawingCols, "drawingIndex");
+    applyMasonryColumns(g, ".drawing-item", 0, "drawingIndex");
   });
 }
 
