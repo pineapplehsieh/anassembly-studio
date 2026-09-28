@@ -750,7 +750,7 @@ function projectEditorHtml(ed){
             <button class="add-tile" data-add-tile="gallery">${iconUpload()}<span>新增照片</span></button>
           </div>
         </div>
-        <div class="field-hint">大／中／寬都會裁切成固定比例；選「全幅」則完全不裁切、維持照片原始比例，並在網站上獨佔一整行（適合拼貼圖、長條圖說這類不能裁切的照片）。</div>
+        <div class="field-hint">大／中／寬／雙欄都會裁切成固定比例。「雙欄」是橫跨兩欄的 16:9 寬幅照片（旁邊那一欄會接著排後面的照片，手機版則佔滿整行）。選「全幅」則完全不裁切、維持照片原始比例，並獨佔一整行（適合拼貼圖、長條圖說這類不能裁切的照片）。</div>
       </div>
 
       <div class="field-block">
@@ -823,7 +823,7 @@ function projectEditorHtml(ed){
 
 function gallerySizeOptions(kind){
   return kind === "gallery"
-    ? [["large","大"],["small","中"],["wide","寬"],["full","全幅"]]
+    ? [["large","大"],["small","中"],["wide","寬"],["span2","雙欄"],["full","全幅"]]
     : [["large","大"],["small","中"],["tiny","小"],["full","全幅"]];
 }
 

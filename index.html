@@ -500,6 +500,11 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
    靠 JS 瀑布流（下面 .js-columns 那套）把它拆成獨立一行；這裡的 column-span
    只是給「JS 還沒跑之前」或 JS 失效時的原生多欄排版當退場備援。 */
 .gallery-item.full{ column-span: all; }
+/* span2：雙欄寬幅——橫跨兩欄、固定 16:9（會裁切，跟 large/small/wide 一樣；
+   不想裁切的照片請用「全幅」）。排版由下面 .js-columns 的 .masonry-band 處理，
+   這裡的 column-span 一樣只是 JS 沒跑之前的備援。 */
+.gallery-item.span2{ column-span: all; }
+.gallery-item.span2 img{ aspect-ratio: 16 / 9; object-fit:cover; }
 
 @media (max-width: 750px) {
   .gallery-grid{ column-count: 2; }
@@ -540,12 +545,23 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   margin-bottom:0;
   break-inside:auto;
 }
-.gallery-grid.js-columns .gallery-item.full{
+.gallery-grid.js-columns .gallery-item.full,
+.gallery-grid.js-columns .gallery-item.span2{
   column-span:initial;
 }
+/* 「雙欄寬幅＋旁邊一欄」的區塊：用跟上下列同樣的欄數與間距做 grid，
+   寬圖 span 2、旁邊那欄接在第 3 欄，欄寬才會跟其他列完全對齊。
+   grid-template-columns 由 JS 依當下欄數寫在 style 上。 */
+.gallery-grid.js-columns .masonry-band{
+  display:grid;
+  align-items:start;
+  gap:12px;
+}
+.gallery-grid.js-columns .masonry-band > .gallery-item.span2{ grid-column: span 2; }
 @media (max-width: 420px) {
   .gallery-grid.js-columns{ gap:8px; }
   .gallery-grid.js-columns .masonry-row{ gap:8px; }
+  .gallery-grid.js-columns .masonry-band{ gap:8px; }
   .gallery-grid.js-columns .masonry-col{ gap:8px; }
 }
 
@@ -1312,7 +1328,7 @@ function galleryItemSrc(item){
 }
 function gallerySizeClass(item){
   const size = typeof item === "string" ? "small" : (item.size || "small");
-  return ["large", "small", "tiny", "wide", "full"].includes(size) ? size : "small";
+  return ["large", "small", "tiny", "wide", "full", "span2"].includes(size) ? size : "small";
 }
 function galleryItemPosition(item){
   return (typeof item === "object" && item.position) ? item.position : "center";
@@ -1348,7 +1364,7 @@ function applyMasonryColumns(grid, itemSelector, columnCount, indexAttr){
   if(!columnCount || columnCount <= 1){
     grid.classList.remove("js-columns");
     items.forEach(it => grid.appendChild(it));
-    grid.querySelectorAll(":scope > .masonry-row, :scope > .masonry-col").forEach(el => el.remove());
+    grid.querySelectorAll(":scope > .masonry-row, :scope > .masonry-band, :scope > .masonry-col").forEach(el => el.remove());
     return;
   }
 
@@ -1376,8 +1392,12 @@ function applyMasonryColumns(grid, itemSelector, columnCount, indexAttr){
     cols = null;
   }
 
+  const isBreaker = (it) => it.classList.contains("full") || it.classList.contains("span2");
+
   startNewRow();
-  items.forEach(item => {
+  for(let idx = 0; idx < items.length; idx++){
+    const item = items[idx];
+
     // full 版型的圖片要獨佔一整行、維持原始比例不裁切：遇到它就把目前這批
     // 欄位收尾（沒有內容的話就直接省略，不留空行），圖片本身直接接在後面，
     // 再重新開始下一批欄位的高度平衡計算，前後兩段各自獨立、不會產生空白。
@@ -1385,15 +1405,62 @@ function applyMasonryColumns(grid, itemSelector, columnCount, indexAttr){
       flushRow();
       frag.appendChild(item);
       startNewRow();
-      return;
+      continue;
     }
+
+    // span2（雙欄寬幅）：橫跨兩欄，剩下的那一欄（3 欄時是 1 欄）在旁邊繼續
+    // 往下接後面的照片，湊成一個「一張寬圖＋旁邊一欄」的區塊，這樣寬圖旁邊
+    // 不會空著。手機版只有 2 欄、兩欄就是整行寬，或是後面沒有照片可以接的時候，
+    // 就直接讓它自己佔一整行（不會硬留一格空白）。
+    if(item.classList.contains("span2")){
+      flushRow();
+      const sideCount = columnCount - 2;
+      const sideCols = [];
+      const sideHeights = [];
+      if(sideCount > 0){
+        // 寬圖的高度（以「一欄的寬度」為單位）：寬 ≈ 2 欄、比例 16:9
+        const wideHeight = 2 / (16 / 9);
+        for(let s = 0; s < sideCount; s++){
+          const col = document.createElement("div");
+          col.className = "masonry-col";
+          sideCols.push(col);
+          sideHeights.push(0);
+        }
+        // 往後拿照片放進旁邊那欄，直到高度最接近寬圖為止（至少拿一張）
+        while(idx + 1 < items.length && !isBreaker(items[idx + 1])){
+          let shortest = 0;
+          for(let s = 1; s < sideCount; s++){
+            if(sideHeights[s] < sideHeights[shortest]) shortest = s;
+          }
+          const est = estimateItemHeightRatio(items[idx + 1]);
+          const cur = sideHeights[shortest];
+          if(cur > 0 && Math.abs(cur + est - wideHeight) >= Math.abs(cur - wideHeight)) break;
+          sideCols[shortest].appendChild(items[idx + 1]);
+          sideHeights[shortest] += est;
+          idx++;
+        }
+      }
+      if(sideCols.some(c => c.children.length > 0)){
+        const band = document.createElement("div");
+        band.className = "masonry-band";
+        band.style.gridTemplateColumns = `repeat(${columnCount}, minmax(0, 1fr))`;
+        band.appendChild(item);
+        sideCols.forEach(c => band.appendChild(c));
+        frag.appendChild(band);
+      } else {
+        frag.appendChild(item);
+      }
+      startNewRow();
+      continue;
+    }
+
     let shortest = 0;
     for(let i = 1; i < columnCount; i++){
       if(colHeights[i] < colHeights[shortest]) shortest = i;
     }
     cols[shortest].appendChild(item);
     colHeights[shortest] += estimateItemHeightRatio(item);
-  });
+  }
   flushRow();
 
   grid.innerHTML = "";
