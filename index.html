@@ -1394,52 +1394,95 @@ function applyMasonryColumns(grid, itemSelector, columnCount, indexAttr){
 
   const isBreaker = (it) => it.classList.contains("full") || it.classList.contains("span2");
 
-  startNewRow();
-  for(let idx = 0; idx < items.length; idx++){
-    const item = items[idx];
+  let idx = 0; // 下一張還沒處理的照片
 
-    // full 版型的圖片要獨佔一整行、維持原始比例不裁切：遇到它就把目前這批
-    // 欄位收尾（沒有內容的話就直接省略，不留空行），圖片本身直接接在後面，
-    // 再重新開始下一批欄位的高度平衡計算，前後兩段各自獨立、不會產生空白。
+  function placeInShortest(item){
+    let shortest = 0;
+    for(let i = 1; i < columnCount; i++){
+      if(colHeights[i] < colHeights[shortest]) shortest = i;
+    }
+    cols[shortest].appendChild(item);
+    colHeights[shortest] += estimateItemHeightRatio(item);
+  }
+  // 遇到 full / span2 這種要獨立成行的照片之前，如果目前這批欄位還有空著的欄
+  // （而且已經有照片了），先把後面的普通照片提前補進去，不要留一塊空白。
+  function fillGaps(){
+    while(cols.some(c => c.children.length === 0) && cols.some(c => c.children.length > 0)){
+      const nxt = items[idx];
+      if(!nxt || isBreaker(nxt)) break;
+      placeInShortest(nxt);
+      idx++;
+    }
+  }
+  // 把旁邊那幾欄接上後面的照片，直到高度最接近寬圖為止（有已經放了照片的欄就從它們的高度接著算）
+  function balanceSides(sideCols, sideHeights, wideHeight){
+    while(idx < items.length && !isBreaker(items[idx])){
+      let shortest = 0;
+      for(let s = 1; s < sideCols.length; s++){
+        if(sideHeights[s] < sideHeights[shortest]) shortest = s;
+      }
+      const est = estimateItemHeightRatio(items[idx]);
+      const cur = sideHeights[shortest];
+      if(cur > 0 && Math.abs(cur + est - wideHeight) >= Math.abs(cur - wideHeight)) break;
+      sideCols[shortest].appendChild(items[idx]);
+      sideHeights[shortest] += est;
+      idx++;
+    }
+  }
+  function newSideCol(){
+    const col = document.createElement("div");
+    col.className = "masonry-col";
+    return col;
+  }
+
+  startNewRow();
+  while(idx < items.length){
+    const item = items[idx++];
+
+    // full 版型的圖片要獨佔一整行、維持原始比例不裁切：遇到它就先把前一批欄位
+    // 的空欄補滿，再把那批收尾（沒有內容的話就直接省略，不留空行），圖片本身
+    // 直接接在後面，再重新開始下一批欄位的高度平衡計算，前後兩段各自獨立。
     if(item.classList.contains("full")){
+      fillGaps();
       flushRow();
       frag.appendChild(item);
       startNewRow();
       continue;
     }
 
-    // span2（雙欄寬幅）：橫跨兩欄，剩下的那一欄（3 欄時是 1 欄）在旁邊繼續
-    // 往下接後面的照片，湊成一個「一張寬圖＋旁邊一欄」的區塊，這樣寬圖旁邊
-    // 不會空著。手機版只有 2 欄、兩欄就是整行寬，或是後面沒有照片可以接的時候，
-    // 就直接讓它自己佔一整行（不會硬留一格空白）。
+    // span2（雙欄寬幅）：橫跨兩欄。
+    //  - 前一批只擺了 1 欄（其餘是空的）：寬圖直接補進那個空位，跟那一欄並排
+    //    （寬圖在右、原本那欄在左），並繼續往下接照片直到高度接近寬圖。
+    //  - 前一批已經是空的：寬圖在左，旁邊那一欄接後面的照片。
+    //  - 前一批有兩欄以上已經有照片：先把空欄補滿、收尾，寬圖再另起一個區塊。
+    // 手機版只有 2 欄、兩欄就是整行寬，所以直接獨佔一行；後面沒有照片可以接的時候
+    // 也直接獨佔一整行（不會硬留一格空白）。
     if(item.classList.contains("span2")){
-      flushRow();
       const sideCount = columnCount - 2;
+      const wideHeight = 2 / (16 / 9); // 以「一欄的寬度」為單位：寬 ≈ 2 欄、比例 16:9
+      const usedIdx = cols.map((c, i) => c.children.length > 0 ? i : -1).filter(i => i >= 0);
+
+      if(sideCount > 0 && usedIdx.length > 0 && usedIdx.length <= sideCount){
+        const sideCols = usedIdx.map(i => cols[i]);
+        const sideHeights = usedIdx.map(i => colHeights[i]);
+        while(sideCols.length < sideCount){ sideCols.push(newSideCol()); sideHeights.push(0); }
+        balanceSides(sideCols, sideHeights, wideHeight);
+        const band = document.createElement("div");
+        band.className = "masonry-band";
+        band.style.gridTemplateColumns = `repeat(${columnCount}, minmax(0, 1fr))`;
+        sideCols.forEach(c => band.appendChild(c));
+        band.appendChild(item);
+        frag.appendChild(band);
+        startNewRow();
+        continue;
+      }
+
+      fillGaps();
+      flushRow();
       const sideCols = [];
       const sideHeights = [];
-      if(sideCount > 0){
-        // 寬圖的高度（以「一欄的寬度」為單位）：寬 ≈ 2 欄、比例 16:9
-        const wideHeight = 2 / (16 / 9);
-        for(let s = 0; s < sideCount; s++){
-          const col = document.createElement("div");
-          col.className = "masonry-col";
-          sideCols.push(col);
-          sideHeights.push(0);
-        }
-        // 往後拿照片放進旁邊那欄，直到高度最接近寬圖為止（至少拿一張）
-        while(idx + 1 < items.length && !isBreaker(items[idx + 1])){
-          let shortest = 0;
-          for(let s = 1; s < sideCount; s++){
-            if(sideHeights[s] < sideHeights[shortest]) shortest = s;
-          }
-          const est = estimateItemHeightRatio(items[idx + 1]);
-          const cur = sideHeights[shortest];
-          if(cur > 0 && Math.abs(cur + est - wideHeight) >= Math.abs(cur - wideHeight)) break;
-          sideCols[shortest].appendChild(items[idx + 1]);
-          sideHeights[shortest] += est;
-          idx++;
-        }
-      }
+      for(let s = 0; s < sideCount; s++){ sideCols.push(newSideCol()); sideHeights.push(0); }
+      if(sideCount > 0) balanceSides(sideCols, sideHeights, wideHeight);
       if(sideCols.some(c => c.children.length > 0)){
         const band = document.createElement("div");
         band.className = "masonry-band";
@@ -1454,12 +1497,7 @@ function applyMasonryColumns(grid, itemSelector, columnCount, indexAttr){
       continue;
     }
 
-    let shortest = 0;
-    for(let i = 1; i < columnCount; i++){
-      if(colHeights[i] < colHeights[shortest]) shortest = i;
-    }
-    cols[shortest].appendChild(item);
-    colHeights[shortest] += estimateItemHeightRatio(item);
+    placeInShortest(item);
   }
   flushRow();
 
