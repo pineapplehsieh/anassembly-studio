@@ -497,11 +497,11 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
    Pinterest 本身也是靠「同欄寬、高度不同」達到無縫排列，並沒有跨欄的圖） */
 .gallery-item.wide img{ aspect-ratio: 3 / 2; object-fit:cover; }
 /* full：完全不裁切、維持照片原始比例、獨佔一整行（不塞進某一欄）。
-   靠 JS 瀑布流（下面 .js-columns 那套）把它拆成獨立一行；這裡的 column-span
+   靠 JS 瀑布流（下面 .js-dense 那套）讓它橫跨整列；這裡的 column-span
    只是給「JS 還沒跑之前」或 JS 失效時的原生多欄排版當退場備援。 */
 .gallery-item.full{ column-span: all; }
 /* span2：雙欄寬幅——橫跨兩欄、固定 16:9（會裁切，跟 large/small/wide 一樣；
-   不想裁切的照片請用「全幅」）。排版由下面 .js-columns 的 .masonry-band 處理，
+   不想裁切的照片請用「全幅」）。排版由下面 .js-dense 的 grid 處理，
    這裡的 column-span 一樣只是 JS 沒跑之前的備援。 */
 .gallery-item.span2{ column-span: all; }
 .gallery-item.span2 img{ aspect-ratio: 16 / 9; object-fit:cover; }
@@ -514,55 +514,28 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   .gallery-item{ margin-bottom: 8px; }
 }
 
-/* JS 強制多欄瀑布流：CSS 的 column-count 在手機 Safari 上做「欄高平衡」時，
-   常常算不準，導致第二欄的第一張圖片沒辦法跟第一欄切齊頂端、上方留一截空白。
-   等版面渲染完成後，JS 會依照圖片實際比例把項目分配進真正獨立的欄位 div
-   （.masonry-col），改用 flex 排版；因為每一欄都是各自獨立堆疊，
-   欄位裡的第一個項目必定貼齊最上方，兩欄自然對齊。
-   外層改成直向堆疊「一批欄位（.masonry-row）」與「全幅圖片」交錯排列，
-   遇到 full 版型的圖片時，前面那批欄位就地收尾、圖片自己獨佔一整行，
-   後面接著重新開始下一批欄位的高度平衡，不會因為硬跨欄而留下大片空白。 */
-.gallery-grid.js-columns{
-  display:flex;
-  flex-direction:column;
+/* 瀑布流（Pinterest 式）：JS 會加上 .js-dense，改用 grid＋1px 隱形列高 dense 排列，
+   每張照片依實際高度往「目前最高處的空位」放，後面的照片會自動補進前面的縫隙。
+   欄數、欄距與各照片跨欄（span2／full）由 JS 寫在 style 上。
+   JS 還沒跑之前，仍是上面 column-count 的原生多欄排版當備援。 */
+.gallery-grid.js-dense{
+  display:grid;
   column-count:initial;
-  column-gap:initial;
-  gap:12px;
+  grid-auto-rows:1px;
+  grid-auto-flow:row dense;
+  row-gap:0;
+  align-items:start;
 }
-.gallery-grid.js-columns .masonry-row{
-  display:flex;
-  align-items:flex-start;
-  gap:12px;
-}
-.gallery-grid.js-columns .masonry-col{
-  display:flex;
-  flex-direction:column;
-  flex:1 1 0;
-  min-width:0;
-  gap:12px;
-}
-.gallery-grid.js-columns .gallery-item{
+.gallery-grid.js-dense .gallery-item{
   margin-bottom:0;
   break-inside:auto;
-}
-.gallery-grid.js-columns .gallery-item.full,
-.gallery-grid.js-columns .gallery-item.span2{
   column-span:initial;
 }
-/* 「雙欄寬幅＋旁邊一欄」的區塊：用跟上下列同樣的欄數與間距做 grid，
-   寬圖 span 2、旁邊那欄接在第 3 欄，欄寬才會跟其他列完全對齊。
-   grid-template-columns 由 JS 依當下欄數寫在 style 上。 */
-.gallery-grid.js-columns .masonry-band{
-  display:grid;
-  align-items:start;
-  gap:12px;
-}
-.gallery-grid.js-columns .masonry-band > .gallery-item.span2{ grid-column: span 2; }
-@media (max-width: 420px) {
-  .gallery-grid.js-columns{ gap:8px; }
-  .gallery-grid.js-columns .masonry-row{ gap:8px; }
-  .gallery-grid.js-columns .masonry-band{ gap:8px; }
-  .gallery-grid.js-columns .masonry-col{ gap:8px; }
+/* 收縫時把照片拉高：圖片跟著撐滿（一樣是 cover 裁切） */
+.gallery-grid.js-dense .gallery-item.stretched img{
+  height:100%;
+  aspect-ratio:auto;
+  object-fit:cover;
 }
 
 /* drawings（Render 共用同一套）— 手機版維持跟桌機版同一套「large 佔滿整列、
@@ -1340,182 +1313,113 @@ function drawingOrientationClass(item){
   return (typeof item === "object" && item.orientation === "portrait") ? "portrait" : "";
 }
 
-/* ---------------- JS 瀑布流欄位對齊 ----------------
-   CSS 的 column-count 排版（Pinterest 式瀑布流）在手機 Safari 上有個已知問題：
-   瀏覽器會嘗試「平衡」各欄的總高度，但計算常常不準，導致第二欄的第一張圖片
-   沒辦法跟第一欄的第一張圖片切齊頂端，上方多出一截空白。
-   解法：改用 JS 把項目依序分配進真正獨立的欄位 <div>（每欄用 flex-direction:column
-   各自往下堆疊），這樣每一欄的第一個項目必定貼齊最上方，兩欄自然對齊。
-   分配時用「目前最矮的那一欄」演算法，依照 large/small/wide/tiny 各自的
-   長寬比粗估高度，讓兩欄整體高度盡量平均。 */
-function estimateItemHeightRatio(item){
-  if(item.classList.contains("large")) return 4 / 3; // 直式照片，較高
-  if(item.classList.contains("wide")) return 2 / 3;  // 橫式照片，較扁
-  if(item.classList.contains("tiny")) return 1;
-  return 3 / 4; // small（預設），中等高度
+/* ---------------- Gallery 瀑布流（Pinterest 式）----------------
+   用 CSS grid（grid-auto-flow: dense）＋ 1px 的隱形列高：JS 量出每張照片實際高度，
+   再讓它佔 N 個 1px 列，瀏覽器就會像瀑布流一樣把每張照片放進「目前最高處的空位」，
+   後面的照片會自動往上補進前面留下的縫隙。雙欄寬幅（span2）跟全幅（full）
+   也只是「佔兩欄／整列」的照片，不會另外拆區塊。
+   最後再做一次「收縫」：寬幅／全幅上方如果某一欄還是比較矮（剩下的照片放不進去），
+   就把那一欄最後一張照片拉高一點（裁切多一些）去貼齊，不留空白。
+   drawings／render 則維持原生 CSS grid，這裡只把它還原成單純排列。 */
+const GALLERY_STRETCH_LIMIT = 1.0; // 收縫最多把一張照片拉高到原本的 2 倍
+function layoutDenseGallery(grid, columnCount){
+  const items = Array.from(grid.querySelectorAll(":scope > .gallery-item"))
+    .sort((a, b) => Number(a.dataset.galleryIndex || 0) - Number(b.dataset.galleryIndex || 0));
+  items.forEach(it => grid.appendChild(it));
+  const gap = window.innerWidth <= 420 ? 8 : 12;
+
+  grid.classList.add("js-dense");
+  grid.style.gridTemplateColumns = `repeat(${columnCount}, minmax(0, 1fr))`;
+  grid.style.columnGap = gap + "px";
+  items.forEach(it => {
+    if(it.classList.contains("full")) it.style.gridColumn = "1 / -1";
+    else if(it.classList.contains("span2")) it.style.gridColumn = columnCount > 2 ? "span 2" : "1 / -1";
+    else it.style.gridColumn = "";
+  });
+
+  function setSpans(){
+    items.forEach(it => {
+      const h = it.getBoundingClientRect().height;
+      it.style.gridRowEnd = "span " + Math.max(1, Math.ceil(h + gap));
+    });
+  }
+  function closeGaps(){
+    const gRect = grid.getBoundingClientRect();
+    const colW = (gRect.width - gap * (columnCount - 1)) / columnCount;
+    if(!(colW > 0)) return false;
+    const info = items.map(it => {
+      const r = it.getBoundingClientRect();
+      const c0 = Math.round((r.left - gRect.left) / (colW + gap));
+      const n = Math.max(1, Math.round((r.width + gap) / (colW + gap)));
+      return { it, top: r.top - gRect.top, h: r.height, bottom: r.bottom - gRect.top, c0, c1: c0 + n - 1, single: n === 1 };
+    });
+    let changed = false;
+    const touched = new Set();
+    info.filter(b => !b.single).forEach(b => {
+      for(let c = b.c0; c <= b.c1; c++){
+        let cand = null;
+        info.forEach(o => {
+          if(o === b || o.bottom > b.top + 1 || c < o.c0 || c > o.c1) return;
+          if(!cand || o.bottom > cand.bottom) cand = o;
+        });
+        if(!cand || !cand.single || touched.has(cand.it)) continue;
+        const gapPx = b.top - (cand.bottom + gap);
+        if(gapPx > 1 && gapPx <= cand.h * GALLERY_STRETCH_LIMIT){
+          cand.it.classList.add("stretched");
+          cand.it.style.height = (cand.h + gapPx) + "px";
+          touched.add(cand.it);
+          changed = true;
+        }
+      }
+    });
+    return changed;
+  }
+  function settle(){
+    if(grid._laying) return;
+    grid._laying = true;
+    try{
+      items.forEach(it => { it.classList.remove("stretched"); it.style.height = ""; });
+      setSpans();
+      for(let pass = 0; pass < 3; pass++){
+        if(!closeGaps()) break;
+        setSpans();
+      }
+    } finally {
+      grid._laying = false;
+    }
+  }
+  grid._settle = settle;
+  settle();
+  requestAnimationFrame(() => grid._settle && grid._settle());
+  // 全幅／沒有固定比例的照片要等圖片載入完才知道高度，載入後重新排一次
+  items.forEach(it => {
+    const img = it.querySelector("img");
+    if(img && !img.complete && !img.dataset.denseBound){
+      img.dataset.denseBound = "1";
+      img.addEventListener("load", () => grid._settle && grid._settle());
+    }
+  });
 }
 
-function applyMasonryColumns(grid, itemSelector, columnCount, indexAttr){
-  if(!grid) return;
-  const items = Array.from(grid.querySelectorAll(itemSelector))
-    .sort((a, b) => Number(a.dataset[indexAttr] || 0) - Number(b.dataset[indexAttr] || 0));
-  if(!items.length) return;
-
-  if(!columnCount || columnCount <= 1){
-    grid.classList.remove("js-columns");
-    items.forEach(it => grid.appendChild(it));
-    grid.querySelectorAll(":scope > .masonry-row, :scope > .masonry-band, :scope > .masonry-col").forEach(el => el.remove());
-    return;
-  }
-
-  grid.classList.add("js-columns");
-  const frag = document.createDocumentFragment();
-  let cols = null;
-  let colHeights = null;
-
-  function startNewRow(){
-    cols = Array.from({ length: columnCount }, () => {
-      const col = document.createElement("div");
-      col.className = "masonry-col";
-      return col;
-    });
-    colHeights = new Array(columnCount).fill(0);
-  }
-  function flushRow(){
-    if(!cols) return;
-    if(cols.some(c => c.children.length > 0)){
-      const row = document.createElement("div");
-      row.className = "masonry-row";
-      cols.forEach(c => row.appendChild(c));
-      frag.appendChild(row);
-    }
-    cols = null;
-  }
-
-  const isBreaker = (it) => it.classList.contains("full") || it.classList.contains("span2");
-
-  let idx = 0; // 下一張還沒處理的照片
-
-  function placeInShortest(item){
-    let shortest = 0;
-    for(let i = 1; i < columnCount; i++){
-      if(colHeights[i] < colHeights[shortest]) shortest = i;
-    }
-    cols[shortest].appendChild(item);
-    colHeights[shortest] += estimateItemHeightRatio(item);
-  }
-  // 遇到 full / span2 這種要獨立成行的照片之前，如果目前這批欄位還有空著的欄
-  // （而且已經有照片了），先把後面的普通照片提前補進去，不要留一塊空白。
-  function fillGaps(){
-    while(cols.some(c => c.children.length === 0) && cols.some(c => c.children.length > 0)){
-      const nxt = items[idx];
-      if(!nxt || isBreaker(nxt)) break;
-      placeInShortest(nxt);
-      idx++;
-    }
-  }
-  // 把旁邊那幾欄接上後面的照片，直到高度最接近寬圖為止（有已經放了照片的欄就從它們的高度接著算）
-  function balanceSides(sideCols, sideHeights, wideHeight){
-    while(idx < items.length && !isBreaker(items[idx])){
-      let shortest = 0;
-      for(let s = 1; s < sideCols.length; s++){
-        if(sideHeights[s] < sideHeights[shortest]) shortest = s;
-      }
-      const est = estimateItemHeightRatio(items[idx]);
-      const cur = sideHeights[shortest];
-      if(cur > 0 && Math.abs(cur + est - wideHeight) >= Math.abs(cur - wideHeight)) break;
-      sideCols[shortest].appendChild(items[idx]);
-      sideHeights[shortest] += est;
-      idx++;
-    }
-  }
-  function newSideCol(){
-    const col = document.createElement("div");
-    col.className = "masonry-col";
-    return col;
-  }
-
-  startNewRow();
-  while(idx < items.length){
-    const item = items[idx++];
-
-    // full 版型的圖片要獨佔一整行、維持原始比例不裁切：遇到它就先把前一批欄位
-    // 的空欄補滿，再把那批收尾（沒有內容的話就直接省略，不留空行），圖片本身
-    // 直接接在後面，再重新開始下一批欄位的高度平衡計算，前後兩段各自獨立。
-    if(item.classList.contains("full")){
-      fillGaps();
-      flushRow();
-      frag.appendChild(item);
-      startNewRow();
-      continue;
-    }
-
-    // span2（雙欄寬幅）：橫跨兩欄。
-    //  - 前一批只擺了 1 欄（其餘是空的）：寬圖直接補進那個空位，跟那一欄並排
-    //    （寬圖在右、原本那欄在左），並繼續往下接照片直到高度接近寬圖。
-    //  - 前一批已經是空的：寬圖在左，旁邊那一欄接後面的照片。
-    //  - 前一批有兩欄以上已經有照片：先把空欄補滿、收尾，寬圖再另起一個區塊。
-    // 手機版只有 2 欄、兩欄就是整行寬，所以直接獨佔一行；後面沒有照片可以接的時候
-    // 也直接獨佔一整行（不會硬留一格空白）。
-    if(item.classList.contains("span2")){
-      const sideCount = columnCount - 2;
-      const wideHeight = 2 / (16 / 9); // 以「一欄的寬度」為單位：寬 ≈ 2 欄、比例 16:9
-      const usedIdx = cols.map((c, i) => c.children.length > 0 ? i : -1).filter(i => i >= 0);
-
-      if(sideCount > 0 && usedIdx.length > 0 && usedIdx.length <= sideCount){
-        const sideCols = usedIdx.map(i => cols[i]);
-        const sideHeights = usedIdx.map(i => colHeights[i]);
-        while(sideCols.length < sideCount){ sideCols.push(newSideCol()); sideHeights.push(0); }
-        balanceSides(sideCols, sideHeights, wideHeight);
-        const band = document.createElement("div");
-        band.className = "masonry-band";
-        band.style.gridTemplateColumns = `repeat(${columnCount}, minmax(0, 1fr))`;
-        sideCols.forEach(c => band.appendChild(c));
-        band.appendChild(item);
-        frag.appendChild(band);
-        startNewRow();
-        continue;
-      }
-
-      fillGaps();
-      flushRow();
-      const sideCols = [];
-      const sideHeights = [];
-      for(let s = 0; s < sideCount; s++){ sideCols.push(newSideCol()); sideHeights.push(0); }
-      if(sideCount > 0) balanceSides(sideCols, sideHeights, wideHeight);
-      if(sideCols.some(c => c.children.length > 0)){
-        const band = document.createElement("div");
-        band.className = "masonry-band";
-        band.style.gridTemplateColumns = `repeat(${columnCount}, minmax(0, 1fr))`;
-        band.appendChild(item);
-        sideCols.forEach(c => band.appendChild(c));
-        frag.appendChild(band);
-      } else {
-        frag.appendChild(item);
-      }
-      startNewRow();
-      continue;
-    }
-
-    placeInShortest(item);
-  }
-  flushRow();
-
-  grid.innerHTML = "";
-  grid.appendChild(frag);
+function resetDenseGallery(grid){
+  grid.classList.remove("js-dense");
+  grid._settle = null;
+  grid.style.gridTemplateColumns = "";
+  grid.style.columnGap = "";
+  grid.querySelectorAll(":scope > .gallery-item, :scope > .drawing-item").forEach(it => {
+    it.style.gridColumn = ""; it.style.gridRowEnd = ""; it.style.height = "";
+  });
 }
 
 function refreshMasonry(){
   const w = window.innerWidth;
   const galleryCols = w <= 750 ? 2 : 3;
   document.querySelectorAll(".gallery-grid").forEach(g => {
-    applyMasonryColumns(g, ".gallery-item", galleryCols, "galleryIndex");
+    layoutDenseGallery(g, galleryCols);
   });
   // drawing-grid（Drawings／Render）不管桌機還是手機，都用固定的 CSS grid
-  // span 排版（large 佔滿整列、small 一列2張、tiny 一列3張），不套用 JS 瀑布流。
-  document.querySelectorAll(".drawing-grid").forEach(g => {
-    applyMasonryColumns(g, ".drawing-item", 0, "drawingIndex");
-  });
+  // span 排版（large 佔滿整列、small 一列2張、tiny 一列3張），不套用瀑布流。
+  document.querySelectorAll(".drawing-grid").forEach(g => resetDenseGallery(g));
 }
 
 function debounce(fn, wait){
