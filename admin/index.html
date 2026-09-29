@@ -1310,6 +1310,33 @@ function statsCardHtml(num, label){
   `;
 }
 
+/* 排除自己的瀏覽：GoatCounter 的追蹤程式碼會檢查 localStorage 裡的 skipgc，
+   設成 "t" 就不記錄這台裝置的瀏覽。後台跟網站同一個網域，所以在後台設定就會生效。 */
+function selfExcluded(){
+  try { return localStorage.getItem("skipgc") === "t"; } catch(e){ return false; }
+}
+function setSelfExcluded(on){
+  try { on ? localStorage.setItem("skipgc", "t") : localStorage.removeItem("skipgc"); } catch(e){}
+}
+
+/* 把 GoatCounter 記到的路徑（例如 /#/project/A-12）換成人看得懂的名稱 */
+function statsPathLabel(path){
+  const h = String(path || "").replace(/^\/?#?\/?/, ""); // "/#/project/A-12" → "project/A-12"
+  const firstLine = (t) => String(t || "").split(/\r?\n/)[0].trim();
+  const find = (list, id) => (list || []).find(x => x.id === id);
+  if(h === "") return "首頁";
+  if(h === "work") return "作品列表 Work";
+  if(h === "books") return "書籍 Books";
+  if(h === "series") return "系列列表 Series";
+  if(h === "about") return "關於 About";
+  let m;
+  if((m = h.match(/^project\/(.+)$/))){ const p = find(state.projects, decodeURIComponent(m[1])); return p ? firstLine(p.title) : "作品 " + m[1]; }
+  if((m = h.match(/^series\/(.+)$/))){ const s = find(state.series, decodeURIComponent(m[1])); return "系列：" + (s ? firstLine(s.title || s.name) : m[1]); }
+  if((m = h.match(/^category\/(.+)$/))) return "分類：" + decodeURIComponent(m[1]);
+  if((m = h.match(/^year\/(.+)$/))) return "年份：" + decodeURIComponent(m[1]);
+  return path;
+}
+
 async function loadAndRenderStats(el){
   try{
     const res = await fetch(STATS_ENDPOINT);
@@ -1326,21 +1353,34 @@ async function loadAndRenderStats(el){
       return;
     }
     el.innerHTML = `
+      <div class="field-block">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" id="skipSelfStats" ${selfExcluded() ? "checked" : ""}>
+          不要把我在這台裝置上的瀏覽算進統計
+        </label>
+        <div class="field-hint">
+          開過後台的裝置會自動排除。你用來看網站的每一台裝置（手機、平板、其他電腦）
+          只要用它登入過一次後台，之後在那台裝置上看網站就不會被計入。
+          已經記錄下來的舊資料沒辦法回溯扣掉。
+        </div>
+      </div>
+      <div class="label">頁面瀏覽次數</div>
+      <div class="field-hint" style="margin-bottom:10px;">算的是「看了幾頁」，不是「幾個人」：同一個人看了 5 個頁面算 5 次。</div>
       <div class="stats-cards">
         ${statsCardHtml(data.today, "今天")}
         ${statsCardHtml(data.last7Days, "近 7 天")}
         ${statsCardHtml(data.last30Days, "近 30 天")}
-        ${statsCardHtml(data.allTime, "累計總訪客")}
+        ${statsCardHtml(data.allTime, "累計")}
       </div>
       <div class="field-block">
         <div class="label">熱門頁面</div>
         ${data.topPages && data.topPages.length ? `
           <table class="stats-table">
-            <thead><tr><th>頁面</th><th style="text-align:right;">訪客數</th></tr></thead>
+            <thead><tr><th>頁面</th><th style="text-align:right;">瀏覽次數</th></tr></thead>
             <tbody>
               ${data.topPages.map(p => `
                 <tr>
-                  <td>${esc(p.title || p.path)}<div style="color:var(--muted); font-size:11.5px;">${esc(p.path)}</div></td>
+                  <td>${esc(statsPathLabel(p.path))}<div style="color:var(--muted); font-size:11.5px;">${esc(p.path)}</div></td>
                   <td class="num">${p.count.toLocaleString()}</td>
                 </tr>
               `).join("")}
@@ -1350,8 +1390,10 @@ async function loadAndRenderStats(el){
           ? `熱門頁面暫時讀不到（${esc(data.topPagesError)}）`
           : "還沒有資料（網站剛開始統計，有訪客之後就會出現）"}</div>`}
       </div>
-      ${data.dashboardUrl ? `<div class="field-hint" style="margin-top:20px;"><a href="${esc(data.dashboardUrl)}" target="_blank" rel="noopener">在 GoatCounter 看更詳細的統計 ↗</a></div>` : ""}
+      ${data.dashboardUrl ? `<div class="field-hint" style="margin-top:20px;"><a href="${esc(data.dashboardUrl)}" target="_blank" rel="noopener">在 GoatCounter 看更詳細的統計（含不重複人數、來源、裝置）↗</a></div>` : ""}
     `;
+    const skipBox = el.querySelector("#skipSelfStats");
+    if(skipBox) skipBox.addEventListener("change", () => setSelfExcluded(skipBox.checked));
   }catch(err){
     el.innerHTML = `<div class="stats-empty">讀取統計資料失敗：${esc(err.message)}</div>`;
   }
@@ -1464,6 +1506,8 @@ function renderEditor(){
    啟動
    ============================================================ */
 (async function init(){
+  // 會開後台的只有自己：這台裝置之後看網站的瀏覽一律不算進訪客統計
+  setSelfExcluded(true);
   if(authToken){
     try{
       setLoading(true, "載入中…");
