@@ -394,6 +394,48 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .side-info strong{ display:block; color:var(--ink); font-size:13px; margin:22px 0 4px; }
 .side-info strong:first-child{ margin-top:0; }
 
+/* ---------------- 專欄報導版型（layout: "article"）---------------- */
+/* 資訊列：地點／年份／狀態／系列／Credits 從右側欄移到內文上方，橫向一條，上下細線 */
+.article-specs{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:22px 40px;
+  padding:26px 0; margin-bottom:64px;
+  border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+}
+.article-spec-k{ font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+.article-spec-v{ font-size:14.5px; line-height:1.7; color:var(--ink); }
+.article-spec.wide{ grid-column:1 / -1; }
+.article-specs .side-series{ margin:2px 12px 0 0; }
+.article-specs .side-series-thumb{ width:72px; height:72px; }
+
+/* 內文：單欄閱讀寬度置中；照片依大小決定寬度，可以比文字欄寬 */
+.article-body{ --article-col:680px; }
+.article-body > p{
+  max-width:var(--article-col); margin:0 auto 26px;
+  color:#3a3833; font-size:17px; line-height:1.95;
+}
+.article-body > p:first-child{ font-size:19px; line-height:1.85; color:var(--ink); }
+.article-fig{ margin:52px auto; width:100%; position:relative; cursor:zoom-in; }
+.article-fig :is(img,video){ width:100%; height:auto; display:block; border-radius:4px; background:#fff; }
+.article-fig figcaption{ max-width:var(--article-col); margin:10px auto 0; font-size:12.5px; line-height:1.6; color:var(--muted); }
+.article-fig.fig-small{ max-width:520px; }
+.article-fig.fig-large{ max-width:var(--article-col); }
+.article-fig.fig-wide{ max-width:880px; }
+.article-fig.fig-span2 img, .article-fig.fig-span2 video{ aspect-ratio:16/9; object-fit:cover; }
+.article-fig.fig-span2, .article-fig.fig-full{ max-width:none; }
+.article-fig.fig-wide figcaption, .article-fig.fig-span2 figcaption, .article-fig.fig-full figcaption{ max-width:var(--article-col); }
+/* 相鄰兩張「中」併成一排 */
+.article-pair{ display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; max-width:880px; margin:52px auto; }
+.article-pair .article-fig{ margin:0; max-width:none; }
+.article-body > .article-fig:first-child, .article-body > .article-pair:first-child{ margin-top:0; }
+@media (max-width:700px){
+  .article-specs{ grid-template-columns:1fr 1fr; gap:18px 20px; padding:20px 0; margin-bottom:40px; }
+  .article-body > p{ font-size:15.5px; line-height:1.85; margin-bottom:20px; }
+  .article-body > p:first-child{ font-size:17px; }
+  .article-fig{ margin:36px 0; }
+  .article-fig.fig-small, .article-fig.fig-large, .article-fig.fig-wide{ max-width:none; }
+  .article-pair{ gap:8px; margin:36px 0; }
+}
+
 /* 側欄內的系列小縮圖（取代原本頁面下方的大區塊，改移到 Credits 旁邊） */
 .side-series{ margin-top:10px; cursor:pointer; display:inline-block; }
 .side-series-thumb{
@@ -1495,6 +1537,101 @@ function debounce(fn, wait){
 
 window.addEventListener("resize", debounce(refreshMasonry, 150));
 
+/* ---------------- 專欄報導版型（layout: "article"）----------------
+   仿 ArchDaily 專欄式頁面：單欄閱讀寬度、圖文交錯。資料欄位完全沿用現有的
+   （文字介紹 description、相簿 gallery、圖說 drawings、Render、地點／年份／狀態／Credits／系列），
+   只是排法不同：
+   - 地點、年份、狀態、Credits、系列從右側欄移到內文上方的一條資訊列。
+   - 相簿照片「自動」穿插在文字段落之間（照片順序＝後台排的順序），不用手動指定位置。
+   - 長段落會在句子結尾自動拆成較短的段落，才有地方插圖；中文段落與它對應的英文
+     第一段之間不會插圖（保留中英對照）。
+   - 圖說 Drawings、Render 維持原本的區塊，接在文章後面。 */
+const ARTICLE_SPLIT_TARGET = 340;   // 長段落拆成大約這個字數一段
+const ARTICLE_SPLIT_MIN_LEN = 520;  // 超過這個字數的段落才拆
+
+function splitLongParagraph(text){
+  if(text.length <= ARTICLE_SPLIT_MIN_LEN) return [text];
+  const sentences = text.match(/[^.!?。！？]+(?:[.!?。！？]+["”’)\]]*\s*|$)/g) || [text];
+  const out = [];
+  let cur = "";
+  sentences.forEach(s => {
+    cur += s;
+    if(cur.length >= ARTICLE_SPLIT_TARGET){ out.push(cur.trim()); cur = ""; }
+  });
+  if(cur.trim()){
+    // 最後剩下的太短就併回前一段，不要單獨一小句
+    if(out.length && cur.trim().length < ARTICLE_SPLIT_TARGET * 0.4) out[out.length - 1] += " " + cur.trim();
+    else out.push(cur.trim());
+  }
+  return out.filter(Boolean);
+}
+
+function articleBlocks(text){
+  const paras = String(text || "").split(/<br>\s*<br>|\n[ \t]*\n+/i).map(t => t.trim()).filter(Boolean);
+  const blocks = [];
+  paras.forEach(t => {
+    const cjk = /[㐀-鿿]/.test(t);
+    splitLongParagraph(t).forEach((part, k) => blocks.push({ text: part, cjk, firstOfPara: k === 0 }));
+  });
+  // 這個段落後面可不可以插圖：中文段落的結尾 → 英文段落的開頭，這個縫不插圖（中英對照要連在一起）
+  blocks.forEach((b, k) => {
+    const nxt = blocks[k + 1];
+    b.gapAfter = !(nxt && b.cjk && !nxt.cjk && nxt.firstOfPara);
+  });
+  return blocks;
+}
+
+function articleParagraphHtml(block){
+  const body = esc(block.text).replace(/&lt;br&gt;/gi, "<br>").replace(/\n/g, "<br>");
+  return `<p>${body}</p>`;
+}
+
+function articleFigHtml(entry, p){
+  const item = entry.item;
+  const size = gallerySizeClass(item) === "tiny" ? "small" : gallerySizeClass(item);
+  const caption = (typeof item === "object" && item.caption) ? `<figcaption>${esc(item.caption)}</figcaption>` : "";
+  const style = size === "span2" ? `object-position:${esc(galleryItemPosition(item))}` : "";
+  return `<figure class="article-fig fig-${size}" data-gallery-index="${entry.i}">${mediaHtml(galleryItemSrc(item), p.title, { thumb: size === "small", style })}${caption}</figure>`;
+}
+
+/* 一段連續的照片：相鄰的「中」會兩兩併成一排，其餘各自單張（寬度由 CSS 依大小決定） */
+function articleFiguresHtml(list, p){
+  let html = "";
+  for(let k = 0; k < list.length; k++){
+    const size = gallerySizeClass(list[k].item);
+    const nxt = list[k + 1];
+    if((size === "small" || size === "tiny") && nxt && ["small", "tiny"].includes(gallerySizeClass(nxt.item))){
+      html += `<div class="article-pair">${articleFigHtml(list[k], p)}${articleFigHtml(nxt, p)}</div>`;
+      k++;
+    } else {
+      html += articleFigHtml(list[k], p);
+    }
+  }
+  return html;
+}
+
+function articleBodyHtml(p){
+  const blocks = articleBlocks(p.description);
+  const entries = (p.gallery || []).map((item, i) => ({ item, i }));
+  if(!blocks.length) return articleFiguresHtml(entries, p);
+  // 可以插圖的縫：每個 gapAfter 為真的段落後面（最後一段後面一定算）
+  const slots = [];
+  blocks.forEach((b, k) => { if(b.gapAfter || k === blocks.length - 1) slots.push(k); });
+  const bySlot = slots.map(() => []);
+  entries.forEach((e, g) => { bySlot[Math.min(slots.length - 1, Math.floor(g * slots.length / entries.length))].push(e); });
+  let html = "";
+  blocks.forEach((b, k) => {
+    html += articleParagraphHtml(b);
+    const s = slots.indexOf(k);
+    if(s >= 0 && bySlot[s].length) html += articleFiguresHtml(bySlot[s], p);
+  });
+  return html;
+}
+
+function articleSpecHtml(label, valueHtml){
+  return `<div class="article-spec"><div class="article-spec-k">${label}</div><div class="article-spec-v">${valueHtml}</div></div>`;
+}
+
 function renderProject(id){
   const p = PROJECTS.find(x => x.id === id);
   if(!p){ renderWork(); return; }
@@ -1513,23 +1650,22 @@ function renderProject(id){
       </div>`
     : "";
   const projectSeries = p.series || [];
+  const seriesThumbsHtml = projectSeries.map(s => {
+    const info = getSeriesInfo(s.id);
+    const thumbSrc = info.thumb || info.cover;
+    return `
+      <div class="side-series" data-series-goto="${esc(s.id)}" title="${esc(info.title || s.id)}">
+        <div class="side-series-thumb">
+          ${thumbSrc
+            ? mediaHtml(thumbSrc, info.title || s.id, { thumb: true })
+            : `<div class="side-series-placeholder">上傳系列縮圖</div>`}
+        </div>
+      </div>`;
+  }).join("");
   const seriesSideHtml = projectSeries.length
     ? `
       <strong>Series</strong>
-      <div style="display:flex; gap:14px; flex-wrap:wrap;">
-        ${projectSeries.map(s => {
-          const info = getSeriesInfo(s.id);
-          const thumbSrc = info.thumb || info.cover;
-          return `
-            <div class="side-series" data-series-goto="${esc(s.id)}" title="${esc(info.title || s.id)}">
-              <div class="side-series-thumb">
-                ${thumbSrc
-                  ? mediaHtml(thumbSrc, info.title || s.id, { thumb: true })
-                  : `<div class="side-series-placeholder">上傳系列縮圖</div>`}
-              </div>
-            </div>`;
-        }).join("")}
-      </div>`
+      <div style="display:flex; gap:14px; flex-wrap:wrap;">${seriesThumbsHtml}</div>`
     : "";
 
   // Drawings 與 Render 共用同一套版型（class 都是 drawing-grid / drawing-item，
@@ -1559,8 +1695,25 @@ function renderProject(id){
     </div>
   `;
 
+  // 專欄報導版型：資訊移到內文上方一條橫列，相簿照片穿插在文字之間（見 articleBodyHtml）
+  const isArticle = p.layout === "article";
+  const articleSpecsHtml = `
+    <div class="article-specs">
+      ${p.location ? articleSpecHtml("Location", esc(p.location)) : ""}
+      ${p.year ? articleSpecHtml("Year", esc(p.year)) : ""}
+      ${p.status ? articleSpecHtml("Status", esc(p.status)) : ""}
+      ${projectSeries.length ? articleSpecHtml("Series", `<div style="display:flex; flex-wrap:wrap;">${seriesThumbsHtml}</div>`) : ""}
+      ${p.credits ? `<div class="article-spec wide"><div class="article-spec-k">Credits</div><div class="article-spec-v">${p.credits}</div></div>` : ""}
+    </div>`;
+  const bodyBlockHtml = isArticle
+    ? `${articleSpecsHtml}<div class="article-body">${articleBodyHtml(p)}</div>`
+    : `<div class="detail-body">
+        <div class="detail-desc">${paragraphs}</div>
+        ${sideInfo}
+      </div>`;
+
   app.innerHTML = `
-    <div class="wrap detail">
+    <div class="wrap detail${isArticle ? " detail-article" : ""}">
       <a href="#/work" class="back-link">← Back to work</a>
       <h1 class="detail-title">${esc(p.title)}</h1>
       
@@ -1571,13 +1724,10 @@ function renderProject(id){
       </div>
 
       ${thumb(p).replace('card-thumb','detail-hero')}
-      <div class="detail-body">
-        <div class="detail-desc">${paragraphs}</div>
-        ${sideInfo}
-      </div>
+      ${bodyBlockHtml}
       ${drawingHtml}
       ${renderHtml}
-      ${galleryHtml}
+      ${isArticle ? "" : galleryHtml}
       ${relatedBooks.length ? `
         <div class="related-books">
           <h3>Related publications</h3>
@@ -1598,7 +1748,7 @@ function renderProject(id){
 
   if(p.gallery && p.gallery.length){
     const galleryImages = p.gallery.map(item => ({ src: galleryItemSrc(item), alt: p.title }));
-    app.querySelectorAll(".gallery-item").forEach(el => {
+    app.querySelectorAll(".gallery-item, .article-fig").forEach(el => {
       el.addEventListener("click", () => {
         openLightbox(galleryImages, parseInt(el.dataset.galleryIndex, 10));
       });

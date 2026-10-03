@@ -170,6 +170,18 @@ input,textarea,select{ font-family:inherit; font-size:14px; }
   background:rgba(20,19,17,0.65); color:#fff; border:none;
 }
 .tile .orient-btn.active{ background:#fff; color:var(--ink); }
+.layout-picker{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.layout-option{
+  display:flex; flex-direction:column; gap:4px; cursor:pointer;
+  border:1.5px solid var(--line); border-radius:8px; padding:12px 14px; background:#fff;
+}
+.layout-option b{ font-size:14px; }
+.layout-option span{ font-size:12px; color:var(--muted); line-height:1.5; font-weight:400; }
+.layout-option input{ display:none; }
+.layout-option.checked{ border-color:var(--ink); box-shadow:0 0 0 1px var(--ink) inset; }
+@media (max-width:560px){ .layout-picker{ grid-template-columns:1fr; } }
+.tile-wrap{ display:flex; flex-direction:column; gap:6px; min-width:0; }
+.tile-caption{ width:100%; font-size:12px; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:#fff; }
 .video-badge{
   position:absolute; left:6px; bottom:6px; z-index:2;
   background:rgba(0,0,0,0.72); color:#fff; font-size:10.5px; font-weight:700;
@@ -797,6 +809,22 @@ function projectEditorHtml(ed){
         <div class="field-hint">建議使用橫式、至少 1600px 寬的照片</div>
       </div>
 
+      <div class="field-block">
+        <div class="label">頁面版型</div>
+        <div class="layout-picker">
+          <label class="layout-option ${p.layout !== "article" ? "checked" : ""}">
+            <input type="radio" name="f_layout" value="standard" ${p.layout !== "article" ? "checked" : ""}>
+            <b>標準</b>
+            <span>文字在左、地點／年份／Credits 在右側，相簿是瀑布流</span>
+          </label>
+          <label class="layout-option ${p.layout === "article" ? "checked" : ""}">
+            <input type="radio" name="f_layout" value="article" ${p.layout === "article" ? "checked" : ""}>
+            <b>專欄報導</b>
+            <span>仿 ArchDaily：單欄閱讀、圖文交錯。資訊移到文字上方，相簿照片自動穿插在段落之間</span>
+          </label>
+        </div>
+      </div>
+
       <div class="field-block two-col">
         <div>
           <label>中文標題</label>
@@ -843,7 +871,9 @@ function projectEditorHtml(ed){
             <button class="add-tile" data-add-tile="gallery">${iconUpload()}<span>新增照片／影片</span></button>
           </div>
         </div>
-        <div class="field-hint">大／中／寬／雙欄都會裁切成固定比例。「雙欄」是橫跨兩欄的 16:9 寬幅照片（旁邊那一欄會接著排後面的照片，手機版則佔滿整行）。選「全幅」則完全不裁切、維持照片原始比例，並獨佔一整行（適合拼貼圖、長條圖說這類不能裁切的照片）。</div>
+        <div class="field-hint">${p.layout === "article"
+          ? "專欄報導：照片會依這裡的順序，自動穿插在文字段落之間（太長的段落會在句子結尾自動分段；中文段落跟它的英文第一段之間不插圖）。大＝文字欄寬、寬＝比文字欄再寬一點、相鄰兩張「中」會併成一排、雙欄＝頁面全寬（裁成 16:9）、全幅＝頁面全寬且不裁切；專欄裡其他大小都不裁切。每張照片下方可以填圖說（選填）。圖說 Drawings 與 Render 會接在文章後面。"
+          : "大／中／寬／雙欄都會裁切成固定比例。「雙欄」是橫跨兩欄的 16:9 寬幅照片（旁邊那一欄會接著排後面的照片，手機版則佔滿整行）。選「全幅」則完全不裁切、維持照片原始比例，並獨佔一整行（適合拼貼圖、長條圖說這類不能裁切的照片）。"}</div>
       </div>
 
       <div class="field-block">
@@ -926,7 +956,8 @@ function galleryTileHtml(ed, item, i, kind, total){
   // 圖說 drawings 與 Render 用同一套版型（大／中／小＋直式），相簿 gallery 才是另一套
   const drawingLike = kind === "drawings" || kind === "renders";
   const isPortrait = drawingLike && item.orientation === "portrait";
-  return `
+  const withCaption = kind === "gallery" && ed.item.layout === "article";
+  const tileHtml = `
     <div class="tile" data-tile-kind="${kind}" data-tile-index="${i}">
       ${src ? mediaTagHtml(src, isVideoRef(ed, item.src)) : ""}
       ${drawingLike ? `<button class="orient-btn ${isPortrait ? "active" : ""}" data-orient-toggle title="直式圖片">↕ 直式</button>` : ""}
@@ -938,6 +969,9 @@ function galleryTileHtml(ed, item, i, kind, total){
       </div>
     </div>
   `;
+  return withCaption
+    ? `<div class="tile-wrap">${tileHtml}<input type="text" class="tile-caption" data-caption-index="${i}" value="${esc(item.caption || "")}" placeholder="圖說（選填）"></div>`
+    : tileHtml;
 }
 
 function bindProjectEditorEvents(ed){
@@ -947,6 +981,12 @@ function bindProjectEditorEvents(ed){
   if(deleteBtn) deleteBtn.addEventListener("click", () => deleteCurrentItem());
 
   bindCoverDropEvents(ed, "cover");
+  document.querySelectorAll('input[name="f_layout"]').forEach(r => r.addEventListener("change", () => {
+    if(r.checked){
+      if(r.value === "article") ed.item.layout = "article"; else delete ed.item.layout;
+      rerenderEditor(); // 版型換了：相簿提示與圖說欄位跟著換
+    }
+  }));
   bindTileGrid(ed, "gallery", "galleryGrid", "galleryDrop");
   bindTileGrid(ed, "drawings", "drawingsGrid", "drawingsDrop");
   bindTileGrid(ed, "renders", "rendersGrid", "rendersDrop");
@@ -1040,6 +1080,15 @@ function bindTileGrid(ed, kind, gridId, dropId){
         [arr[i], arr[j]] = [arr[j], arr[i]];
         rerenderEditor();
       });
+    });
+  });
+
+  grid.querySelectorAll("[data-caption-index]").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const entry = ed.item[kind][parseInt(inp.dataset.captionIndex, 10)];
+      if(!entry) return;
+      const v = inp.value.trim();
+      if(v) entry.caption = v; else delete entry.caption;
     });
   });
 
@@ -1149,6 +1198,8 @@ async function saveProjectEditor(ed){
   // Render 是選填：沒有任何圖片就不要寫這個欄位（網站對「沒有欄位」跟「空陣列」都是不顯示，
   // 但不寫可以讓沒用到的作品資料保持乾淨）。
   if(!p.renders || !p.renders.length) delete p.renders;
+  // 標準版型是預設值，不寫 layout 欄位（既有作品的資料完全不變）
+  if(p.layout !== "article") delete p.layout;
 
   try{
     setLoading(true, "儲存中…");
