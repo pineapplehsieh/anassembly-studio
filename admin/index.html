@@ -21,7 +21,7 @@ body{
   font-family:var(--f-body); font-size:15px; line-height:1.6;
   -webkit-font-smoothing:antialiased;
 }
-img{ max-width:100%; display:block; }
+img, video{ max-width:100%; display:block; }
 a{ color:inherit; }
 button{ font-family:inherit; cursor:pointer; }
 h1,h2,h3{ font-family:var(--f-heading); font-weight:700; letter-spacing:-0.01em; margin:0; }
@@ -79,8 +79,8 @@ input,textarea,select{ font-family:inherit; font-size:14px; }
   background:#fff; transition:box-shadow .15s ease, transform .15s ease;
 }
 .item-card:hover{ box-shadow:0 6px 18px rgba(32,31,29,0.1); transform:translateY(-2px); }
-.item-card .thumb{ aspect-ratio:4/3; background:#efece5; overflow:hidden; }
-.item-card .thumb img{ width:100%; height:100%; object-fit:cover; }
+.item-card .thumb{ aspect-ratio:4/3; background:#efece5; overflow:hidden; position:relative; }
+.item-card .thumb :is(img,video){ width:100%; height:100%; object-fit:cover; }
 .item-card .thumb.empty{ display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:12px; }
 .item-card .info{ padding:12px 14px; }
 .item-card .info .t{ font-size:14px; font-weight:600; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -121,7 +121,7 @@ input,textarea,select{ font-family:inherit; font-size:14px; }
   background:#efece5; border:1.5px dashed var(--line); position:relative; cursor:pointer;
 }
 .cover-drop.has-image{ border-style:solid; }
-.cover-drop img{ width:100%; height:100%; object-fit:cover; }
+.cover-drop :is(img,video){ width:100%; height:100%; object-fit:cover; }
 .cover-drop .placeholder{
   position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:8px; color:var(--muted); font-size:13px;
@@ -141,7 +141,7 @@ input,textarea,select{ font-family:inherit; font-size:14px; }
   position:relative; aspect-ratio:4/3; border-radius:6px; overflow:hidden; background:#efece5;
   border:1px solid var(--line);
 }
-.tile img{ width:100%; height:100%; object-fit:cover; }
+.tile :is(img,video){ width:100%; height:100%; object-fit:cover; }
 .tile .tile-controls{
   position:absolute; left:0; right:0; bottom:0; padding:6px;
   background:linear-gradient(to top, rgba(20,19,17,0.85), rgba(20,19,17,0));
@@ -170,6 +170,12 @@ input,textarea,select{ font-family:inherit; font-size:14px; }
   background:rgba(20,19,17,0.65); color:#fff; border:none;
 }
 .tile .orient-btn.active{ background:#fff; color:var(--ink); }
+.video-badge{
+  position:absolute; left:6px; bottom:6px; z-index:2;
+  background:rgba(0,0,0,0.72); color:#fff; font-size:10.5px; font-weight:700;
+  padding:2px 7px; border-radius:10px; pointer-events:none; letter-spacing:.04em;
+}
+.tile .video-badge{ bottom:auto; top:6px; left:6px; }
 .add-tile{
   aspect-ratio:4/3; border-radius:6px; border:1.5px dashed var(--line);
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
@@ -410,6 +416,38 @@ function sanitizeFilename(name){
   return name.replace(/[^\w.\-一-鿿]+/g, "_");
 }
 
+/* 任何圖片格都可以放影片。影片不會在瀏覽器裡轉檔（轉了會很慢、也容易壞），原檔直接上傳，
+   所以限制單檔大小：GitHub 透過網頁上傳單檔上限約 100MB，保險起見抓 40MB。
+   建議用手機拍短片（10～30 秒）或先用剪輯軟體匯出成 MP4（H.264）再上傳，相容性最好。 */
+const MAX_VIDEO_MB = 40;
+const VIDEO_EXT_RE = /\.(mp4|webm|mov|m4v)(?:[?#].*)?$/i;
+function isVideoFile(file){ return !!file && (/^video\//i.test(file.type) || VIDEO_EXT_RE.test(file.name || "")); }
+function isMediaFile(file){ return !!file && (/^image\//i.test(file.type) || isVideoFile(file)); }
+/* 挑檔案時就檢查：不是圖片／影片、或影片太大的直接擋掉並說明原因，不要等到按儲存才失敗 */
+function acceptMediaFiles(files){
+  const ok = [];
+  Array.from(files || []).forEach(file => {
+    if(!isMediaFile(file)){ toast(`「${file.name}」不是圖片或影片，已略過`, true); return; }
+    if(isVideoFile(file) && file.size > MAX_VIDEO_MB * 1024 * 1024){
+      toast(`影片「${file.name}」有 ${(file.size / 1048576).toFixed(0)}MB，超過 ${MAX_VIDEO_MB}MB 上限，已略過。請先壓縮或剪短再上傳`, true);
+      return;
+    }
+    ok.push(file);
+  });
+  return ok;
+}
+/* 縮圖／預覽：影片顯示第一個畫面加一個「影片」標籤，圖片照舊。
+   srcValue 可能是已發布的路徑，也可能是還沒上傳的 PENDING:: 暫時 key */
+function isVideoRef(ed, srcValue){
+  const pending = ed && ed.pendingUploads && ed.pendingUploads[srcValue];
+  return pending ? isVideoFile(pending.file) : VIDEO_EXT_RE.test(String(srcValue || ""));
+}
+function mediaTagHtml(url, isVideo, extra){
+  return isVideo
+    ? `<video src="${esc(url)}#t=0.001" muted playsinline preload="metadata"${extra || ""}></video><span class="video-badge">▶ 影片</span>`
+    : `<img src="${esc(url)}" alt=""${extra || ""}>`;
+}
+
 /* 圖片上傳前先在瀏覽器裡縮圖、轉成 JPEG：手機拍的原圖動輒 4000px、好幾 MB，
    直接放上網站會讓前台載入很慢。長邊最多 2400px（畫廊、燈箱看起來都夠清楚），
    透明背景一律鋪白（網站本來就是白底）。GIF／SVG／PDF 不動。 */
@@ -438,6 +476,9 @@ async function compressImage(file){
 
 /* 上傳一個檔案（圖片或 PDF）到 uploads/ 資料夾，回傳最終路徑 */
 async function uploadAsset(file){
+  if(isVideoFile(file) && file.size > MAX_VIDEO_MB * 1024 * 1024){
+    throw new Error(`影片「${file.name}」超過 ${MAX_VIDEO_MB}MB，請先壓縮或剪短`);
+  }
   file = await compressImage(file);
   const path = `${UPLOADS_DIR}/${Date.now()}-${sanitizeFilename(file.name)}`;
   const b64 = await readFileAsBase64(file);
@@ -605,7 +646,7 @@ function projectsListHtml(){
   const cards = state.projects.map((p, i) => `
     <div class="item-card" data-edit="${i}">
       <div class="thumb ${p.cover ? "" : "empty"}">
-        ${p.cover ? `<img src="${esc(rawUrl(p.cover))}" alt="" loading="lazy">` : "尚無封面"}
+        ${p.cover ? mediaTagHtml(rawUrl(p.cover), isVideoRef(null, p.cover), " loading=\"lazy\"") : "尚無封面"}
       </div>
       <div class="info">
         <div class="t">${esc((p.title || "").split("\n")[0] || "（未命名）")}</div>
@@ -620,7 +661,7 @@ function booksListHtml(){
   const cards = state.books.map((b, i) => `
     <div class="item-card" data-edit="${i}">
       <div class="thumb ${b.cover ? "" : "empty"}">
-        ${b.cover ? `<img src="${esc(rawUrl(b.cover))}" alt="" loading="lazy">` : "尚無封面"}
+        ${b.cover ? mediaTagHtml(rawUrl(b.cover), isVideoRef(null, b.cover), " loading=\"lazy\"") : "尚無封面"}
       </div>
       <div class="info">
         <div class="t">${esc((b.title || "").split("\n")[0] || "（未命名）")}</div>
@@ -635,7 +676,7 @@ function seriesListHtml(){
   const cards = state.series.map((s, i) => `
     <div class="item-card" data-edit="${i}">
       <div class="thumb ${(s.thumb || s.cover) ? "" : "empty"}">
-        ${(s.thumb || s.cover) ? `<img src="${esc(rawUrl(s.thumb || s.cover))}" alt="" loading="lazy">` : "尚無縮圖"}
+        ${(s.thumb || s.cover) ? mediaTagHtml(rawUrl(s.thumb || s.cover), isVideoRef(null, s.thumb || s.cover), " loading=\"lazy\"") : "尚無縮圖"}
       </div>
       <div class="info">
         <div class="t">${esc(s.title || "（未命名）")}</div>
@@ -692,14 +733,14 @@ function iconFile(){
 }
 
 /* 產生一個「封面」拖拉上傳區的 HTML；imgSrc 可能是本地 blob 網址（剛選的檔案）或原始 raw url */
-function coverDropHtml(fieldPath, imgSrc){
+function coverDropHtml(fieldPath, imgSrc, isVideo){
   return `
     <div class="cover-drop ${imgSrc ? "has-image" : ""}" data-cover-field="${esc(fieldPath)}">
       ${imgSrc
-        ? `<img src="${esc(imgSrc)}" alt=""><div class="replace-hint">點擊或拖曳圖片以更換</div>`
-        : `<div class="placeholder">${iconUpload()}<span>點擊或拖曳圖片到這裡</span></div>`
+        ? `${mediaTagHtml(imgSrc, !!isVideo)}<div class="replace-hint">點擊或拖曳圖片／影片以更換</div>`
+        : `<div class="placeholder">${iconUpload()}<span>點擊或拖曳圖片／影片到這裡</span></div>`
       }
-      <input type="file" accept="image/*" style="display:none">
+      <input type="file" accept="image/*,video/*" style="display:none">
     </div>
   `;
 }
@@ -727,7 +768,7 @@ function projectEditorHtml(ed){
 
       <div class="field-block">
         <div class="label">封面照片</div>
-        ${coverDropHtml("cover", resolveTileSrc(ed, p.cover))}
+        ${coverDropHtml("cover", resolveTileSrc(ed, p.cover), isVideoRef(ed, p.cover))}
         <div class="field-hint">建議使用橫式、至少 1600px 寬的照片</div>
       </div>
 
@@ -774,7 +815,7 @@ function projectEditorHtml(ed){
         <div class="tile-grid-drop" id="galleryDrop">
           <div class="tile-grid" id="galleryGrid">
             ${(p.gallery || []).map((g, i) => galleryTileHtml(ed, g, i, "gallery", (p.gallery || []).length)).join("")}
-            <button class="add-tile" data-add-tile="gallery">${iconUpload()}<span>新增照片</span></button>
+            <button class="add-tile" data-add-tile="gallery">${iconUpload()}<span>新增照片／影片</span></button>
           </div>
         </div>
         <div class="field-hint">大／中／寬／雙欄都會裁切成固定比例。「雙欄」是橫跨兩欄的 16:9 寬幅照片（旁邊那一欄會接著排後面的照片，手機版則佔滿整行）。選「全幅」則完全不裁切、維持照片原始比例，並獨佔一整行（適合拼貼圖、長條圖說這類不能裁切的照片）。</div>
@@ -785,7 +826,7 @@ function projectEditorHtml(ed){
         <div class="tile-grid-drop" id="drawingsDrop">
           <div class="tile-grid" id="drawingsGrid">
             ${(p.drawings || []).map((g, i) => galleryTileHtml(ed, g, i, "drawings", (p.drawings || []).length)).join("")}
-            <button class="add-tile" data-add-tile="drawings">${iconUpload()}<span>新增圖片</span></button>
+            <button class="add-tile" data-add-tile="drawings">${iconUpload()}<span>新增圖片／影片</span></button>
           </div>
         </div>
         <div class="field-hint">大／中／小都會裁切成固定比例；選「全幅」則完全不裁切、維持照片原始比例，並獨佔一整行。</div>
@@ -796,7 +837,7 @@ function projectEditorHtml(ed){
         <div class="tile-grid-drop" id="rendersDrop">
           <div class="tile-grid" id="rendersGrid">
             ${(p.renders || []).map((g, i) => galleryTileHtml(ed, g, i, "renders", (p.renders || []).length)).join("")}
-            <button class="add-tile" data-add-tile="renders">${iconUpload()}<span>新增圖片</span></button>
+            <button class="add-tile" data-add-tile="renders">${iconUpload()}<span>新增圖片／影片</span></button>
           </div>
         </div>
         <div class="field-hint">版型設定跟上面的圖說一樣（大／中／小、全幅、直式）。沒有放任何圖片的話，網站上就不會出現 Render 這個區塊。網站上的顯示順序是：圖說 → Render → 相簿。</div>
@@ -862,7 +903,7 @@ function galleryTileHtml(ed, item, i, kind, total){
   const isPortrait = drawingLike && item.orientation === "portrait";
   return `
     <div class="tile" data-tile-kind="${kind}" data-tile-index="${i}">
-      ${src ? `<img src="${esc(src)}" alt="">` : ""}
+      ${src ? mediaTagHtml(src, isVideoRef(ed, item.src)) : ""}
       ${drawingLike ? `<button class="orient-btn ${isPortrait ? "active" : ""}" data-orient-toggle title="直式圖片">↕ 直式</button>` : ""}
       <button class="remove-btn" data-remove-tile title="移除">×</button>
       <div class="tile-controls">
@@ -923,13 +964,15 @@ function bindCoverDropEvents(ed, fieldName){
   const fileInput = dropEl.querySelector("input[type=file]");
   dropEl.addEventListener("click", () => fileInput.click());
   fileInput.addEventListener("change", () => {
-    if(fileInput.files[0]) handleCoverFile(ed, fieldName, fileInput.files[0]);
+    const file = acceptMediaFiles(fileInput.files && [fileInput.files[0]].filter(Boolean))[0];
+    if(file) handleCoverFile(ed, fieldName, file);
+    fileInput.value = ""; // 同一個檔案被擋下後，修正再選一次還能觸發 change
   });
   ["dragover","dragenter"].forEach(evt => dropEl.addEventListener(evt, e => { e.preventDefault(); dropEl.classList.add("drag-over"); }));
   ["dragleave","drop"].forEach(evt => dropEl.addEventListener(evt, e => { e.preventDefault(); dropEl.classList.remove("drag-over"); }));
   dropEl.addEventListener("drop", e => {
-    const file = e.dataTransfer.files && e.dataTransfer.files[0];
-    if(file && file.type.startsWith("image/")) handleCoverFile(ed, fieldName, file);
+    const file = acceptMediaFiles(e.dataTransfer.files && [e.dataTransfer.files[0]].filter(Boolean))[0];
+    if(file) handleCoverFile(ed, fieldName, file);
   });
 }
 
@@ -977,16 +1020,16 @@ function bindTileGrid(ed, kind, gridId, dropId){
 
   const addBtn = grid.querySelector(`[data-add-tile="${kind}"]`);
   const fileInput = document.createElement("input");
-  fileInput.type = "file"; fileInput.accept = "image/*"; fileInput.multiple = true; fileInput.style.display = "none";
+  fileInput.type = "file"; fileInput.accept = "image/*,video/*"; fileInput.multiple = true; fileInput.style.display = "none";
   addBtn.after(fileInput);
   addBtn.addEventListener("click", () => fileInput.click());
-  fileInput.addEventListener("change", () => addTileFiles(ed, kind, Array.from(fileInput.files)));
+  fileInput.addEventListener("change", () => addTileFiles(ed, kind, acceptMediaFiles(fileInput.files)));
 
   if(dropZone){
     ["dragover","dragenter"].forEach(evt => dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.add("drag-over"); }));
     ["dragleave","drop"].forEach(evt => dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.remove("drag-over"); }));
     dropZone.addEventListener("drop", e => {
-      const files = Array.from(e.dataTransfer.files || []).filter(f => f.type.startsWith("image/"));
+      const files = acceptMediaFiles(e.dataTransfer.files);
       if(files.length) addTileFiles(ed, kind, files);
     });
   }
@@ -1043,10 +1086,12 @@ function rerenderEditor(){
 
 /* 把 editing.item 裡所有指向 pendingUploads 的暫時 key，實際上傳到 GitHub，換成正式路徑 */
 async function flushPendingUploads(ed){
-  const keys = Object.keys(ed.pendingUploads);
+  const used = JSON.stringify(ed.item);
+  const keys = Object.keys(ed.pendingUploads).filter(k => used.includes(k));
   for(let i = 0; i < keys.length; i++){
     const key = keys[i];
-    setLoading(true, `上傳圖片中… (${i+1}/${keys.length})`);
+    const mb = ed.pendingUploads[key].file.size / 1048576;
+    setLoading(true, `上傳檔案中… (${i+1}/${keys.length})${mb >= 5 ? `　${mb.toFixed(0)}MB，請稍候` : ""}`);
     const finalPath = await uploadAsset(ed.pendingUploads[key].file);
     replaceValueDeep(ed.item, key, finalPath);
     delete ed.pendingUploads[key];
@@ -1138,7 +1183,7 @@ function bookEditorHtml(ed){
 
       <div class="field-block">
         <div class="label">封面照片</div>
-        ${coverDropHtml("cover", resolveTileSrc(ed, b.cover))}
+        ${coverDropHtml("cover", resolveTileSrc(ed, b.cover), isVideoRef(ed, b.cover))}
       </div>
 
       <div class="field-block two-col">
@@ -1227,12 +1272,12 @@ function seriesEditorHtml(ed){
 
       <div class="field-block">
         <div class="label">主視覺封面</div>
-        ${coverDropHtml("cover", resolveTileSrc(ed, s.cover))}
+        ${coverDropHtml("cover", resolveTileSrc(ed, s.cover), isVideoRef(ed, s.cover))}
       </div>
 
       <div class="field-block">
         <div class="label">目錄縮圖（選填，不填則使用主視覺封面）</div>
-        ${coverDropHtml("thumb", resolveTileSrc(ed, s.thumb))}
+        ${coverDropHtml("thumb", resolveTileSrc(ed, s.thumb), isVideoRef(ed, s.thumb))}
       </div>
 
       <div class="field-block">
@@ -1408,7 +1453,7 @@ function aboutEditorHtml(ed){
     <div class="editor">
       <div class="field-block">
         <div class="label">大頭照</div>
-        ${coverDropHtml("photo", resolveTileSrc(ed, a.photo))}
+        ${coverDropHtml("photo", resolveTileSrc(ed, a.photo), isVideoRef(ed, a.photo))}
       </div>
 
       <div class="field-block">

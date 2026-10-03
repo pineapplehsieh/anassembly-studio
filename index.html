@@ -32,7 +32,7 @@ body{
   line-height:1.6;
   -webkit-font-smoothing:antialiased;
 }
-img{ max-width:100%; display:block; }
+img, video{ max-width:100%; display:block; }
 a{ color:inherit; text-decoration:none; }
 button{ font-family:inherit; background:none; border:none; cursor:pointer; }
 h1,h2,h3{ font-family:var(--f-heading); font-weight:700; letter-spacing:-0.01em; margin:0; }
@@ -65,7 +65,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .home-slides{ position:absolute; inset:0; }
 .home-slide{ position:absolute; inset:0; opacity:0; transition:opacity 1.4s ease; }
 .home-slide.active{ opacity:1; }
-.home-slide img{ width:100%; height:100%; object-fit:cover; object-position: center; }
+.home-slide :is(img,video){ width:100%; height:100%; object-fit:cover; object-position: center; }
 .placeholder-slide{
   display:flex; align-items:center; justify-content:center;
   background:linear-gradient(135deg,#efece5,#ddd8cc);
@@ -150,7 +150,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 @media (max-width:700px){
   .home-hero{ height:auto; min-height:unset; overflow:visible; display:flex; flex-direction:column; }
   .home-hero-media{ position:relative; inset:auto; aspect-ratio: 4 / 5; background:#1c1b19; overflow:hidden; }
-  .home-slide img{ object-fit:contain; }
+  .home-slide :is(img,video){ object-fit:contain; }
   .home-caption-bl { left: 16px; right: 16px; bottom: 16px; }
   .home-button-br { position:static; display:flex; justify-content:center; padding:16px 16px 0; }
   .slide-caption { font-size: 14px; }
@@ -176,7 +176,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   position:relative;
   width:100%; aspect-ratio:3/2; overflow:hidden; border-radius:6px;
 }
-.home-mobile-media img{ width:100%; height:100%; object-fit:cover; display:block; }
+.home-mobile-media :is(img,video){ width:100%; height:100%; object-fit:cover; display:block; }
 .home-mobile-caption{
   position:absolute; left:10px; bottom:10px; right:10px;
   display:flex; flex-direction:column; align-items:flex-start; gap:4px;
@@ -206,8 +206,8 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .work-row:hover{ background:rgba(245,223,77,0.28); } /* Pantone 13-0647 TCX — Illuminating */
 .work-year{ width:56px; flex-shrink:0; font-family:var(--f-heading); font-size:14px; color:var(--muted); }
 .work-thumb{ width:200px; aspect-ratio:4/3; flex-shrink:0; overflow:hidden; border-radius:4px; background:#efece5; }
-.work-thumb img{ width:100%; height:100%; object-fit:cover; transition:transform .4s ease; }
-.work-row:hover .work-thumb img{ transform:scale(1.04); }
+.work-thumb :is(img,video){ width:100%; height:100%; object-fit:cover; transition:transform .4s ease; }
+.work-row:hover .work-thumb :is(img,video){ transform:scale(1.04); }
 .work-title-wrap{ flex:1; min-width:0; }
 .work-title{ font-size:21px; margin-bottom:4px; }
 .work-meta{ color:var(--muted); font-size:13px; }
@@ -222,7 +222,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 @media (max-width:700px){
   /* 手機板觸控點擊會讓 :hover 狀態卡住顯示黃色底色，因此手機板取消這個 hover 效果 */
   .work-row:hover{ background:none; }
-  .work-row:hover .work-thumb img{ transform:none; }
+  .work-row:hover .work-thumb :is(img,video){ transform:none; }
   /* About 頁面手機板左右留白修正見下方 .about 區塊 */
 }
 
@@ -276,8 +276,8 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   aspect-ratio:4/3; border-radius:2px;
   overflow:hidden; cursor:pointer; background:#efece5;
 }
-.matrix-thumb img{ width:100%; height:100%; object-fit:cover; transition:transform .3s ease; }
-.matrix-thumb:hover img{ transform:scale(1.08); }
+.matrix-thumb :is(img,video){ width:100%; height:100%; object-fit:cover; transition:transform .3s ease; }
+.matrix-thumb:hover :is(img,video){ transform:scale(1.08); }
 .matrix-thumb .placeholder{ font-size:0; }
 .matrix-thumb-caption{
   position:absolute; inset:0;
@@ -324,8 +324,8 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   aspect-ratio:4/3; width:100%; overflow:hidden;
   border-radius:6px; margin-bottom:16px; background:#efece5;
 }
-.card-thumb img{ width:100%; height:100%; object-fit:cover; transition:transform .4s ease; }
-.card:hover .card-thumb img{ transform:scale(1.03); }
+.card-thumb :is(img,video){ width:100%; height:100%; object-fit:cover; transition:transform .4s ease; }
+.card:hover .card-thumb :is(img,video){ transform:scale(1.03); }
 .placeholder{
   width:100%; height:100%; display:flex; align-items:center; justify-content:center;
   color:var(--muted); font-size:13px; background:#efece5; text-align:center; padding:10px;
@@ -358,7 +358,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   aspect-ratio:16/9; width:100%; overflow:hidden; border-radius:8px;
   background:#efece5; margin-bottom:44px;
 }
-.detail-hero img{ width:100%; height:100%; object-fit:cover; }
+.detail-hero :is(img,video){ width:100%; height:100%; object-fit:cover; }
 
 /* 系列頁主視覺：正方形、置中、比原本稍微放大，並用 contain 讓整張封面完整顯示、不被裁切 */
 .series-hero{
@@ -366,7 +366,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   background:#efece5; margin:0 auto 44px;
   display:flex; align-items:center; justify-content:center;
 }
-.series-hero img{ width:100%; height:100%; object-fit:contain; }
+.series-hero :is(img,video){ width:100%; height:100%; object-fit:contain; }
 
 /* 主視覺下方的文字介紹與收錄案子網格，統一置中並與主視覺同寬對齊 */
 .series-content{ max-width:640px; margin:0 auto; }
@@ -402,7 +402,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   transition:opacity .25s ease, transform .25s ease, box-shadow .25s ease;
 }
 .side-series:hover .side-series-thumb{ opacity:0.85; transform:translateY(-2px); box-shadow:0 10px 22px rgba(32,31,29,0.24); }
-.side-series-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.side-series-thumb :is(img,video){ width:100%; height:100%; object-fit:cover; display:block; }
 .side-series-placeholder{
   width:100%; height:100%; display:flex; align-items:center; justify-content:center;
   text-align:center; font-size:9px; color:var(--muted); padding:4px; box-sizing:border-box;
@@ -433,7 +433,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   transition:opacity .25s ease, transform .25s ease, box-shadow .25s ease;
 }
 .series-thumb-trigger:hover{ opacity:0.85; transform:translateY(-3px); box-shadow:0 12px 26px rgba(32,31,29,0.22); }
-.series-thumb-trigger img{ width:100%; height:100%; object-fit:cover; display:block; }
+.series-thumb-trigger :is(img,video){ width:100%; height:100%; object-fit:cover; display:block; }
 .series-thumb-placeholder{
   width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;
   text-align:center; gap:4px; border:1px dashed var(--line); box-sizing:border-box;
@@ -455,7 +455,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .series-pedigree-list .series-pedigree-item:first-child{ border-top:none; }
 .series-pedigree-item:not(.current):hover .series-pedigree-title{ color:var(--accent); }
 .series-pedigree-thumb{ width:104px; height:104px; flex:0 0 auto; overflow:hidden; background:#efece5; }
-.series-pedigree-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.series-pedigree-thumb :is(img,video){ width:100%; height:100%; object-fit:cover; display:block; }
 .series-pedigree-part{ font-family:var(--f-heading); font-size:12.5px; color:var(--muted); letter-spacing:0.05em; margin-bottom:5px; }
 .series-pedigree-title{ font-size:18px; line-height:1.35; color:var(--ink); transition:color .2s ease; }
 .series-pedigree-item.current{
@@ -485,17 +485,17 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   overflow:hidden; border-radius:4px; background:#fff;
   cursor:zoom-in; position:relative;
 }
-.gallery-item img{
+.gallery-item :is(img,video){
   width:100%; height:auto; display:block;
   transition:transform .4s ease;
 }
-.gallery-item:hover img{ transform:scale(1.045); }
-.gallery-item.large img{ aspect-ratio: 3 / 4; object-fit:cover; }
-.gallery-item.small img{ aspect-ratio: 4 / 3; object-fit:cover; }
+.gallery-item:hover :is(img,video){ transform:scale(1.045); }
+.gallery-item.large :is(img,video){ aspect-ratio: 3 / 4; object-fit:cover; }
+.gallery-item.small :is(img,video){ aspect-ratio: 4 / 3; object-fit:cover; }
 /* wide：給橫式照片使用。維持跟 large/small 一樣的單欄寬度，只是比例較扁（3:2），
    不使用 column-span 跨欄，才能真正無縫融入瀑布流（跨欄會強制斷版造成空白，
    Pinterest 本身也是靠「同欄寬、高度不同」達到無縫排列，並沒有跨欄的圖） */
-.gallery-item.wide img{ aspect-ratio: 3 / 2; object-fit:cover; }
+.gallery-item.wide :is(img,video){ aspect-ratio: 3 / 2; object-fit:cover; }
 /* full：完全不裁切、維持照片原始比例、獨佔一整行（不塞進某一欄）。
    靠 JS 瀑布流（下面 .js-dense 那套）讓它橫跨整列；這裡的 column-span
    只是給「JS 還沒跑之前」或 JS 失效時的原生多欄排版當退場備援。 */
@@ -504,7 +504,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
    不想裁切的照片請用「全幅」）。排版由下面 .js-dense 的 grid 處理，
    這裡的 column-span 一樣只是 JS 沒跑之前的備援。 */
 .gallery-item.span2{ column-span: all; }
-.gallery-item.span2 img{ aspect-ratio: 16 / 9; object-fit:cover; }
+.gallery-item.span2 :is(img,video){ aspect-ratio: 16 / 9; object-fit:cover; }
 
 @media (max-width: 750px) {
   .gallery-grid{ column-count: 2; }
@@ -532,7 +532,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   column-span:initial;
 }
 /* 收縫時把照片拉高：圖片跟著撐滿（一樣是 cover 裁切） */
-.gallery-grid.js-dense .gallery-item.stretched img{
+.gallery-grid.js-dense .gallery-item.stretched :is(img,video){
   height:100%;
   aspect-ratio:auto;
   object-fit:cover;
@@ -561,17 +561,17 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
    一張圖佔滿一整行本來就會自動換行，不需要像 gallery 瀑布流那樣另外
    處理「跨欄斷版」的問題。 */
 .drawing-item.full{ grid-column: span 6; }
-.drawing-item img{
+.drawing-item :is(img,video){
   width:100%; height:100%; display:block;
   transition:transform .4s ease;
 }
-.drawing-item:hover img{ transform:scale(1.045); }
-.drawing-item.large img{ aspect-ratio: 3 / 2; object-fit:cover; }
-.drawing-item.small img{ aspect-ratio: 16 / 9; object-fit:cover; }
-.drawing-item.tiny img{ aspect-ratio: 2 / 1; object-fit:cover; }
-.drawing-item.large.portrait img{ aspect-ratio: 2 / 3; object-fit:cover; }
-.drawing-item.small.portrait img{ aspect-ratio: 3 / 4; object-fit:cover; }
-.drawing-item.full img{ height:auto; object-fit:contain; }
+.drawing-item:hover :is(img,video){ transform:scale(1.045); }
+.drawing-item.large :is(img,video){ aspect-ratio: 3 / 2; object-fit:cover; }
+.drawing-item.small :is(img,video){ aspect-ratio: 16 / 9; object-fit:cover; }
+.drawing-item.tiny :is(img,video){ aspect-ratio: 2 / 1; object-fit:cover; }
+.drawing-item.large.portrait :is(img,video){ aspect-ratio: 2 / 3; object-fit:cover; }
+.drawing-item.small.portrait :is(img,video){ aspect-ratio: 3 / 4; object-fit:cover; }
+.drawing-item.full :is(img,video){ height:auto; object-fit:contain; }
 
 @media (max-width: 420px) {
   .drawing-grid{ gap:8px; }
@@ -619,6 +619,14 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 }
 .lightbox-img-slide img.zoomed{ cursor:grab; touch-action:none; }
 .lightbox-img-slide img.zoomed.lb-dragging{ cursor:grabbing; transition:none; }
+/* 影片（任何圖片格都可以放影片）：行為跟圖片一樣填滿格子；格子裡的影片是靜音循環自動播放，
+   點下去開燈箱才有聲音與播放控制。 */
+.media-video{ background:#000; }
+.lightbox-img-slide video{
+  max-width:100%; max-height:100%; width:auto; height:auto;
+  border-radius:4px; box-shadow:0 10px 40px rgba(0,0,0,0.45);
+  background:#000; outline:none;
+}
 .lightbox-zoom-hint{
   position:absolute; top:24px; left:50%; transform:translateX(-50%);
   color:rgba(255,255,255,0.55); font-size:12px; letter-spacing:0.02em;
@@ -753,9 +761,9 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   border-radius:4px; margin-bottom:14px; background:#efece5;
   box-shadow:0 1px 2px rgba(32,31,29,0.08);
 }
-.book-cover img{ width:100%; height:100%; object-fit:cover; transition:opacity .25s ease; }
+.book-cover :is(img,video){ width:100%; height:100%; object-fit:cover; transition:opacity .25s ease; }
 .book-cover.book-cover-clickable{ cursor:zoom-in; }
-.book-cover.book-cover-clickable:hover img{ opacity:0.92; }
+.book-cover.book-cover-clickable:hover :is(img,video){ opacity:0.92; }
 .book-title{ font-size:16px; line-height:1.35; margin-bottom:4px; }
 .book-meta{ color:var(--muted); font-size:13px; margin-bottom:6px; }
 .book-link{ font-size:13px; color:var(--accent); border-bottom:1px solid var(--line); }
@@ -876,6 +884,13 @@ async function loadContent(){
    RENDER LOGIC (核心渲染邏輯，請勿更動)
    ============================================================ */
 const app = document.getElementById("app");
+/* 圖片不再等到「捲到附近」才開始下載（慢網路下會看到一片空白，要等一下才出現）：
+   頁面一畫好就把頁面上所有圖片都改成立刻載入，畫面內的瀏覽器會自動優先處理，
+   其餘的在背景一張一張補齊，等使用者往下滑的時候多半已經載好了。 */
+function warmLazyImages(root){
+  root.querySelectorAll('img[loading="lazy"]').forEach(img => { img.loading = "eager"; });
+}
+new MutationObserver(() => { observeInlineVideos(app); warmLazyImages(app); }).observe(app, { childList: true, subtree: true });
 document.getElementById("footerYear").textContent = new Date().getFullYear();
 
 function categories(){
@@ -909,9 +924,43 @@ function descriptionToHtml(text, escapeHtml){
     .join("");
 }
 
+/* 任何圖片格都可以放影片：副檔名是 mp4／webm／mov／m4v 就輸出 <video>（靜音、循環、
+   手機內嵌播放，進到畫面才開始播、離開畫面就暫停，省流量也省電），否則照舊輸出 <img>。
+   opts.style 是已經 esc 過的 style 字串；opts.eager 用在首屏第一張。 */
+const VIDEO_EXT_RE = /\.(mp4|webm|mov|m4v)(?:[?#].*)?$/i;
+function isVideoSrc(src){ return VIDEO_EXT_RE.test(String(src || "")); }
+function mediaHtml(src, alt, opts){
+  opts = opts || {};
+  const style = opts.style ? ` style="${opts.style}"` : "";
+  if(isVideoSrc(src)){
+    // #t=0.001 讓還沒開始播的時候也能顯示第一個畫面（iOS 省電模式不會自動播放時尤其需要）
+    return `<video class="media-video" src="${esc(src)}#t=0.001" muted loop playsinline preload="metadata" aria-label="${esc(alt || "")}"${style}></video>`;
+  }
+  return `<img decoding="async" src="${esc(src)}" alt="${esc(alt || "")}" loading="${opts.eager ? "eager" : "lazy"}"${opts.eager ? ' fetchpriority="high"' : ""}${style}>`;
+}
+let inlineVideoIO = null;
+function observeInlineVideos(root){
+  const vids = (root || document).querySelectorAll("video.media-video");
+  if(!vids.length) return;
+  if(!("IntersectionObserver" in window)){
+    vids.forEach(v => { v.muted = true; const p = v.play(); if(p && p.catch) p.catch(() => {}); });
+    return;
+  }
+  if(!inlineVideoIO){
+    inlineVideoIO = new IntersectionObserver(entries => entries.forEach(en => {
+      const v = en.target;
+      if(en.isIntersecting){ v.muted = true; const p = v.play(); if(p && p.catch) p.catch(() => {}); }
+      else v.pause();
+    }), { rootMargin: "120px" });
+  }
+  // 版面重排（瀑布流會把格子拔掉再接回去）會讓影片暫停，所以每次都先取消再重新觀察，
+  // 這樣就會立刻重新判斷一次「現在看不看得到」，看得到的馬上接著播。
+  vids.forEach(v => { inlineVideoIO.unobserve(v); inlineVideoIO.observe(v); });
+}
+
 function thumb(p){
   if(p.cover){
-    return `<div class="card-thumb"><img decoding="async" src="${esc(p.cover)}" alt="${esc(p.title)}" loading="lazy" style="object-position:${esc(p.coverPosition || "center")}"></div>`;
+    return `<div class="card-thumb">${mediaHtml(p.cover, p.title, { style: `object-position:${esc(p.coverPosition || "center")}` })}</div>`;
   }
   return `<div class="card-thumb"><div class="placeholder">Image coming soon</div></div>`;
 }
@@ -920,7 +969,7 @@ function bookCover(b){
   if(b.cover){
     const clickable = b.file ? " book-cover-clickable" : "";
     const attrs = b.file ? ` data-pdf-src="${esc(b.file)}" data-book-title="${esc(b.title)}"` : "";
-    return `<div class="book-cover${clickable}"${attrs}><img decoding="async" src="${esc(b.cover)}" alt="${esc(b.title)} cover" loading="lazy"></div>`;
+    return `<div class="book-cover${clickable}"${attrs}>${mediaHtml(b.cover, b.title + " cover")}</div>`;
   }
   return `<div class="book-cover"><div class="placeholder">Cover coming soon</div></div>`;
 }
@@ -1102,7 +1151,7 @@ function attachViewToggleEvents(){
    滑鼠移到縮圖上會浮現作品名稱與年份 */
 function matrixThumbHtml(p){
   const inner = p.cover
-    ? `<img decoding="async" src="${esc(p.cover)}" alt="${esc(p.title)}" loading="lazy" style="object-position:${esc(p.coverPosition || "center")}">`
+    ? mediaHtml(p.cover, p.title, { style: `object-position:${esc(p.coverPosition || "center")}` })
     : `<div class="placeholder"></div>`;
   return `
     <div class="matrix-thumb" data-goto="${p.id}" tabindex="0" title="${esc(p.title)} · ${esc(p.year)}">
@@ -1153,7 +1202,7 @@ function renderLandingDesktop(){
         <div class="home-slides" style="position:absolute; inset:0; width:100%; height:100%;">
           ${slides.map((s, i) => s.type === "image"
             ? `<div class="home-slide${i === 0 ? " active" : ""}" data-id="${esc(s.id)}" data-title="${esc(s.alt || "")}" style="position:absolute; inset:0;">
-                <img decoding="async" src="${esc(s.src)}" alt="${esc(s.alt || "")}" loading="${i === 0 ? "eager" : "lazy"}" ${i === 0 ? 'fetchpriority="high"' : ''} style="width:100%; height:100%; object-position:${esc(s.position || "center")};">
+                ${mediaHtml(s.src, s.alt || "", { eager: i === 0, style: `width:100%; height:100%; object-position:${esc(s.position || "center")};` })}
                </div>`
             : `<div class="home-slide placeholder-slide${i === 0 ? " active" : ""}" data-id="${esc(s.id)}" data-title="${esc(s.label || "")}" style="position:absolute; inset:0;">
                 <span>${esc(s.label)}</span>
@@ -1227,7 +1276,7 @@ function renderLandingMobile(){
       ${picks.map(p => `
         <article class="home-mobile-card" data-goto="${esc(p.id)}">
           <div class="home-mobile-media">
-            <img decoding="async" src="${esc(p.cover)}" alt="${esc(p.title)}" loading="lazy">
+            ${mediaHtml(p.cover, p.title)}
             <div class="home-mobile-caption">
               <h3 class="home-mobile-title">${esc(p.title)}</h3>
             </div>
@@ -1247,7 +1296,7 @@ function renderLandingMobile(){
 
 function workRowHtml(p){
   const thumbHtml = p.cover
-    ? `<img decoding="async" src="${esc(p.cover)}" alt="${esc(p.title)}" loading="lazy" style="object-position:${esc(p.coverPosition || "center")}">`
+    ? mediaHtml(p.cover, p.title, { style: `object-position:${esc(p.coverPosition || "center")}` })
     : `<div class="placeholder" style="font-size:10.5px; text-align:center; padding:6px;">Image coming soon</div>`;
   return `
     <div class="work-row" data-goto="${p.id}">
@@ -1398,6 +1447,11 @@ function layoutDenseGallery(grid, columnCount){
       img.dataset.denseBound = "1";
       img.addEventListener("load", () => grid._settle && grid._settle());
     }
+    const vid = it.querySelector("video");
+    if(vid && vid.readyState < 1 && !vid.dataset.denseBound){
+      vid.dataset.denseBound = "1";
+      vid.addEventListener("loadedmetadata", () => grid._settle && grid._settle());
+    }
   });
 }
 
@@ -1445,7 +1499,7 @@ function renderProject(id){
         <h3>Gallery</h3>
         <div class="gallery-grid">${p.gallery.map((item, i) => `
           <div class="gallery-item ${gallerySizeClass(item)}" data-gallery-index="${i}">
-            <img decoding="async" src="${esc(galleryItemSrc(item))}" alt="${esc(p.title)}" loading="lazy" style="object-position:${esc(galleryItemPosition(item))}; object-fit:${esc(galleryItemFit(item))}">
+            ${mediaHtml(galleryItemSrc(item), p.title, { style: `object-position:${esc(galleryItemPosition(item))}; object-fit:${esc(galleryItemFit(item))}` })}
           </div>`).join("")}</div>
       </div>`
     : "";
@@ -1461,7 +1515,7 @@ function renderProject(id){
             <div class="side-series" data-series-goto="${esc(s.id)}" title="${esc(info.title || s.id)}">
               <div class="side-series-thumb">
                 ${thumbSrc
-                  ? `<img src="${esc(thumbSrc)}" alt="${esc(info.title || s.id)}">`
+                  ? mediaHtml(thumbSrc, info.title || s.id)
                   : `<div class="side-series-placeholder">上傳系列縮圖</div>`}
               </div>
             </div>`;
@@ -1478,7 +1532,7 @@ function renderProject(id){
         <h3>${heading}</h3>
         <div class="drawing-grid">${items.map((item, i) => `
           <div class="drawing-item ${gallerySizeClass(item)} ${drawingOrientationClass(item)}" data-drawing-index="${i}">
-            <img decoding="async" src="${esc(galleryItemSrc(item))}" alt="${esc(p.title)}" loading="lazy" style="object-position:${esc(galleryItemPosition(item))}; object-fit:${esc(galleryItemFit(item))}">
+            ${mediaHtml(galleryItemSrc(item), p.title, { style: `object-position:${esc(galleryItemPosition(item))}; object-fit:${esc(galleryItemFit(item))}` })}
           </div>`).join("")}</div>
       </div>`
     : "";
@@ -1614,7 +1668,7 @@ function renderSeriesIndex(){
           <div class="series-index-card" data-series-goto="${esc(s.id)}">
             <div class="series-thumb-trigger">
               ${s.thumb
-                ? `<img decoding="async" src="${esc(s.thumb)}" alt="${esc(s.title)}" loading="lazy">`
+                ? mediaHtml(s.thumb, s.title)
                 : `<div class="series-thumb-placeholder">上傳系列縮圖<span>series.thumb: "images/…jpg"</span></div>`}
             </div>
             <div class="series-caption"><b>${esc(s.title)}</b> — ${s.members.length} tracks</div>
@@ -1635,7 +1689,7 @@ function renderSeriesDetail(id){
   const title = info.title || id;
   const heroSrc = info.cover || info.thumb;
   const heroHtml = heroSrc
-    ? `<div class="series-hero"><img decoding="async" src="${esc(heroSrc)}" alt="${esc(title)}" loading="lazy"></div>`
+    ? `<div class="series-hero">${mediaHtml(heroSrc, title)}</div>`
     : `<div class="series-hero"><div class="placeholder">上傳系列主視覺（cover）</div></div>`;
   const descHtml = info.description
     ? descriptionToHtml(info.description, false)
@@ -1691,7 +1745,7 @@ function renderAbout(){
         </div>
         ${a.photo ? `
         <div style="flex-shrink:0; margin: 0 auto;">
-          <img decoding="async" src="${esc(a.photo)}" alt="Profile" style="width:180px; height:180px; aspect-ratio: 1 / 1; object-fit:cover; border-radius:50%;">
+          ${mediaHtml(a.photo, "Profile", { style: "width:180px; height:180px; aspect-ratio: 1 / 1; object-fit:cover; border-radius:50%;" })}
         </div>` : ""}
       </div>
     </div>
@@ -1848,10 +1902,22 @@ function buildImgSlides(){
     const slide = document.createElement("div");
     slide.className = "lightbox-img-slide";
     slide.dataset.index = String(i);
-    const img = document.createElement("img");
-    img.src = item.src;
-    img.alt = item.alt || "";
-    img.draggable = false;
+    let img;
+    if(isVideoSrc(item.src)){
+      // 影片：有播放控制、有聲音；滑到這一格才播，滑走就暫停
+      img = document.createElement("video");
+      img.src = item.src;
+      img.controls = true;
+      img.loop = true;
+      img.playsInline = true;
+      img.preload = "metadata";
+      img.setAttribute("aria-label", item.alt || "");
+    } else {
+      img = document.createElement("img");
+      img.src = item.src;
+      img.alt = item.alt || "";
+      img.draggable = false;
+    }
     slide.appendChild(img);
     frag.appendChild(slide);
   });
@@ -1861,18 +1927,34 @@ function buildImgSlides(){
     entries.forEach(entry => {
       if(entry.isIntersecting && entry.intersectionRatio > 0.5){
         const idx = parseInt(entry.target.dataset.index, 10);
-        const newImg = entry.target.querySelector("img");
+        const newImg = entry.target.querySelector("img, video");
         if(idx !== lightboxIndex || newImg !== lbActiveImgEl){
           resetLbZoom(lbActiveImgEl); // 切到別張照片時，重置上一張的放大狀態
           lbActiveImgEl = newImg;
         }
         lightboxIndex = idx;
         updateLightboxNav();
+        playActiveLightboxVideo();
       }
     });
   }, { root: lightboxImgScrollerEl, threshold: [0, 0.5, 1] });
 
   lightboxImgScrollerEl.querySelectorAll(".lightbox-img-slide").forEach(el => lbImgObserver.observe(el));
+}
+
+/* 燈箱裡只讓目前這一格的影片播放，其他格的影片全部暫停。
+   先試著有聲播放（使用者剛點擊過，通常允許）；瀏覽器擋下的話退回靜音播放，使用者可從控制列開聲音。 */
+function playActiveLightboxVideo(){
+  // 影片不能放大平移，「點擊或滾輪放大」的提示只在看圖片時顯示
+  lightboxZoomHintEl.style.display = (lbActiveImgEl && lbActiveImgEl.tagName === "VIDEO") ? "none" : "block";
+  lightboxImgScrollerEl.querySelectorAll("video").forEach(v => {
+    if(v === lbActiveImgEl){
+      const p = v.play();
+      if(p && p.catch) p.catch(() => { v.muted = true; const q = v.play(); if(q && q.catch) q.catch(() => {}); });
+    } else {
+      v.pause();
+    }
+  });
 }
 
 function scrollToImgSlide(idx, behavior){
