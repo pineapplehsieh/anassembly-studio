@@ -1,0 +1,47 @@
+name: Clean unused uploads
+
+# 每週一凌晨 3 點（台灣時間）自動清掉 uploads/ 裡沒有任何內容在用的檔案。
+# 也可以到 GitHub 的 Actions 頁面手動執行（Run workflow），預設是「試跑」只列清單、不刪。
+on:
+  schedule:
+    - cron: "0 19 * * 0"   # UTC 週日 19:00 = 台灣週一 03:00
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "試跑（只列出要刪的檔案，不真的刪）"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cleanup-uploads
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 要看每個檔案最後一次 commit 的時間，需要完整歷史
+
+      - name: Find and delete unused uploads
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+          GRACE_DAYS: "7"
+        run: node .github/scripts/cleanup-uploads.js
+
+      - name: Commit deletions
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A uploads thumbs
+          if git diff --cached --quiet; then
+            echo "Nothing to clean."
+          else
+            git commit -m "Clean up unused uploads"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
