@@ -1697,14 +1697,12 @@ function renderProject(id){
 
   // 專欄報導版型：資訊移到內文上方一條橫列，相簿照片穿插在文字之間（見 articleBodyHtml）
   const isArticle = p.layout === "article";
-  const articleSpecsHtml = `
-    <div class="article-specs">
-      ${p.location ? articleSpecHtml("Location", esc(p.location)) : ""}
-      ${p.year ? articleSpecHtml("Year", esc(p.year)) : ""}
-      ${p.status ? articleSpecHtml("Status", esc(p.status)) : ""}
-      ${projectSeries.length ? articleSpecHtml("Series", `<div style="display:flex; flex-wrap:wrap;">${seriesThumbsHtml}</div>`) : ""}
-      ${p.credits ? `<div class="article-spec wide"><div class="article-spec-k">Credits</div><div class="article-spec-v">${p.credits}</div></div>` : ""}
-    </div>`;
+  // 地點／年份已經在標題下面那一行，不再重複；這條資訊列只剩系列與 Credits，兩個都沒有就整條不顯示
+  const articleSpecsInner = [
+    projectSeries.length ? articleSpecHtml("Series", `<div style="display:flex; flex-wrap:wrap;">${seriesThumbsHtml}</div>`) : "",
+    p.credits ? `<div class="article-spec wide"><div class="article-spec-k">Credits</div><div class="article-spec-v">${p.credits}</div></div>` : "",
+  ].join("");
+  const articleSpecsHtml = articleSpecsInner ? `<div class="article-specs">${articleSpecsInner}</div>` : "";
   const bodyBlockHtml = isArticle
     ? `${articleSpecsHtml}<div class="article-body">${articleBodyHtml(p)}</div>`
     : `<div class="detail-body">
