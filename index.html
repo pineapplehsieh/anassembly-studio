@@ -929,6 +929,13 @@ function descriptionToHtml(text, escapeHtml){
    opts.style 是已經 esc 過的 style 字串；opts.eager 用在首屏第一張。 */
 const VIDEO_EXT_RE = /\.(mp4|webm|mov|m4v)(?:[?#].*)?$/i;
 function isVideoSrc(src){ return VIDEO_EXT_RE.test(String(src || "")); }
+/* 縮圖：每張圖片另外存了一份長邊 1200px 的小檔放在 thumbs/<原路徑>.jpg，
+   格子裡（只顯示 200～700px 寬）用小檔，燈箱與滿版大圖才讀原檔，載入量大約少 3～4 倍。
+   小檔不存在（例如舊圖還沒補、上傳時縮圖失敗）就自動退回原圖，不會破圖。 */
+const THUMB_SRC_RE = /^(images[0-9]*|uploads)\/.+\.(png|jpe?g|webp)$/i;
+function thumbPathFor(src){
+  return THUMB_SRC_RE.test(String(src || "")) ? "thumbs/" + String(src).replace(/\.(png|jpe?g|webp)$/i, ".jpg") : null;
+}
 function mediaHtml(src, alt, opts){
   opts = opts || {};
   const style = opts.style ? ` style="${opts.style}"` : "";
@@ -936,7 +943,9 @@ function mediaHtml(src, alt, opts){
     // #t=0.001 讓還沒開始播的時候也能顯示第一個畫面（iOS 省電模式不會自動播放時尤其需要）
     return `<video class="media-video" src="${esc(src)}#t=0.001" muted loop playsinline preload="metadata" aria-label="${esc(alt || "")}"${style}></video>`;
   }
-  return `<img decoding="async" src="${esc(src)}" alt="${esc(alt || "")}" loading="${opts.eager ? "eager" : "lazy"}"${opts.eager ? ' fetchpriority="high"' : ""}${style}>`;
+  const tp = opts.thumb ? thumbPathFor(src) : null;
+  const fallback = tp ? ` data-full="${esc(src)}" onerror="this.onerror=null;this.src=this.dataset.full"` : "";
+  return `<img decoding="async" src="${esc(tp || src)}" alt="${esc(alt || "")}" loading="${opts.eager ? "eager" : "lazy"}"${opts.eager ? ' fetchpriority="high"' : ""}${fallback}${style}>`;
 }
 let inlineVideoIO = null;
 function observeInlineVideos(root){
@@ -960,7 +969,7 @@ function observeInlineVideos(root){
 
 function thumb(p){
   if(p.cover){
-    return `<div class="card-thumb">${mediaHtml(p.cover, p.title, { style: `object-position:${esc(p.coverPosition || "center")}` })}</div>`;
+    return `<div class="card-thumb">${mediaHtml(p.cover, p.title, { thumb: true, style: `object-position:${esc(p.coverPosition || "center")}` })}</div>`;
   }
   return `<div class="card-thumb"><div class="placeholder">Image coming soon</div></div>`;
 }
@@ -969,7 +978,7 @@ function bookCover(b){
   if(b.cover){
     const clickable = b.file ? " book-cover-clickable" : "";
     const attrs = b.file ? ` data-pdf-src="${esc(b.file)}" data-book-title="${esc(b.title)}"` : "";
-    return `<div class="book-cover${clickable}"${attrs}>${mediaHtml(b.cover, b.title + " cover")}</div>`;
+    return `<div class="book-cover${clickable}"${attrs}>${mediaHtml(b.cover, b.title + " cover", { thumb: true })}</div>`;
   }
   return `<div class="book-cover"><div class="placeholder">Cover coming soon</div></div>`;
 }
@@ -1151,7 +1160,7 @@ function attachViewToggleEvents(){
    滑鼠移到縮圖上會浮現作品名稱與年份 */
 function matrixThumbHtml(p){
   const inner = p.cover
-    ? mediaHtml(p.cover, p.title, { style: `object-position:${esc(p.coverPosition || "center")}` })
+    ? mediaHtml(p.cover, p.title, { thumb: true, style: `object-position:${esc(p.coverPosition || "center")}` })
     : `<div class="placeholder"></div>`;
   return `
     <div class="matrix-thumb" data-goto="${p.id}" tabindex="0" title="${esc(p.title)} · ${esc(p.year)}">
@@ -1276,7 +1285,7 @@ function renderLandingMobile(){
       ${picks.map(p => `
         <article class="home-mobile-card" data-goto="${esc(p.id)}">
           <div class="home-mobile-media">
-            ${mediaHtml(p.cover, p.title)}
+            ${mediaHtml(p.cover, p.title, { thumb: true })}
             <div class="home-mobile-caption">
               <h3 class="home-mobile-title">${esc(p.title)}</h3>
             </div>
@@ -1296,7 +1305,7 @@ function renderLandingMobile(){
 
 function workRowHtml(p){
   const thumbHtml = p.cover
-    ? mediaHtml(p.cover, p.title, { style: `object-position:${esc(p.coverPosition || "center")}` })
+    ? mediaHtml(p.cover, p.title, { thumb: true, style: `object-position:${esc(p.coverPosition || "center")}` })
     : `<div class="placeholder" style="font-size:10.5px; text-align:center; padding:6px;">Image coming soon</div>`;
   return `
     <div class="work-row" data-goto="${p.id}">
@@ -1499,7 +1508,7 @@ function renderProject(id){
         <h3>Gallery</h3>
         <div class="gallery-grid">${p.gallery.map((item, i) => `
           <div class="gallery-item ${gallerySizeClass(item)}" data-gallery-index="${i}">
-            ${mediaHtml(galleryItemSrc(item), p.title, { style: `object-position:${esc(galleryItemPosition(item))}; object-fit:${esc(galleryItemFit(item))}` })}
+            ${mediaHtml(galleryItemSrc(item), p.title, { thumb: !/\b(full|span2)\b/.test(gallerySizeClass(item)), style: `object-position:${esc(galleryItemPosition(item))}; object-fit:${esc(galleryItemFit(item))}` })}
           </div>`).join("")}</div>
       </div>`
     : "";
@@ -1515,7 +1524,7 @@ function renderProject(id){
             <div class="side-series" data-series-goto="${esc(s.id)}" title="${esc(info.title || s.id)}">
               <div class="side-series-thumb">
                 ${thumbSrc
-                  ? mediaHtml(thumbSrc, info.title || s.id)
+                  ? mediaHtml(thumbSrc, info.title || s.id, { thumb: true })
                   : `<div class="side-series-placeholder">上傳系列縮圖</div>`}
               </div>
             </div>`;
@@ -1532,7 +1541,7 @@ function renderProject(id){
         <h3>${heading}</h3>
         <div class="drawing-grid">${items.map((item, i) => `
           <div class="drawing-item ${gallerySizeClass(item)} ${drawingOrientationClass(item)}" data-drawing-index="${i}">
-            ${mediaHtml(galleryItemSrc(item), p.title, { style: `object-position:${esc(galleryItemPosition(item))}; object-fit:${esc(galleryItemFit(item))}` })}
+            ${mediaHtml(galleryItemSrc(item), p.title, { thumb: /\b(small|tiny)\b/.test(gallerySizeClass(item)), style: `object-position:${esc(galleryItemPosition(item))}; object-fit:${esc(galleryItemFit(item))}` })}
           </div>`).join("")}</div>
       </div>`
     : "";
@@ -1668,7 +1677,7 @@ function renderSeriesIndex(){
           <div class="series-index-card" data-series-goto="${esc(s.id)}">
             <div class="series-thumb-trigger">
               ${s.thumb
-                ? mediaHtml(s.thumb, s.title)
+                ? mediaHtml(s.thumb, s.title, { thumb: true })
                 : `<div class="series-thumb-placeholder">上傳系列縮圖<span>series.thumb: "images/…jpg"</span></div>`}
             </div>
             <div class="series-caption"><b>${esc(s.title)}</b> — ${s.members.length} tracks</div>

@@ -483,7 +483,32 @@ async function uploadAsset(file){
   const path = `${UPLOADS_DIR}/${Date.now()}-${sanitizeFilename(file.name)}`;
   const b64 = await readFileAsBase64(file);
   await ghPutFile(path, b64, `Upload ${file.name} via admin`);
+  // 前台的小格子讀的是 thumbs/ 底下的縮圖（長邊 1200px），所以圖片另外存一份。
+  // 縮圖失敗不影響發布：前台找不到縮圖會自動改讀原圖。
+  if(/\.(png|jpe?g|webp)$/i.test(path)){
+    try{
+      const thumb = await makeThumbBlob(file);
+      if(thumb) await ghPutFile("thumbs/" + path.replace(/\.(png|jpe?g|webp)$/i, ".jpg"), await readFileAsBase64(thumb), `Thumbnail for ${file.name}`);
+    }catch(e){ console.warn("thumbnail upload failed", e); }
+  }
   return path;
+}
+
+const THUMB_EDGE = 1200;
+const THUMB_QUALITY = 0.78;
+async function makeThumbBlob(file){
+  if(!/^image\//i.test(file.type)) return null;
+  let bitmap;
+  try { bitmap = await createImageBitmap(file, { imageOrientation: "from-image" }); } catch(e){ return null; }
+  const scale = Math.min(1, THUMB_EDGE / Math.max(bitmap.width, bitmap.height));
+  const w = Math.max(1, Math.round(bitmap.width * scale)), h = Math.max(1, Math.round(bitmap.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  bitmap.close && bitmap.close();
+  return await new Promise(res => canvas.toBlob(res, "image/jpeg", THUMB_QUALITY));
 }
 
 /* ============================================================
