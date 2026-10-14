@@ -385,6 +385,21 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 @media (max-width:1000px){ .detail-body{ grid-template-columns:minmax(0,1fr) 170px; gap:40px; } }
 @media (max-width:800px){ .detail-body{ grid-template-columns:1fr; gap:28px; } }
 .pbreak{ display:block; height:.9em; }
+/* 長文字介紹預設收合：只露出前面一段高度，底部漸層淡出，按「展開全文」才全部顯示 */
+.desc-inner{ position:relative; }
+.desc-collapsible.is-collapsed .desc-inner{ max-height:var(--desc-collapsed-h, 380px); overflow:hidden; }
+.desc-collapsible.is-collapsed .desc-inner::after{
+  content:""; position:absolute; left:0; right:0; bottom:0; height:110px; pointer-events:none;
+  background:linear-gradient(to bottom, rgba(251,250,248,0), var(--paper) 88%);
+}
+.desc-toggle{
+  display:none; margin:2px 0 0; padding:8px 0; background:none; border:0; cursor:pointer;
+  font:inherit; font-size:14px; letter-spacing:.04em; color:var(--ink);
+  border-bottom:1px solid var(--ink); line-height:1.2;
+}
+.desc-collapsible.is-collapsible .desc-toggle{ display:inline-block; }
+.desc-toggle:hover{ opacity:.65; }
+.desc-collapsible.is-collapsible:not(.is-collapsed) .desc-inner p:last-child{ margin-bottom:24px; }
 .detail-desc .zh, .article-body .zh{ font-size:.92em; }
 .detail-desc p{ margin:0 0 32px; color:#3a3833; font-size:16.5px; line-height:1.85; max-width:820px; }
 .side-info{ font-size:14px; color:var(--muted); line-height:1.9; }
@@ -1553,7 +1568,44 @@ function debounce(fn, wait){
   };
 }
 
-window.addEventListener("resize", debounce(refreshMasonry, 150));
+/* 長文字介紹收合：內文高度超過 DESC_COLLAPSE_H 才收合（超過的量太少就不收，免得收了只少一兩行）。
+   每次重新排版（視窗改變大小）都重新判斷；使用者已經按過展開的話維持展開。 */
+const DESC_COLLAPSE_H = 380;
+const DESC_COLLAPSE_SLACK = 140;
+function setupDescCollapse(){
+  const box = document.getElementById("projectDesc");
+  if(!box) return;
+  const inner = box.querySelector(".desc-inner");
+  const btn = box.querySelector(".desc-toggle");
+  const wasExpanded = box.dataset.expanded === "1";
+  box.classList.remove("is-collapsed", "is-collapsible");
+  const full = inner.scrollHeight;
+  const should = full > DESC_COLLAPSE_H + DESC_COLLAPSE_SLACK;
+  box.style.setProperty("--desc-collapsed-h", DESC_COLLAPSE_H + "px");
+  if(should){
+    box.classList.add("is-collapsible");
+    if(!wasExpanded) box.classList.add("is-collapsed");
+  }
+  const collapsed = box.classList.contains("is-collapsed");
+  btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+  btn.textContent = collapsed ? "展開全文 Read more ↓" : "收合 Show less ↑";
+  if(!btn.dataset.bound){
+    btn.dataset.bound = "1";
+    btn.addEventListener("click", () => {
+      const nowCollapsed = box.classList.toggle("is-collapsed");
+      box.dataset.expanded = nowCollapsed ? "0" : "1";
+      btn.setAttribute("aria-expanded", nowCollapsed ? "false" : "true");
+      btn.textContent = nowCollapsed ? "展開全文 Read more ↓" : "收合 Show less ↑";
+      // 收合時如果文字開頭已經被捲到畫面上方，帶回文字開頭，不要讓人迷路
+      if(nowCollapsed){
+        const top = box.getBoundingClientRect().top;
+        if(top < 0) window.scrollTo({ top: window.scrollY + top - 90, behavior: "smooth" });
+      }
+    });
+  }
+}
+
+window.addEventListener("resize", debounce(() => { refreshMasonry(); setupDescCollapse(); }, 150));
 
 /* ---------------- 專欄報導版型（layout: "article"）----------------
    仿 ArchDaily 專欄式頁面：單欄閱讀寬度、圖文交錯。資料欄位完全沿用現有的
@@ -1723,7 +1775,7 @@ function renderProject(id){
   const bodyBlockHtml = isArticle
     ? `${articleSpecsHtml}<div class="article-body">${articleBodyHtml(p)}</div>`
     : `<div class="detail-body">
-        <div class="detail-desc">${paragraphs}</div>
+        <div class="detail-desc desc-collapsible" id="projectDesc"><div class="desc-inner">${paragraphs}</div><button type="button" class="desc-toggle" aria-expanded="false">展開全文 Read more ↓</button></div>
         ${sideInfo}
       </div>`;
 
@@ -1760,6 +1812,8 @@ function renderProject(id){
   });
 
   refreshMasonry();
+  setupDescCollapse();
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(setupDescCollapse);
 
   if(p.gallery && p.gallery.length){
     const galleryImages = p.gallery.map(item => ({ src: galleryItemSrc(item), alt: p.title }));
