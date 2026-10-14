@@ -389,7 +389,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .desc-inner{ position:relative; }
 .desc-collapsible.is-collapsed .desc-inner{ max-height:var(--desc-collapsed-h, 380px); overflow:hidden; }
 .desc-collapsible.is-collapsed .desc-inner::after{
-  content:""; position:absolute; left:0; right:0; bottom:0; height:110px; pointer-events:none;
+  content:""; position:absolute; left:0; right:0; bottom:0; height:72px; pointer-events:none;
   background:linear-gradient(to bottom, rgba(251,250,248,0), var(--paper) 88%);
 }
 .desc-toggle{
@@ -403,6 +403,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .desc-collapsible.is-collapsible:not(.is-collapsed) .desc-inner p:last-child{ margin-bottom:24px; }
 .detail-desc .zh, .article-body .zh{ font-size:.92em; }
 .detail-desc p{ margin:0 0 32px; color:#3a3833; font-size:16.5px; line-height:1.85; max-width:820px; }
+.detail-body .side-info{ align-self:start; }  /* 不要被拉長到跟文字一樣高：收合要用它「自然高度」的底線當基準 */
 .side-info{ font-size:14px; color:var(--muted); line-height:1.9; }
 @media (max-width:700px){
   .detail-title{ font-size:clamp(24px,7vw,32px); }
@@ -1571,8 +1572,12 @@ function debounce(fn, wait){
 
 /* 長文字介紹收合：內文高度超過 DESC_COLLAPSE_H 才收合（超過的量太少就不收，免得收了只少一兩行）。
    每次重新排版（視窗改變大小）都重新判斷；使用者已經按過展開的話維持展開。 */
+/* 收合的基準：右側資訊欄（含系列縮圖）最底下那條線——文字跟資訊欄同高的部分一定完整顯示，
+   超出資訊欄的部分才收合。手機版資訊欄在文字下面（單欄堆疊），沒有可比較的對象，
+   就改用固定高度 DESC_COLLAPSE_H。 */
 const DESC_COLLAPSE_H = 380;
-const DESC_COLLAPSE_SLACK = 140;
+const DESC_COLLAPSE_MIN_H = 220;   // 資訊欄很矮時，文字至少還是露出這麼多
+const DESC_COLLAPSE_SLACK = 70;    // 只超出一兩行就不收，免得為了藏一兩行多一個按鈕
 function setupDescCollapse(){
   const box = document.getElementById("projectDesc");
   if(!box) return;
@@ -1581,8 +1586,14 @@ function setupDescCollapse(){
   const wasExpanded = box.dataset.expanded === "1";
   box.classList.remove("is-collapsed", "is-collapsible");
   const full = inner.scrollHeight;
-  const should = full > DESC_COLLAPSE_H + DESC_COLLAPSE_SLACK;
-  box.style.setProperty("--desc-collapsed-h", DESC_COLLAPSE_H + "px");
+  const side = document.querySelector(".detail-body .side-info");
+  const innerTop = inner.getBoundingClientRect().top;
+  const sideRect = side ? side.getBoundingClientRect() : null;
+  // 資訊欄跟文字並排（頂端在文字開頭附近，而不是堆在文字下面）才用它當基準
+  const sideBeside = sideRect && Math.abs(sideRect.top - innerTop) < 40;
+  const limit = sideBeside ? Math.max(DESC_COLLAPSE_MIN_H, Math.round(sideRect.bottom - innerTop)) : DESC_COLLAPSE_H;
+  const should = full > limit + DESC_COLLAPSE_SLACK;
+  box.style.setProperty("--desc-collapsed-h", limit + "px");
   if(should){
     box.classList.add("is-collapsible");
     if(!wasExpanded) box.classList.add("is-collapsed");
@@ -1815,6 +1826,9 @@ function renderProject(id){
   refreshMasonry();
   setupDescCollapse();
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(setupDescCollapse);
+  app.querySelectorAll(".detail-body .side-info img").forEach(img => {
+    if(!img.complete) img.addEventListener("load", setupDescCollapse);
+  });
 
   if(p.gallery && p.gallery.length){
     const galleryImages = p.gallery.map(item => ({ src: galleryItemSrc(item), alt: p.title }));
