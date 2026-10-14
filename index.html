@@ -799,6 +799,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .about{ padding:50px 0 100px; max-width:850px; }
 .about h1{ font-size:36px; margin-bottom:22px; }
 .about p{ color:#3a3833; font-size:16px; line-height:1.8; margin:0 0 16px; }
+.about .zh{ font-size:.92em; }
 .about .contact{ margin-top:28px; font-size:14.5px; color:var(--muted); }
 .about .contact a{ color:var(--ink); border-bottom:1px solid var(--line); }
 .about .contact a:hover{ border-color:var(--ink); }
@@ -972,17 +973,19 @@ function esc(str){
    - 新格式（後台打字更自然）：段落間留一個空白行、段落內直接按 Enter 換行
    escapeHtml=true 時會把文字內容做 HTML escape 再輸出（用於使用者可能編輯的專案介紹），
    escapeHtml=false 時直接信任原始內容（用於系列介紹，維持與原本相同的行為）。 */
-/* 專案內文（標準版與專欄報導共用）的行內處理：
+/* 全站內文（作品、系列、About）共用的行內處理：
    - 中文字（含全形標點）包一層 <span class="zh">，CSS 讓它比英文小一號；
    - 後台打字時按一次 Enter 的換行，前台顯示成「半行」的段落間隔
      （空一行＝中文／英文兩大部分，那是另外的 <p> 區塊，間距維持原本比較大）。
-   傳入的 body 必須已經是處理好 HTML 跳脫的字串。 */
+   isRaw 為真代表內容本身就是 HTML（系列、About）：只處理標籤以外的文字，不去動標籤裡的屬性；
+   否則傳入的 body 必須已經是處理好 HTML 跳脫的字串。 */
 const CJK_RUN_RE = /[\u2E80-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF]+/g;
-function richTextInline(body){
-  return body
-    .replace(CJK_RUN_RE, m => '<span class="zh">' + m + '</span>')
-    .replace(/&lt;br&gt;/gi, "<br>")
-    .replace(/\n/g, '<span class="pbreak"></span>');
+function richTextInline(body, isRaw){
+  const wrapZh = s => s.replace(CJK_RUN_RE, m => '<span class="zh">' + m + '</span>');
+  let out = isRaw
+    ? body.split(/(<[^>]*>)/).map(part => part.startsWith("<") ? part : wrapZh(part)).join("")
+    : wrapZh(body).replace(/&lt;br&gt;/gi, "<br>");
+  return out.replace(/\n/g, '<span class="pbreak"></span>');
 }
 
 function descriptionToHtml(text, escapeHtml){
@@ -991,13 +994,7 @@ function descriptionToHtml(text, escapeHtml){
     .split(/<br>\s*<br>|\n[ \t]*\n+/i)
     .map(t => t.trim())
     .filter(Boolean)
-    .map(t => {
-      let body = escapeHtml ? esc(t) : t;
-      // escapeHtml 為真代表是專案內文（見 renderProject）：套用中文縮小與半行段距；
-      // 系列、About 的文字（raw HTML）維持原本的 <br> 換行。
-      body = escapeHtml ? richTextInline(body) : body.replace(/&lt;br&gt;/gi, "<br>").replace(/\n/g, "<br>");
-      return `<p>${body}</p>`;
-    })
+    .map(t => "<p>" + richTextInline(escapeHtml ? esc(t) : t, !escapeHtml) + "</p>")
     .join("");
 }
 
