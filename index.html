@@ -1588,14 +1588,14 @@ function setupDescCollapse(){
   }
   const collapsed = box.classList.contains("is-collapsed");
   btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
-  btn.textContent = collapsed ? "展開全文 Read more ↓" : "收合 Show less ↑";
+  btn.textContent = collapsed ? "展開全文 Read more +" : "收合 Show less −";
   if(!btn.dataset.bound){
     btn.dataset.bound = "1";
     btn.addEventListener("click", () => {
       const nowCollapsed = box.classList.toggle("is-collapsed");
       box.dataset.expanded = nowCollapsed ? "0" : "1";
       btn.setAttribute("aria-expanded", nowCollapsed ? "false" : "true");
-      btn.textContent = nowCollapsed ? "展開全文 Read more ↓" : "收合 Show less ↑";
+      btn.textContent = nowCollapsed ? "展開全文 Read more +" : "收合 Show less −";
       // 收合時如果文字開頭已經被捲到畫面上方，帶回文字開頭，不要讓人迷路
       if(nowCollapsed){
         const top = box.getBoundingClientRect().top;
@@ -1775,7 +1775,7 @@ function renderProject(id){
   const bodyBlockHtml = isArticle
     ? `${articleSpecsHtml}<div class="article-body">${articleBodyHtml(p)}</div>`
     : `<div class="detail-body">
-        <div class="detail-desc desc-collapsible" id="projectDesc"><div class="desc-inner">${paragraphs}</div><button type="button" class="desc-toggle" aria-expanded="false">展開全文 Read more ↓</button></div>
+        <div class="detail-desc desc-collapsible" id="projectDesc"><div class="desc-inner">${paragraphs}</div><button type="button" class="desc-toggle" aria-expanded="false">展開全文 Read more +</button></div>
         ${sideInfo}
       </div>`;
 
