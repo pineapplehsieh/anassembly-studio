@@ -384,7 +384,9 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .detail-body{ display:grid; grid-template-columns:minmax(0,1fr) 190px; gap:64px; width:100%; }
 @media (max-width:1000px){ .detail-body{ grid-template-columns:minmax(0,1fr) 170px; gap:40px; } }
 @media (max-width:800px){ .detail-body{ grid-template-columns:1fr; gap:28px; } }
-.detail-desc p{ margin:0 0 18px; color:#3a3833; font-size:16.5px; line-height:1.85; max-width:820px; }
+.pbreak{ display:block; height:.9em; }
+.detail-desc .zh, .article-body .zh{ font-size:.92em; }
+.detail-desc p{ margin:0 0 32px; color:#3a3833; font-size:16.5px; line-height:1.85; max-width:820px; }
 .side-info{ font-size:14px; color:var(--muted); line-height:1.9; }
 @media (max-width:700px){
   .detail-title{ font-size:clamp(24px,7vw,32px); }
@@ -953,6 +955,19 @@ function esc(str){
    - 新格式（後台打字更自然）：段落間留一個空白行、段落內直接按 Enter 換行
    escapeHtml=true 時會把文字內容做 HTML escape 再輸出（用於使用者可能編輯的專案介紹），
    escapeHtml=false 時直接信任原始內容（用於系列介紹，維持與原本相同的行為）。 */
+/* 專案內文（標準版與專欄報導共用）的行內處理：
+   - 中文字（含全形標點）包一層 <span class="zh">，CSS 讓它比英文小一號；
+   - 後台打字時按一次 Enter 的換行，前台顯示成「半行」的段落間隔
+     （空一行＝中文／英文兩大部分，那是另外的 <p> 區塊，間距維持原本比較大）。
+   傳入的 body 必須已經是處理好 HTML 跳脫的字串。 */
+const CJK_RUN_RE = /[\u2E80-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF]+/g;
+function richTextInline(body){
+  return body
+    .replace(CJK_RUN_RE, m => '<span class="zh">' + m + '</span>')
+    .replace(/&lt;br&gt;/gi, "<br>")
+    .replace(/\n/g, '<span class="pbreak"></span>');
+}
+
 function descriptionToHtml(text, escapeHtml){
   if(!text) return "";
   return String(text)
@@ -961,7 +976,9 @@ function descriptionToHtml(text, escapeHtml){
     .filter(Boolean)
     .map(t => {
       let body = escapeHtml ? esc(t) : t;
-      body = body.replace(/&lt;br&gt;/gi, "<br>").replace(/\n/g, "<br>");
+      // escapeHtml 為真代表是專案內文（見 renderProject）：套用中文縮小與半行段距；
+      // 系列、About 的文字（raw HTML）維持原本的 <br> 換行。
+      body = escapeHtml ? richTextInline(body) : body.replace(/&lt;br&gt;/gi, "<br>").replace(/\n/g, "<br>");
       return `<p>${body}</p>`;
     })
     .join("");
@@ -1583,8 +1600,7 @@ function articleBlocks(text){
 }
 
 function articleParagraphHtml(block){
-  const body = esc(block.text).replace(/&lt;br&gt;/gi, "<br>").replace(/\n/g, "<br>");
-  return `<p>${body}</p>`;
+  return `<p>${richTextInline(esc(block.text))}</p>`;
 }
 
 function articleFigHtml(entry, p){
