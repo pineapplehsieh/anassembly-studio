@@ -74,6 +74,20 @@ input,textarea,select{ font-family:inherit; font-size:14px; }
 /* ---------- collection grid (list view) ---------- */
 .collection-toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:12px; flex-wrap:wrap; }
 .item-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:20px; padding-bottom:60px; }
+#publishBanner{
+  position:fixed; right:20px; bottom:20px; z-index:60; max-width:min(440px, calc(100vw - 40px));
+  display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:10px;
+  background:var(--ink); color:#fff; box-shadow:0 10px 30px rgba(0,0,0,.25); font-size:13px; line-height:1.5;
+}
+#publishBanner.done{ background:#1f6b45; }
+#publishBanner.fail{ background:#8a3b2a; }
+#publishBanner .pb-text{ display:flex; flex-direction:column; min-width:0; }
+#publishBanner .pb-text b{ font-size:14px; }
+#publishBanner .pb-text span{ opacity:.82; font-size:12px; }
+#publishBanner .pb-icon{ width:22px; height:22px; flex:none; border-radius:50%; background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; font-weight:700; }
+#publishBanner a{ color:#fff; text-decoration:underline; white-space:nowrap; font-size:12.5px; }
+#publishBanner .pb-close{ background:none; border:0; color:#fff; font-size:20px; line-height:1; cursor:pointer; opacity:.7; padding:0 2px; }
+#publishBanner .spinner{ flex:none; border-color:rgba(255,255,255,.35); border-top-color:#fff; }
 .list-tools{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-bottom:24px; }
 .view-switch{ display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#fff; }
 .view-switch button{ border:0; background:none; padding:8px 16px; font-size:13px; cursor:pointer; color:var(--muted); }
@@ -333,6 +347,112 @@ function uid(){ return Math.random().toString(36).slice(2, 9); }
    Toast / loading
    ============================================================ */
 let toastTimer = null;
+/* ============================================================
+   發布進度：每次寫入 GitHub 都會觸發一次網站發布（GitHub Pages），要等 2～3 分鐘才會真的上線。
+   這裡記下最後一次寫入的 commit，之後每隔幾秒去查 GitHub Actions 那次發布跑完沒，
+   畫面右下角顯示「發布中 → 已上線」。連續寫入時，前面的發布會被後面的取代（取消），
+   所以只認「我最後一個 commit」那一次（或比它更新的）成功就算上線。
+   ============================================================ */
+const PUBLISH_TIMEOUT_MS = 12 * 60 * 1000;
+let publishState = null; // { sha, startedAt, phase: "wait"|"done"|"fail"|"timeout"|"unknown" }
+let publishPollTimer = null, publishTickTimer = null, publishHideTimer = null;
+
+function notePublishCommit(sha){
+  if(!sha) return;
+  publishState = { sha, startedAt: (publishState && publishState.phase === "wait") ? publishState.startedAt : Date.now(), phase: "wait" };
+  try { sessionStorage.setItem("admin_publish", JSON.stringify(publishState)); } catch(e){}
+  clearTimeout(publishHideTimer);
+  renderPublishBanner();
+  schedulePublishPoll(4000);
+  clearInterval(publishTickTimer);
+  publishTickTimer = setInterval(renderPublishBanner, 1000);
+}
+
+function resumePublishFromSession(){
+  try{
+    const s = JSON.parse(sessionStorage.getItem("admin_publish") || "null");
+    if(s && s.phase === "wait" && Date.now() - s.startedAt < PUBLISH_TIMEOUT_MS){
+      publishState = s;
+      renderPublishBanner();
+      schedulePublishPoll(1500);
+      publishTickTimer = setInterval(renderPublishBanner, 1000);
+    }
+  }catch(e){}
+}
+
+function schedulePublishPoll(delay){
+  clearTimeout(publishPollTimer);
+  publishPollTimer = setTimeout(pollPublish, delay);
+}
+
+async function pollPublish(){
+  const st = publishState;
+  if(!st || st.phase !== "wait") return;
+  if(Date.now() - st.startedAt > PUBLISH_TIMEOUT_MS){ finishPublish("timeout"); return; }
+  try{
+    const res = await ghFetch(`/actions/runs?branch=${REPO_BRANCH}&per_page=15&_=${Date.now()}`);
+    const runs = ((await res.json()).workflow_runs || []).filter(r => /pages/i.test(r.name));
+    if(publishState !== st) return; // 輪詢期間又有新的寫入，改看新的
+    const mine = runs.find(r => r.head_sha === st.sha);
+    if(mine && mine.status === "completed"){
+      if(mine.conclusion === "success"){ finishPublish("done"); return; }
+      if(mine.conclusion === "cancelled"){
+        // 被更新的 commit 取代了（可能是別的自動作業）：看比它更新的那次發布
+        const newer = runs.filter(r => new Date(r.created_at) > new Date(mine.created_at));
+        if(newer.some(r => r.status === "completed" && r.conclusion === "success")){ finishPublish("done"); return; }
+      } else { finishPublish("fail"); return; }
+    }
+  }catch(e){
+    // 查不到進度（權限、網路）就不要卡住畫面：改成單純的倒數提示
+    if(Date.now() - st.startedAt > 4 * 60 * 1000){ finishPublish("unknown"); return; }
+  }
+  schedulePublishPoll(6000);
+}
+
+function finishPublish(phase){
+  if(!publishState) return;
+  publishState.phase = phase;
+  try { sessionStorage.removeItem("admin_publish"); } catch(e){}
+  clearInterval(publishTickTimer); clearTimeout(publishPollTimer);
+  renderPublishBanner();
+  if(phase === "done"){
+    clearTimeout(publishHideTimer);
+    publishHideTimer = setTimeout(() => { publishState = null; renderPublishBanner(); }, 15000);
+  }
+}
+
+function renderPublishBanner(){
+  let el = document.getElementById("publishBanner");
+  if(!publishState){ if(el) el.remove(); return; }
+  if(!el){
+    el = document.createElement("div");
+    el.id = "publishBanner";
+    document.body.appendChild(el);
+  }
+  const st = publishState;
+  const sec = Math.floor((Date.now() - st.startedAt) / 1000);
+  const mmss = Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0");
+  const siteUrl = `https://${REPO_OWNER}.github.io/${REPO_NAME}/`;
+  const actionsUrl = `https://github.com/${REPO_OWNER}/${REPO_NAME}/actions`;
+  let cls = "wait", html;
+  if(st.phase === "done"){
+    cls = "done";
+    html = `<span class="pb-icon">✓</span><div class="pb-text"><b>已上線</b><span>可以到前台看了（若沒看到，按 Ctrl+Shift+R 強制重新整理）</span></div><a href="${siteUrl}" target="_blank" rel="noopener">查看網站 ↗</a>`;
+  } else if(st.phase === "fail"){
+    cls = "fail";
+    html = `<span class="pb-icon">!</span><div class="pb-text"><b>發布失敗</b><span>內容已存到 GitHub，但網站沒有成功更新</span></div><a href="${actionsUrl}" target="_blank" rel="noopener">查看原因 ↗</a>`;
+  } else if(st.phase === "timeout" || st.phase === "unknown"){
+    cls = "fail";
+    html = `<span class="pb-icon">?</span><div class="pb-text"><b>${st.phase === "timeout" ? "發布比預期久" : "無法查詢發布進度"}</b><span>通常 2～3 分鐘會上線，可以先去前台看看</span></div><a href="${actionsUrl}" target="_blank" rel="noopener">查看進度 ↗</a>`;
+  } else {
+    html = `<span class="spinner"></span><div class="pb-text"><b>發布中…</b><span>已等待 ${mmss}，通常 2～3 分鐘</span></div>`;
+  }
+  el.className = cls;
+  el.innerHTML = html + (st.phase === "wait" ? "" : `<button class="pb-close" aria-label="關閉">×</button>`);
+  const closeBtn = el.querySelector(".pb-close");
+  if(closeBtn) closeBtn.addEventListener("click", () => { publishState = null; renderPublishBanner(); });
+}
+
 function toast(msg, isErr){
   const el = document.getElementById("toast");
   el.textContent = msg;
@@ -438,10 +558,17 @@ async function ghPutFile(path, base64Content, message, sha){
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  return res.json();
+  const data = await res.json();
+  notePublishCommit(data && data.commit && data.commit.sha);
+  return data;
 }
 
 async function ghDeleteFile(path, message, sha){
+  const res = await ghDeleteRequest(path, message, sha);
+  try { const data = await res.clone().json(); notePublishCommit(data && data.commit && data.commit.sha); } catch(e){}
+  return res;
+}
+async function ghDeleteRequest(path, message, sha){
   return ghFetch(`/contents/${path.split("/").map(encodeURIComponent).join("/")}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
@@ -1858,6 +1985,7 @@ function renderEditor(){
     }
   }
   render();
+  resumePublishFromSession();
 })();
 </script>
 </body>
