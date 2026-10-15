@@ -80,7 +80,7 @@
       "series": [
         {
           "id": "Series-S",
-          "part": 2
+          "part": 3
         },
         {
           "id": "Series-R",
@@ -165,7 +165,7 @@
       "series": [
         {
           "id": "Series-S",
-          "part": 1
+          "part": 4
         },
         {
           "id": "Series-R",
@@ -497,7 +497,7 @@
       "series": [
         {
           "id": "Series-S",
-          "part": 1
+          "part": 2
         }
       ],
       "gallery": [
