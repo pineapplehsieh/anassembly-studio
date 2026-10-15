@@ -74,6 +74,40 @@ input,textarea,select{ font-family:inherit; font-size:14px; }
 /* ---------- collection grid (list view) ---------- */
 .collection-toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:12px; flex-wrap:wrap; }
 .item-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:20px; padding-bottom:60px; }
+.list-tools{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-bottom:24px; }
+.view-switch{ display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#fff; }
+.view-switch button{ border:0; background:none; padding:8px 16px; font-size:13px; cursor:pointer; color:var(--muted); }
+.view-switch button.active{ background:var(--ink); color:#fff; }
+.list-search{ flex:1 1 200px; min-width:160px; max-width:320px; padding:8px 12px; border:1px solid var(--line); border-radius:8px; background:#fff; }
+.list-count{ font-size:12.5px; color:var(--muted); margin-left:auto; }
+.group-block{ margin-bottom:34px; }
+.group-head{
+  display:flex; align-items:baseline; gap:10px; padding-bottom:8px; margin-bottom:14px;
+  border-bottom:1.5px solid var(--ink); font-size:17px; font-weight:700;
+}
+.group-head .n{ font-size:12.5px; font-weight:400; color:var(--muted); }
+.subgroup-head{ font-size:13px; font-weight:700; color:var(--muted); letter-spacing:.04em; margin:18px 0 10px; }
+.group-block .item-grid{ padding-bottom:0; }
+.item-card .info .m .sr{ display:inline-block; margin-left:4px; padding:0 6px; border-radius:8px; background:#efece5; font-size:11px; }
+.member-list{ display:flex; flex-direction:column; gap:8px; }
+.member-row{
+  display:flex; align-items:center; gap:12px; padding:8px 10px; background:#fff;
+  border:1px solid var(--line); border-radius:8px;
+}
+.member-row .no{ width:26px; text-align:center; font-weight:700; color:var(--muted); font-size:13px; }
+.member-row .mthumb{ width:64px; height:48px; flex:none; border-radius:4px; overflow:hidden; background:#efece5; position:relative; }
+.member-row .mthumb :is(img,video){ width:100%; height:100%; object-fit:cover; }
+.member-row .minfo{ flex:1; min-width:0; }
+.member-row .minfo .t{ font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.member-row .minfo .m{ font-size:12px; color:var(--muted); }
+.member-row button{
+  border:1px solid var(--line); background:#fff; border-radius:6px; width:30px; height:30px;
+  cursor:pointer; font-size:15px; line-height:1; color:var(--ink);
+}
+.member-row button:hover:not(:disabled){ border-color:var(--ink); }
+.member-row button:disabled{ opacity:.25; cursor:default; }
+.member-add{ display:flex; gap:10px; margin-top:12px; }
+.member-add select{ flex:1; min-width:0; padding:9px 10px; border:1px solid var(--line); border-radius:8px; background:#fff; }
 .item-card{
   border:1px solid var(--line); border-radius:8px; overflow:hidden; cursor:pointer;
   background:#fff; transition:box-shadow .15s ease, transform .15s ease;
@@ -534,6 +568,7 @@ const state = {
   series: null, seriesSha: null,
   about: null, aboutSha: null,
   editing: null, // { type, item, isNew }
+  projectView: (function(){ try { return localStorage.getItem("admin_project_view") === "year" ? "year" : "category"; } catch(e){ return "category"; } })(),
 };
 
 async function loadAllContent(){
@@ -662,7 +697,7 @@ function renderCollectionList(){
 
 function renderTabContent(){
   const el = document.getElementById("tabContent");
-  if(state.tab === "projects"){ el.innerHTML = projectsListHtml(); bindListEvents(); return; }
+  if(state.tab === "projects"){ el.innerHTML = projectsListHtml(); bindListEvents(); bindProjectListTools(); return; }
   if(state.tab === "books"){ el.innerHTML = booksListHtml(); bindListEvents(); return; }
   if(state.tab === "series"){ el.innerHTML = seriesListHtml(); bindListEvents(); return; }
   if(state.tab === "stats"){ el.innerHTML = statsLoadingHtml(); loadAndRenderStats(el); return; }
@@ -679,19 +714,99 @@ function addCardHtml(label){
   `;
 }
 
-function projectsListHtml(){
-  const cards = state.projects.map((p, i) => `
-    <div class="item-card" data-edit="${i}">
+/* 作品列表：預設「依分類」分組（分類順序跟前台一樣），每個分類底下再依年份新到舊；
+   也可以切到「依年份」（年份新到舊，底下再分分類）。上面有搜尋框，打字即時過濾。
+   每張卡片的 data-edit 仍然是它在 state.projects 裡的原始位置，所以點下去編輯、儲存都不受排序影響。 */
+function projectCardHtml(p, i){
+  const first = (p.title || "").split("\n")[0] || "（未命名）";
+  const seriesTags = (p.series || []).map(s => {
+    const info = state.series.find(x => x.id === s.id);
+    return `<span class="sr">${esc(info ? (info.title || s.id) : s.id)}</span>`;
+  }).join("");
+  const hay = [p.title, p.category, p.year, p.location, p.id].join(" ").toLowerCase();
+  return `
+    <div class="item-card" data-edit="${i}" data-hay="${esc(hay)}">
       <div class="thumb ${p.cover ? "" : "empty"}">
         ${p.cover ? mediaTagHtml(rawUrl(p.cover), isVideoRef(null, p.cover), " loading=\"lazy\"") : "尚無封面"}
       </div>
       <div class="info">
-        <div class="t">${esc((p.title || "").split("\n")[0] || "（未命名）")}</div>
-        <div class="m">${esc(p.category || "")} · ${esc(p.year || "")}</div>
+        <div class="t">${esc(first)}</div>
+        <div class="m">${esc(p.category || "")} · ${esc(p.year || "")}${seriesTags}</div>
       </div>
     </div>
-  `).join("");
-  return `<div class="item-grid">${cards}${addCardHtml("新增作品")}</div>`;
+  `;
+}
+
+function projectsListHtml(){
+  const view = state.projectView === "year" ? "year" : "category";
+  const items = state.projects.map((p, i) => ({ p, i }));
+  const yearOf = (p) => String(p.year || "未填年份");
+  const catOf = (p) => p.category || "未分類";
+  const byYearDesc = (a, b) => (parseInt(b.p.year, 10) || 0) - (parseInt(a.p.year, 10) || 0) || String(a.p.id).localeCompare(String(b.p.id), undefined, { numeric: true });
+  const uniq = (arr) => arr.filter((x, k) => arr.indexOf(x) === k);
+  const gridHtml = (list) => `<div class="item-grid">${list.slice().sort(byYearDesc).map(x => projectCardHtml(x.p, x.i)).join("")}</div>`;
+
+  let groups = "";
+  if(view === "category"){
+    uniq(items.map(x => catOf(x.p))).forEach(cat => {
+      const inCat = items.filter(x => catOf(x.p) === cat);
+      const years = uniq(inCat.slice().sort(byYearDesc).map(x => yearOf(x.p)));
+      groups += `<div class="group-block"><div class="group-head">${esc(cat)}<span class="n">${inCat.length} 件</span></div>`
+        + years.map(y => `<div class="subgroup-head">${esc(y)}</div>` + gridHtml(inCat.filter(x => yearOf(x.p) === y))).join("")
+        + `</div>`;
+    });
+  } else {
+    uniq(items.slice().sort(byYearDesc).map(x => yearOf(x.p))).forEach(y => {
+      const inYear = items.filter(x => yearOf(x.p) === y);
+      const cats = uniq(inYear.map(x => catOf(x.p)));
+      groups += `<div class="group-block"><div class="group-head">${esc(y)}<span class="n">${inYear.length} 件</span></div>`
+        + cats.map(c => `<div class="subgroup-head">${esc(c)}</div>` + gridHtml(inYear.filter(x => catOf(x.p) === c))).join("")
+        + `</div>`;
+    });
+  }
+  return `
+    <div class="list-tools">
+      <div class="view-switch">
+        <button data-view="category" class="${view === "category" ? "active" : ""}">依分類</button>
+        <button data-view="year" class="${view === "year" ? "active" : ""}">依年份</button>
+      </div>
+      <input type="search" class="list-search" id="listSearch" placeholder="搜尋標題、分類、年份、地點…">
+      <span class="list-count" id="listCount">共 ${items.length} 件</span>
+    </div>
+    <div id="groupedList">${groups}</div>
+    <div class="item-grid" style="padding-top:8px;">${addCardHtml("新增作品")}</div>
+  `;
+}
+
+/* 搜尋：只切換卡片顯示，不重畫畫面（重畫會讓輸入框失去焦點）；整個分組都沒有符合的就把分組標題一起藏起來 */
+function bindProjectListTools(){
+  const el = document.getElementById("tabContent");
+  el.querySelectorAll("[data-view]").forEach(btn => btn.addEventListener("click", () => {
+    state.projectView = btn.dataset.view;
+    try { localStorage.setItem("admin_project_view", state.projectView); } catch(e){}
+    renderTabContent();
+  }));
+  const input = document.getElementById("listSearch");
+  if(!input) return;
+  input.addEventListener("input", () => {
+    const q = input.value.trim().toLowerCase();
+    let shown = 0;
+    el.querySelectorAll(".item-card[data-hay]").forEach(card => {
+      const ok = !q || card.dataset.hay.includes(q);
+      card.style.display = ok ? "" : "none";
+      if(ok) shown++;
+    });
+    el.querySelectorAll("#groupedList .item-grid").forEach(grid => {
+      const any = [...grid.children].some(c => c.style.display !== "none");
+      grid.style.display = any ? "" : "none";
+      const head = grid.previousElementSibling;
+      if(head && head.classList.contains("subgroup-head")) head.style.display = any ? "" : "none";
+    });
+    el.querySelectorAll("#groupedList .group-block").forEach(g => {
+      g.style.display = [...g.querySelectorAll(".item-card")].some(c => c.style.display !== "none") ? "" : "none";
+    });
+    document.getElementById("listCount").textContent = q ? `符合 ${shown} 件` : `共 ${state.projects.length} 件`;
+  });
 }
 
 function booksListHtml(){
@@ -1233,8 +1348,19 @@ async function deleteCurrentItem(){
   const ed = state.editing;
   try{
     setLoading(true, "刪除中…");
-    state[ed.type].splice(ed.index, 1);
+    const removed = state[ed.type].splice(ed.index, 1)[0];
     await saveCollection(ed.type);
+    if(ed.type === "series" && removed){
+      let touched = 0;
+      state.projects.forEach(p => {
+        if((p.series || []).some(s => s.id === removed.id)){
+          p.series = p.series.filter(s => s.id !== removed.id);
+          if(!p.series.length) delete p.series;
+          touched++;
+        }
+      });
+      if(touched) await saveCollection("projects");
+    }
     toast("已刪除");
     closeEditor();
   }catch(err){
@@ -1367,6 +1493,12 @@ function seriesEditorHtml(ed){
         <div class="field-hint">直接打字、按 Enter 換行、空一行分段即可</div>
       </div>
 
+      <div class="field-block">
+        <div class="label">收錄的作品（依這裡的順序排列）</div>
+        ${seriesMembersHtml(ed)}
+        <div class="field-hint">用 ↑ ↓ 調整順序（前台系列頁的編號 01、02… 就是依這個順序）；按 × 只是把作品移出這個系列，不會刪除作品。按「儲存並發布」後才會生效。</div>
+      </div>
+
       <div class="save-bar">
         <span class="save-status" id="saveStatus"></span>
         <button class="btn primary" id="saveBtn">儲存並發布</button>
@@ -1375,7 +1507,89 @@ function seriesEditorHtml(ed){
   `;
 }
 
+/* 這個系列收錄哪些作品：ed.members 是「作品 id 的有序陣列」。
+   第一次打開時依各作品目前的 part 排序；之後的加入／移除／調整順序只改這個陣列，
+   按儲存才一次寫回各作品的 series 欄位（見 applySeriesMembers）。 */
+function initSeriesMembers(ed){
+  if(ed.members) return;
+  const sid = ed.item.id;
+  const partOf = (p) => ((p.series || []).find(s => s.id === sid) || {}).part || 0;
+  ed.members = sid
+    ? state.projects.filter(p => (p.series || []).some(s => s.id === sid)).sort((a, b) => partOf(a) - partOf(b)).map(p => p.id)
+    : [];
+}
+
+function seriesMembersHtml(ed){
+  initSeriesMembers(ed);
+  const byId = (id) => state.projects.find(p => p.id === id);
+  const rows = ed.members.map((id, k) => {
+    const p = byId(id);
+    if(!p) return "";
+    return `
+      <div class="member-row" data-member="${esc(id)}">
+        <div class="no">${String(k + 1).padStart(2, "0")}</div>
+        <div class="mthumb">${p.cover ? mediaTagHtml(rawUrl(p.cover), isVideoRef(null, p.cover)) : ""}</div>
+        <div class="minfo"><div class="t">${esc((p.title || "").split("\n")[0] || "（未命名）")}</div><div class="m">${esc(p.category || "")} · ${esc(p.year || "")}</div></div>
+        <button data-member-move="-1" title="往前移" ${k === 0 ? "disabled" : ""}>↑</button>
+        <button data-member-move="1" title="往後移" ${k === ed.members.length - 1 ? "disabled" : ""}>↓</button>
+        <button data-member-remove title="移出這個系列">×</button>
+      </div>`;
+  }).join("");
+  // 還沒收錄的作品，依分類分組放進下拉選單
+  const rest = state.projects.filter(p => !ed.members.includes(p.id));
+  const cats = rest.map(p => p.category || "未分類").filter((c, i, a) => a.indexOf(c) === i);
+  const options = cats.map(c => {
+    const list = rest.filter(p => (p.category || "未分類") === c).sort((a, b) => (parseInt(b.year, 10) || 0) - (parseInt(a.year, 10) || 0));
+    return `<optgroup label="${esc(c)}">${list.map(p => `<option value="${esc(p.id)}">${esc((p.title || "").split("\n")[0] || p.id)}（${esc(p.year || "")}）</option>`).join("")}</optgroup>`;
+  }).join("");
+  return `
+    <div class="member-list" id="memberList">${rows || `<div class="empty-note">還沒有收錄任何作品</div>`}</div>
+    ${rest.length ? `<div class="member-add"><select id="memberPick"><option value="">＋ 加入作品…</option>${options}</select></div>` : ""}
+  `;
+}
+
+function bindSeriesMemberEvents(ed){
+  initSeriesMembers(ed);
+  document.querySelectorAll("[data-member]").forEach(row => {
+    const id = row.dataset.member;
+    row.querySelectorAll("[data-member-move]").forEach(btn => btn.addEventListener("click", () => {
+      const i = ed.members.indexOf(id), j = i + parseInt(btn.dataset.memberMove, 10);
+      if(j < 0 || j >= ed.members.length) return;
+      [ed.members[i], ed.members[j]] = [ed.members[j], ed.members[i]];
+      rerenderEditor();
+    }));
+    row.querySelector("[data-member-remove]").addEventListener("click", () => {
+      ed.members = ed.members.filter(x => x !== id);
+      rerenderEditor();
+    });
+  });
+  const pick = document.getElementById("memberPick");
+  if(pick) pick.addEventListener("change", () => {
+    if(pick.value){ ed.members.push(pick.value); rerenderEditor(); }
+  });
+}
+
+/* 把 ed.members 寫回各作品的 series 欄位：在名單裡的依順序給 part 1..n（保留它在其他系列的設定），
+   不在名單裡的把這個系列從它的 series 拿掉。回傳有被改動的作品數。 */
+function applySeriesMembers(ed, seriesId){
+  let changed = 0;
+  state.projects.forEach(p => {
+    const orig = p.series || [];
+    const k = ed.members.indexOf(p.id);
+    let next;
+    if(k < 0) next = orig.filter(s => s.id !== seriesId);
+    else if(orig.some(s => s.id === seriesId)) next = orig.map(s => s.id === seriesId ? { ...s, part: k + 1 } : s);
+    else next = [...orig, { id: seriesId, part: k + 1 }];
+    if(JSON.stringify(next) !== JSON.stringify(orig)){
+      if(next.length) p.series = next; else delete p.series;
+      changed++;
+    }
+  });
+  return changed;
+}
+
 function bindSeriesEditorEvents(ed){
+  bindSeriesMemberEvents(ed);
   document.getElementById("backBtn").addEventListener("click", closeEditor);
   const deleteBtn = document.getElementById("deleteBtn");
   if(deleteBtn) deleteBtn.addEventListener("click", () => deleteCurrentItem());
@@ -1397,6 +1611,8 @@ async function saveSeriesEditor(ed){
     if(ed.isNew) state.series.push(s);
     else state.series[ed.index] = s;
     await saveCollection("series");
+    initSeriesMembers(ed);
+    if(applySeriesMembers(ed, s.id) > 0) await saveCollection("projects");
     toast("已發布，網站幾分鐘內會更新");
     closeEditor();
   }catch(err){
