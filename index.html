@@ -1041,9 +1041,11 @@ function observeInlineVideos(root){
   vids.forEach(v => { inlineVideoIO.unobserve(v); inlineVideoIO.observe(v); });
 }
 
-function thumb(p){
+/* full 為真：作品內頁最上面的主視覺大圖，讀原圖（縮圖只有 1200px，放到整個版面寬會偏糊）；
+   其餘小格子（卡片、列表…）讀縮圖。 */
+function thumb(p, full){
   if(p.cover){
-    return `<div class="card-thumb">${mediaHtml(p.cover, p.title, { thumb: true, style: `object-position:${esc(p.coverPosition || "center")}` })}</div>`;
+    return `<div class="card-thumb">${mediaHtml(p.cover, p.title, { thumb: !full, eager: !!full, style: `object-position:${esc(p.coverPosition || "center")}` })}</div>`;
   }
   return `<div class="card-thumb"><div class="placeholder">Image coming soon</div></div>`;
 }
@@ -1799,7 +1801,7 @@ function renderProject(id){
         <span>${esc(p.location)}</span>
       </div>
 
-      ${thumb(p).replace('card-thumb','detail-hero')}
+      ${thumb(p, true).replace('card-thumb','detail-hero')}
       ${bodyBlockHtml}
       ${drawingHtml}
       ${renderHtml}
