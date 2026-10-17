@@ -87,6 +87,17 @@ exports.handler = async () => {
       topPagesError = err.message;
     }
 
+    // 每日瀏覽次數（最近 90 天，每天一筆；沒有紀錄的日子由後台補 0）。
+    // 跟熱門頁面一樣是附加資訊：失敗不要拖垮上面的數字。
+    let daily = [];
+    let dailyError = null;
+    try{
+      const series = await gcFetch(site, token, "/stats/total", { start: isoDaysAgo(89), end: now });
+      daily = (series.stats || []).map(s => ({ day: String(s.day).slice(0, 10), count: s.daily || 0 }));
+    }catch(err){
+      dailyError = err.message;
+    }
+
     return json(200, {
       today: today.total,
       last7Days: last7.total,
@@ -94,6 +105,8 @@ exports.handler = async () => {
       allTime: allTime.total,
       topPages,
       topPagesError,
+      daily,
+      dailyError,
       dashboardUrl: `https://${site}.goatcounter.com`,
     });
   }catch(err){
