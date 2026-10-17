@@ -121,10 +121,11 @@ input,textarea,select{ font-family:inherit; font-size:14px; }
 .art-img.size-span2 .art-figure :is(img,video){ aspect-ratio:16/9; object-fit:cover; }
 .art-figure :is(img,video){ display:block; width:100%; height:auto; }
 .art-img-controls{ display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px; padding:0 6px 4px; }
+.art-img-controls .art-sizes{ flex:1 1 100%; justify-content:center; }
 .art-sizes{ display:flex; gap:4px; }
 .art-sizes .size-btn{ border:1px solid var(--line); background:#fff; border-radius:6px; padding:3px 9px; font-size:12px; cursor:pointer; color:var(--muted); }
 .art-sizes .size-btn.active{ background:var(--ink); color:#fff; border-color:var(--ink); }
-.art-caption{ flex:1 1 180px; min-width:140px; max-width:360px; font-size:12px; padding:5px 8px; border:1px solid var(--line); border-radius:6px; background:#fff; }
+.art-caption{ flex:1 1 100%; min-width:0; font-family:inherit; font-size:13px; line-height:1.6; padding:7px 10px; border:1px solid var(--line); border-left:3px solid var(--ink); border-radius:6px; background:#fff; resize:vertical; }
 .art-note{ text-align:center; font-size:11.5px; color:var(--muted); margin-bottom:2px; }
 .list-tools{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-bottom:24px; }
 .view-switch{ display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#fff; }
@@ -1389,7 +1390,7 @@ function articleEditorBlockHtml(ed){
           <div class="art-figure">${url ? mediaTagHtml(url, isVideoRef(ed, b.src)) : ""}</div>
           <div class="art-img-controls">
             <div class="art-sizes">${sizeBtns(b, i)}</div>
-            <input type="text" class="art-caption" data-art-caption="${i}" value="${esc(b.caption || "")}" placeholder="圖說（選填）">
+            <textarea class="art-caption" rows="2" data-art-caption="${i}" placeholder="在這裡輸入這張圖的文字圖說（會顯示在圖片正下方，可換行）">${esc(b.caption || "")}</textarea>
           </div>
           ${note ? `<div class="art-note">${note}</div>` : ""}
         </div>`;
