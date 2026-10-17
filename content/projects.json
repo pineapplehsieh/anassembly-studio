@@ -1016,6 +1016,16 @@
           "src": "images/loop. studio architectural drawing set_頁面_13.jpg",
           "size": "small",
           "fit": "contain"
+        },
+        {
+          "src": "uploads/1792249091319-3_頁面_1.jpg",
+          "size": "small",
+          "orientation": "portrait"
+        },
+        {
+          "src": "uploads/1792249095830-3_頁面_2.jpg",
+          "size": "small",
+          "orientation": "portrait"
         }
       ],
       "books": [
