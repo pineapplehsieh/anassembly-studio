@@ -88,6 +88,44 @@ input,textarea,select{ font-family:inherit; font-size:14px; }
 #publishBanner a{ color:#fff; text-decoration:underline; white-space:nowrap; font-size:12.5px; }
 #publishBanner .pb-close{ background:none; border:0; color:#fff; font-size:20px; line-height:1; cursor:pointer; opacity:.7; padding:0 2px; }
 #publishBanner .spinner{ flex:none; border-color:rgba(255,255,255,.35); border-top-color:#fff; }
+.art-editor{ background:#fff; border:1px solid var(--line); border-radius:8px; padding:14px 18px 10px; max-width:820px; }
+.art-gap{ display:flex; justify-content:center; gap:8px; padding:3px 0; opacity:.4; transition:opacity .15s ease; border-radius:6px; }
+.art-gap:hover, .art-gap:focus-within, .art-gap.drag-over{ opacity:1; }
+.art-gap.drag-over{ background:rgba(107,99,85,.1); }
+.art-gap button{ border:1px dashed var(--line); background:#fff; border-radius:14px; padding:3px 12px; font-size:12px; cursor:pointer; color:var(--muted); }
+.art-gap button:hover{ border-color:var(--ink); color:var(--ink); }
+.art-block{ position:relative; padding:4px 0; border-radius:6px; transition:box-shadow .1s ease; }
+.art-block:hover{ background:#faf9f6; }
+.art-block.dragging{ opacity:.4; }
+.art-block.drop-before{ box-shadow:0 -3px 0 var(--ink); }
+.art-block.drop-after{ box-shadow:0 3px 0 var(--ink); }
+.art-tools{ position:absolute; right:4px; top:4px; display:flex; gap:4px; z-index:3; opacity:0; transition:opacity .15s ease; }
+.art-block:hover .art-tools, .art-block:focus-within .art-tools{ opacity:1; }
+.art-tools button, .art-tools .art-handle{
+  min-width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center;
+  border:1px solid var(--line); background:#fff; border-radius:6px; font-size:14px; line-height:1; color:var(--ink); cursor:pointer;
+}
+.art-tools .art-handle{ cursor:grab; user-select:none; }
+.art-tools button:hover:not(:disabled){ border-color:var(--ink); }
+.art-tools button:disabled{ opacity:.25; cursor:default; }
+.art-text{
+  display:block; width:100%; box-sizing:border-box; border:0; background:transparent; resize:none; overflow:hidden;
+  font-family:inherit; font-size:15.5px; line-height:1.8; color:#3a3833; padding:8px 40px 8px 6px; outline:none; border-radius:4px;
+}
+.art-text:focus{ background:#f7f5f0; }
+.art-img .art-figure{ position:relative; margin:6px auto 8px; border-radius:4px; overflow:hidden; background:#efece5; }
+.art-img.size-small .art-figure{ width:48%; }
+.art-img.size-large .art-figure{ width:68%; }
+.art-img.size-wide .art-figure{ width:86%; }
+.art-img.size-span2 .art-figure, .art-img.size-full .art-figure{ width:100%; }
+.art-img.size-span2 .art-figure :is(img,video){ aspect-ratio:16/9; object-fit:cover; }
+.art-figure :is(img,video){ display:block; width:100%; height:auto; }
+.art-img-controls{ display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px; padding:0 6px 4px; }
+.art-sizes{ display:flex; gap:4px; }
+.art-sizes .size-btn{ border:1px solid var(--line); background:#fff; border-radius:6px; padding:3px 9px; font-size:12px; cursor:pointer; color:var(--muted); }
+.art-sizes .size-btn.active{ background:var(--ink); color:#fff; border-color:var(--ink); }
+.art-caption{ flex:1 1 180px; min-width:140px; max-width:360px; font-size:12px; padding:5px 8px; border:1px solid var(--line); border-radius:6px; background:#fff; }
+.art-note{ text-align:center; font-size:11.5px; color:var(--muted); margin-bottom:2px; }
 .list-tools{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-bottom:24px; }
 .view-switch{ display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#fff; }
 .view-switch button{ border:0; background:none; padding:8px 16px; font-size:13px; cursor:pointer; color:var(--muted); }
@@ -1071,6 +1109,9 @@ function projectEditorHtml(ed){
   const titleParts = (p.title || "").split("\n");
   const seriesIds = (p.series || []).map(s => s.id);
   const bookIds = p.books || [];
+  const isArticle = p.layout === "article";
+  // 區塊只在「剛進入專欄報導」時整理一次；編輯中 description 還沒跟著更新，不能每次重畫都重排
+  if(isArticle && !ed.blocksReady){ ensureBlocks(ed); ed.blocksReady = true; }
 
   return `
     <div class="editor">
@@ -1133,6 +1174,7 @@ function projectEditorHtml(ed){
         <input type="text" id="f_location" value="${esc(p.location)}" placeholder="Tainan, Taiwan">
       </div>
 
+      ${isArticle ? articleEditorBlockHtml(ed) : `
       <div class="field-block">
         <label>文字介紹</label>
         <textarea id="f_description" style="min-height:200px">${esc(p.description)}</textarea>
@@ -1151,6 +1193,8 @@ function projectEditorHtml(ed){
           ? "專欄報導：照片會依這裡的順序，自動穿插在文字段落之間（太長的段落會在句子結尾自動分段；中文段落跟它的英文第一段之間不插圖）。大＝文字欄寬、寬＝比文字欄再寬一點、相鄰兩張「中」會併成一排、雙欄＝頁面全寬（裁成 16:9）、全幅＝頁面全寬且不裁切；專欄裡其他大小都不裁切。每張照片下方可以填圖說（選填）。圖說 Drawings 與 Render 會接在文章後面。"
           : "大／中／寬／雙欄都會裁切成固定比例。「雙欄」是橫跨兩欄的 16:9 寬幅照片（旁邊那一欄會接著排後面的照片，手機版則佔滿整行）。選「全幅」則完全不裁切、維持照片原始比例，並獨佔一整行（適合拼貼圖、長條圖說這類不能裁切的照片）。"}</div>
       </div>
+
+      `}
 
       <div class="field-block">
         <div class="label">圖說 / 圖面 Drawings</div>
@@ -1220,6 +1264,300 @@ function projectEditorHtml(ed){
   `;
 }
 
+/* ============================================================
+   專欄報導編輯器（像 Word 的版面編輯）
+   文章 = 一串「區塊」：文字段落（type:"p"）與圖片／影片（type:"img"）。
+   每個區塊可以上下移動、拖曳換位置、刪除；段落與段落之間（或最前面、最後面）
+   可以隨時插入新的文字或圖片。存檔時：
+     p.blocks      ← 這串區塊（前台專欄報導就是照它排）
+     p.description ← 所有文字段落依序接起來（標準版型、收合功能照常使用）
+     p.gallery     ← 所有圖片依序（燈箱、切回標準版型用）
+   ============================================================ */
+const ART_SPLIT_TARGET = 340;
+const ART_SPLIT_MIN_LEN = 520;
+
+function artSplitLong(text){
+  if(text.length <= ART_SPLIT_MIN_LEN) return [text];
+  const sentences = text.match(/[^.!?。！？]+(?:[.!?。！？]+["”’)\]]*\s*|$)/g) || [text];
+  const out = [];
+  let cur = "";
+  sentences.forEach(s => { cur += s; if(cur.length >= ART_SPLIT_TARGET){ out.push(cur.trim()); cur = ""; } });
+  if(cur.trim()){
+    if(out.length && cur.trim().length < ART_SPLIT_TARGET * 0.4) out[out.length - 1] += " " + cur.trim();
+    else out.push(cur.trim());
+  }
+  return out.filter(Boolean);
+}
+
+/* 第一次把某個作品切到專欄報導時，先照舊的「自動穿插」排法排出一份初始區塊，
+   這樣你一打開看到的就是目前前台的樣子，再自己微調。 */
+function artBuildBlocks(p){
+  // 舊資料用 <br> 當換行：變成真正的換行，編輯框裡才不會看到 <br> 字樣
+  const paras = String(p.description || "").split(/<br>\s*<br>|\n[ \t]*\n+/i).map(t => t.replace(/<br\s*\/?>/gi, "\n").trim()).filter(Boolean);
+  const texts = [];
+  paras.forEach(t => {
+    const cjk = /[㐀-鿿]/.test(t);
+    artSplitLong(t).forEach((part, k) => texts.push({ text: part, cjk, firstOfPara: k === 0 }));
+  });
+  const gallery = (p.gallery || []).map(g => (typeof g === "string" ? { src: g } : Object.assign({}, g)));
+  const imgBlock = (g) => Object.assign({ type: "img", size: "small" }, g);
+  if(!texts.length) return gallery.map(imgBlock);
+  texts.forEach((b, k) => {
+    const nxt = texts[k + 1];
+    b.gapAfter = !(nxt && b.cjk && !nxt.cjk && nxt.firstOfPara);
+  });
+  const slots = [];
+  texts.forEach((b, k) => { if(b.gapAfter || k === texts.length - 1) slots.push(k); });
+  const bySlot = slots.map(() => []);
+  gallery.forEach((g, i) => { bySlot[Math.min(slots.length - 1, Math.floor(i * slots.length / gallery.length))].push(g); });
+  const blocks = [];
+  texts.forEach((b, k) => {
+    blocks.push({ type: "p", text: b.text });
+    const s = slots.indexOf(k);
+    if(s >= 0) bySlot[s].forEach(g => blocks.push(imgBlock(g)));
+  });
+  return blocks;
+}
+
+function blocksToDescription(blocks){
+  return (blocks || []).filter(b => b.type === "p" && String(b.text || "").trim()).map(b => String(b.text).trim()).join("\n\n");
+}
+function blocksToGallery(blocks){
+  return (blocks || []).filter(b => b.type === "img").map(b => {
+    const g = { src: b.src, size: b.size || "small" };
+    if(b.caption) g.caption = b.caption;
+    if(b.position) g.position = b.position;
+    if(b.fit) g.fit = b.fit;
+    return g;
+  });
+}
+function normDesc(t){
+  return String(t || "").split(/<br>\s*<br>|\n[ \t]*\n+/i).map(s => s.trim()).filter(Boolean).join("\n\n");
+}
+
+/* 進入專案編輯畫面（專欄報導）時確保有區塊：
+   - 沒有區塊，或文字已經在標準版型被改過 → 依目前文字＋相簿重排；
+   - 有區塊 → 保留你排好的位置，只把相簿裡多出來／被刪掉的圖片同步進來。 */
+function ensureBlocks(ed){
+  const p = ed.item;
+  if(p.layout !== "article") return;
+  const has = Array.isArray(p.blocks) && p.blocks.length;
+  if(!has || blocksToDescription(p.blocks) !== normDesc(p.description)){
+    p.blocks = artBuildBlocks(p);
+    return;
+  }
+  const gal = (p.gallery || []).map(g => (typeof g === "string" ? { src: g } : g));
+  const galSrcs = new Set(gal.map(g => g.src));
+  p.blocks = p.blocks.filter(b => b.type !== "img" || galSrcs.has(b.src) || /^PENDING::/.test(b.src));
+  const have = new Set(p.blocks.filter(b => b.type === "img").map(b => b.src));
+  gal.forEach(g => { if(!have.has(g.src)) p.blocks.push(Object.assign({ type: "img", size: "small" }, g)); });
+}
+
+/* 寫回 description / gallery（空的文字段落丟掉） */
+function commitBlocks(ed){
+  const p = ed.item;
+  if(!Array.isArray(p.blocks)) return;
+  p.blocks = p.blocks.filter(b => b.type === "img" || String(b.text || "").trim());
+  p.blocks.forEach(b => { if(b.type === "p") b.text = String(b.text).trim(); });
+  p.description = blocksToDescription(p.blocks);
+  p.gallery = blocksToGallery(p.blocks);
+}
+
+function articleEditorBlockHtml(ed){
+  const blocks = ed.item.blocks || [];
+  const gap = (i) => `
+    <div class="art-gap" data-gap="${i}">
+      <button type="button" data-ins-text="${i}">＋ 文字</button>
+      <button type="button" data-ins-img="${i}">＋ 圖片／影片</button>
+    </div>`;
+  const sizeBtns = (b, i) => gallerySizeOptions("gallery").map(([val, label]) =>
+    `<button type="button" class="size-btn ${(b.size || "small") === val ? "active" : ""}" data-art-size="${i}" data-val="${val}">${label}</button>`).join("");
+  const rows = blocks.map((b, i) => {
+    const tools = `
+      <div class="art-tools">
+        <span class="art-handle" draggable="true" data-handle="${i}" title="拖曳換位置">⠿</span>
+        <button type="button" data-art-move="${i}" data-dir="-1" title="往上" ${i === 0 ? "disabled" : ""}>↑</button>
+        <button type="button" data-art-move="${i}" data-dir="1" title="往下" ${i === blocks.length - 1 ? "disabled" : ""}>↓</button>
+        <button type="button" data-art-del="${i}" title="刪除這個區塊">×</button>
+      </div>`;
+    if(b.type === "img"){
+      const url = resolveTileSrc(ed, b.src);
+      const note = b.size === "span2" ? "雙欄：頁面全寬、裁成 16:9" : (b.size === "full" ? "全幅：頁面全寬、不裁切" : "");
+      return `
+        <div class="art-block art-img size-${esc(b.size || "small")}" data-block="${i}">
+          ${tools}
+          <div class="art-figure">${url ? mediaTagHtml(url, isVideoRef(ed, b.src)) : ""}</div>
+          <div class="art-img-controls">
+            <div class="art-sizes">${sizeBtns(b, i)}</div>
+            <input type="text" class="art-caption" data-art-caption="${i}" value="${esc(b.caption || "")}" placeholder="圖說（選填）">
+          </div>
+          ${note ? `<div class="art-note">${note}</div>` : ""}
+        </div>`;
+    }
+    return `
+      <div class="art-block art-p" data-block="${i}">
+        ${tools}
+        <textarea class="art-text" data-art-text="${i}" rows="1" placeholder="在這裡打字…">${esc(b.text || "")}</textarea>
+      </div>`;
+  });
+  return `
+    <div class="field-block">
+      <div class="label">文章內容（專欄報導）</div>
+      <div class="art-editor" id="artEditor">
+        ${gap(0)}${rows.map((r, i) => r + gap(i + 1)).join("")}
+      </div>
+      <div class="field-hint">
+        像在 Word 裡排版：點兩個區塊之間的「＋ 文字」「＋ 圖片／影片」插入內容；用 ↑ ↓ 或抓住左邊的 ⠿ 拖曳來換位置；圖片可以選大小、填圖說。
+        文字框裡按一次 Enter＝半行的段落間隔，空一行＝大段落；按 <b>Ctrl＋Enter</b>（Mac：⌘＋Enter）會在游標處把文字拆成兩個區塊，方便在中間插圖。
+        大＝文字欄寬、中＝較窄（相鄰兩張「中」會併成一排）、寬＝比文字欄再寬、雙欄／全幅＝頁面全寬。圖說 Drawings 與 Render 會接在文章後面。
+      </div>
+    </div>
+  `;
+}
+
+function artAutoGrow(ta){
+  ta.style.height = "auto";
+  ta.style.height = (ta.scrollHeight + 2) + "px";
+}
+
+/* 把區塊 from 移到 to（拖曳與上下鈕共用）；to 是「移動後它在陣列裡的位置」 */
+function artMoveBlock(ed, from, to){
+  const arr = ed.item.blocks;
+  if(from === to || from < 0 || to < 0 || from >= arr.length || to >= arr.length) return;
+  const [b] = arr.splice(from, 1);
+  arr.splice(to, 0, b);
+  rerenderEditor();
+}
+
+function artInsertFiles(ed, at, files){
+  const list = acceptMediaFiles(files);
+  if(!list.length) return;
+  const news = list.map(file => {
+    const tempKey = "PENDING::" + uid();
+    ed.pendingUploads[tempKey] = { file, previewUrl: URL.createObjectURL(file) };
+    return { type: "img", src: tempKey, size: "small" };
+  });
+  ed.item.blocks.splice(at, 0, ...news);
+  rerenderEditor();
+}
+
+function bindArticleEditor(ed){
+  const root = document.getElementById("artEditor");
+  if(!root) return;
+  const blocks = ed.item.blocks;
+
+  root.querySelectorAll("textarea.art-text").forEach(ta => {
+    const i = parseInt(ta.dataset.artText, 10);
+    artAutoGrow(ta);
+    ta.addEventListener("input", () => { blocks[i].text = ta.value; artAutoGrow(ta); });
+    // Ctrl／⌘＋Enter：在游標處拆成兩個區塊，游標跳到後一個
+    ta.addEventListener("keydown", (e) => {
+      if(e.key === "Enter" && (e.ctrlKey || e.metaKey)){
+        e.preventDefault();
+        const pos = ta.selectionStart;
+        const before = ta.value.slice(0, pos).replace(/\s+$/, "");
+        const after = ta.value.slice(pos).replace(/^\s+/, "");
+        blocks[i].text = before;
+        blocks.splice(i + 1, 0, { type: "p", text: after });
+        ed.focusBlock = i + 1;
+        rerenderEditor();
+      }
+    });
+  });
+
+  root.querySelectorAll("[data-art-caption]").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const b = blocks[parseInt(inp.dataset.artCaption, 10)];
+      const v = inp.value.trim();
+      if(v) b.caption = v; else delete b.caption;
+    });
+  });
+  root.querySelectorAll("[data-art-size]").forEach(btn => btn.addEventListener("click", () => {
+    blocks[parseInt(btn.dataset.artSize, 10)].size = btn.dataset.val;
+    rerenderEditor();
+  }));
+  root.querySelectorAll("[data-art-move]").forEach(btn => btn.addEventListener("click", () => {
+    const i = parseInt(btn.dataset.artMove, 10);
+    artMoveBlock(ed, i, i + parseInt(btn.dataset.dir, 10));
+  }));
+  root.querySelectorAll("[data-art-del]").forEach(btn => btn.addEventListener("click", () => {
+    const i = parseInt(btn.dataset.artDel, 10);
+    const b = blocks[i];
+    if(b.type === "p" && String(b.text || "").trim().length > 40 && !confirm("這個段落有文字，確定要刪除嗎？")) return;
+    blocks.splice(i, 1);
+    rerenderEditor();
+  }));
+
+  // 插入文字／圖片
+  root.querySelectorAll("[data-ins-text]").forEach(btn => btn.addEventListener("click", () => {
+    const at = parseInt(btn.dataset.insText, 10);
+    blocks.splice(at, 0, { type: "p", text: "" });
+    ed.focusBlock = at;
+    rerenderEditor();
+  }));
+  root.querySelectorAll("[data-ins-img]").forEach(btn => btn.addEventListener("click", () => {
+    const at = parseInt(btn.dataset.insImg, 10);
+    const input = document.createElement("input");
+    input.type = "file"; input.accept = "image/*,video/*"; input.multiple = true; input.style.display = "none";
+    input.addEventListener("change", () => artInsertFiles(ed, at, input.files));
+    document.body.appendChild(input);
+    input.click();
+    setTimeout(() => input.remove(), 60000);
+  }));
+  // 把檔案直接拖到插入列上
+  root.querySelectorAll(".art-gap").forEach(g => {
+    g.addEventListener("dragover", (e) => { if(e.dataTransfer && [...(e.dataTransfer.types || [])].includes("Files")){ e.preventDefault(); g.classList.add("drag-over"); } });
+    g.addEventListener("dragleave", () => g.classList.remove("drag-over"));
+    g.addEventListener("drop", (e) => {
+      g.classList.remove("drag-over");
+      if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length){
+        e.preventDefault();
+        artInsertFiles(ed, parseInt(g.dataset.gap, 10), e.dataTransfer.files);
+      }
+    });
+  });
+
+  // 拖曳區塊換位置：抓住 ⠿，放到另一個區塊的上半（插到它前面）或下半（插到它後面）
+  let dragFrom = null;
+  root.querySelectorAll("[data-handle]").forEach(h => {
+    h.addEventListener("dragstart", (e) => {
+      dragFrom = parseInt(h.dataset.handle, 10);
+      if(e.dataTransfer){ e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", "block"); } catch(err){} }
+      const row = h.closest(".art-block"); if(row) row.classList.add("dragging");
+    });
+    h.addEventListener("dragend", () => {
+      dragFrom = null;
+      root.querySelectorAll(".dragging,.drop-before,.drop-after").forEach(el => el.classList.remove("dragging", "drop-before", "drop-after"));
+    });
+  });
+  root.querySelectorAll(".art-block").forEach(row => {
+    const half = (e) => { const r = row.getBoundingClientRect(); return (e.clientY - r.top) < r.height / 2 ? "before" : "after"; };
+    row.addEventListener("dragover", (e) => {
+      if(dragFrom === null) return;
+      e.preventDefault();
+      const side = half(e);
+      row.classList.toggle("drop-before", side === "before");
+      row.classList.toggle("drop-after", side === "after");
+    });
+    row.addEventListener("dragleave", () => row.classList.remove("drop-before", "drop-after"));
+    row.addEventListener("drop", (e) => {
+      if(dragFrom === null) return;
+      e.preventDefault();
+      const j = parseInt(row.dataset.block, 10);
+      let to = half(e) === "before" ? j : j + 1;
+      const from = dragFrom; dragFrom = null;
+      if(from < to) to -= 1;          // 先拿掉 from，後面的位置會往前一格
+      artMoveBlock(ed, from, to);
+    });
+  });
+
+  if(ed.focusBlock !== undefined && ed.focusBlock !== null){
+    const ta = root.querySelector(`textarea[data-art-text="${ed.focusBlock}"]`);
+    ed.focusBlock = null;
+    if(ta){ ta.focus(); ta.setSelectionRange(0, 0); }
+  }
+}
+
 function gallerySizeOptions(kind){
   return kind === "gallery"
     ? [["large","大"],["small","中"],["wide","寬"],["span2","雙欄"],["full","全幅"]]
@@ -1259,10 +1597,11 @@ function bindProjectEditorEvents(ed){
   bindCoverDropEvents(ed, "cover");
   document.querySelectorAll('input[name="f_layout"]').forEach(r => r.addEventListener("change", () => {
     if(r.checked){
-      if(r.value === "article") ed.item.layout = "article"; else delete ed.item.layout;
+      if(r.value === "article") ed.item.layout = "article"; else { commitBlocks(ed); delete ed.item.layout; ed.blocksReady = false; }
       rerenderEditor(); // 版型換了：相簿提示與圖說欄位跟著換
     }
   }));
+  bindArticleEditor(ed);
   bindTileGrid(ed, "gallery", "galleryGrid", "galleryDrop");
   bindTileGrid(ed, "drawings", "drawingsGrid", "drawingsDrop");
   bindTileGrid(ed, "renders", "rendersGrid", "rendersDrop");
@@ -1430,8 +1769,10 @@ function syncEditorFieldsToItem(){
 }
 
 function rerenderEditor(){
+  const y = window.scrollY;
   syncEditorFieldsToItem();
   render();
+  window.scrollTo(0, y);
 }
 
 /* 把 editing.item 裡所有指向 pendingUploads 的暫時 key，實際上傳到 GitHub，換成正式路徑 */
@@ -1466,7 +1807,9 @@ async function saveProjectEditor(ed){
   p.year = document.getElementById("f_year").value.trim();
   p.status = document.getElementById("f_status").value.trim();
   p.location = document.getElementById("f_location").value.trim();
-  p.description = document.getElementById("f_description").value;
+  const descEl = document.getElementById("f_description");
+  if(descEl) p.description = descEl.value;
+  if(p.layout === "article") commitBlocks(ed); // 專欄報導：文字與相簿由區塊編輯器產生
   p.credits = document.getElementById("f_credits").value.trim().replace(/\n/g, "<br>");
 
   if(!p.title){ toast("請至少填寫標題", true); return; }

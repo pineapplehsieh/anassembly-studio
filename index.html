@@ -1690,6 +1690,27 @@ function articleFiguresHtml(list, p){
   return html;
 }
 
+/* 後台「專欄報導編輯器」排好的版面：p.blocks 是一串區塊，文字段落（type:"p"）與圖片（type:"img"）
+   完全照作者排的順序輸出。連續的圖片區塊視為一組（相鄰兩張「中」會併成一排）。 */
+function hasArticleBlocks(p){
+  return p.layout === "article" && Array.isArray(p.blocks) && p.blocks.some(b => b && (b.type === "img" || String(b.text || "").trim()));
+}
+function articleBlocksBodyHtml(p){
+  let html = "", run = [], imgIdx = 0;
+  const flush = () => { if(run.length){ html += articleFiguresHtml(run, p); run = []; } };
+  p.blocks.forEach(b => {
+    if(!b) return;
+    if(b.type === "img"){ run.push({ item: b, i: imgIdx++ }); }
+    else if(String(b.text || "").trim()){ flush(); html += "<p>" + richTextInline(esc(String(b.text).trim())) + "</p>"; }
+  });
+  flush();
+  return html;
+}
+/* 燈箱要翻的圖片清單：專欄報導（有區塊）以區塊裡的圖片為準，其餘用相簿 */
+function projectLightboxItems(p){
+  return hasArticleBlocks(p) ? p.blocks.filter(b => b && b.type === "img") : (p.gallery || []);
+}
+
 function articleBodyHtml(p){
   const blocks = articleBlocks(p.description);
   const entries = (p.gallery || []).map((item, i) => ({ item, i }));
@@ -1784,7 +1805,7 @@ function renderProject(id){
   ].join("");
   const articleSpecsHtml = articleSpecsInner ? `<div class="article-specs">${articleSpecsInner}</div>` : "";
   const bodyBlockHtml = isArticle
-    ? `${articleSpecsHtml}<div class="article-body">${articleBodyHtml(p)}</div>`
+    ? `${articleSpecsHtml}<div class="article-body">${hasArticleBlocks(p) ? articleBlocksBodyHtml(p) : articleBodyHtml(p)}</div>`
     : `<div class="detail-body">
         <div class="detail-desc desc-collapsible" id="projectDesc"><div class="desc-inner">${paragraphs}</div><button type="button" class="desc-toggle" aria-expanded="false" aria-label="展開全文">+</button></div>
         ${sideInfo}
@@ -1829,8 +1850,9 @@ function renderProject(id){
     if(!img.complete) img.addEventListener("load", setupDescCollapse);
   });
 
-  if(p.gallery && p.gallery.length){
-    const galleryImages = p.gallery.map(item => ({ src: galleryItemSrc(item), alt: p.title }));
+  const lbItems = projectLightboxItems(p);
+  if(lbItems.length){
+    const galleryImages = lbItems.map(item => ({ src: galleryItemSrc(item), alt: p.title }));
     app.querySelectorAll(".gallery-item, .article-fig").forEach(el => {
       el.addEventListener("click", () => {
         openLightbox(galleryImages, parseInt(el.dataset.galleryIndex, 10));
