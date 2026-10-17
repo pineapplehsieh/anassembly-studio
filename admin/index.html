@@ -99,6 +99,10 @@ input,textarea,select{ font-family:inherit; font-size:14px; }
   display:flex; align-items:baseline; gap:10px; padding-bottom:8px; margin-bottom:14px;
   border-bottom:1.5px solid var(--ink); font-size:17px; font-weight:700;
 }
+.group-head .cat-edit{
+  margin-left:auto; border:0; background:none; cursor:pointer; font-size:12.5px; font-weight:400; color:var(--muted);
+}
+.group-head .cat-edit:hover{ color:var(--ink); text-decoration:underline; }
 .group-head .n{ font-size:12.5px; font-weight:400; color:var(--muted); }
 .subgroup-head{ font-size:13px; font-weight:700; color:var(--muted); letter-spacing:.04em; margin:18px 0 10px; }
 .group-block .item-grid{ padding-bottom:0; }
@@ -695,7 +699,6 @@ const state = {
   series: null, seriesSha: null,
   about: null, aboutSha: null,
   editing: null, // { type, item, isNew }
-  projectView: (function(){ try { return localStorage.getItem("admin_project_view") === "year" ? "year" : "category"; } catch(e){ return "category"; } })(),
 };
 
 async function loadAllContent(){
@@ -865,54 +868,87 @@ function projectCardHtml(p, i){
 }
 
 function projectsListHtml(){
-  const view = state.projectView === "year" ? "year" : "category";
   const items = state.projects.map((p, i) => ({ p, i }));
-  const yearOf = (p) => String(p.year || "未填年份");
   const catOf = (p) => p.category || "未分類";
-  const byYearDesc = (a, b) => (parseInt(b.p.year, 10) || 0) - (parseInt(a.p.year, 10) || 0) || String(a.p.id).localeCompare(String(b.p.id), undefined, { numeric: true });
-  const uniq = (arr) => arr.filter((x, k) => arr.indexOf(x) === k);
-  const gridHtml = (list) => `<div class="item-grid">${list.slice().sort(byYearDesc).map(x => projectCardHtml(x.p, x.i)).join("")}</div>`;
+  // 年份新到舊；同一年的，編號大（比較晚新增）的排前面
+  const sorter = (a, b) => (parseInt(b.p.year, 10) || 0) - (parseInt(a.p.year, 10) || 0) || String(b.p.id).localeCompare(String(a.p.id), undefined, { numeric: true });
+  const cats = items.map(x => catOf(x.p)).filter((c, k, arr) => arr.indexOf(c) === k); // 跟前台一樣：依第一次出現的順序
 
-  let groups = "";
-  if(view === "category"){
-    uniq(items.map(x => catOf(x.p))).forEach(cat => {
-      const inCat = items.filter(x => catOf(x.p) === cat);
-      const years = uniq(inCat.slice().sort(byYearDesc).map(x => yearOf(x.p)));
-      groups += `<div class="group-block"><div class="group-head">${esc(cat)}<span class="n">${inCat.length} 件</span></div>`
-        + years.map(y => `<div class="subgroup-head">${esc(y)}</div>` + gridHtml(inCat.filter(x => yearOf(x.p) === y))).join("")
-        + `</div>`;
-    });
-  } else {
-    uniq(items.slice().sort(byYearDesc).map(x => yearOf(x.p))).forEach(y => {
-      const inYear = items.filter(x => yearOf(x.p) === y);
-      const cats = uniq(inYear.map(x => catOf(x.p)));
-      groups += `<div class="group-block"><div class="group-head">${esc(y)}<span class="n">${inYear.length} 件</span></div>`
-        + cats.map(c => `<div class="subgroup-head">${esc(c)}</div>` + gridHtml(inYear.filter(x => catOf(x.p) === c))).join("")
-        + `</div>`;
-    });
-  }
+  const groups = cats.map(cat => {
+    const inCat = items.filter(x => catOf(x.p) === cat).sort(sorter);
+    return `
+      <div class="group-block" data-cat-block="${esc(cat)}">
+        <div class="group-head">
+          ${esc(cat)}<span class="n">${inCat.length} 件</span>
+          <button class="cat-edit" data-rename-cat="${esc(cat)}" title="修改分類名稱">✎ 修改名稱</button>
+        </div>
+        <div class="item-grid">
+          ${inCat.map(x => projectCardHtml(x.p, x.i)).join("")}
+          <button class="add-card" data-add-cat="${esc(cat)}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>在「${esc(cat)}」新增案子</span>
+          </button>
+        </div>
+      </div>`;
+  }).join("");
+
   return `
     <div class="list-tools">
-      <div class="view-switch">
-        <button data-view="category" class="${view === "category" ? "active" : ""}">依分類</button>
-        <button data-view="year" class="${view === "year" ? "active" : ""}">依年份</button>
-      </div>
+      <button class="btn primary" id="addCategoryBtn">＋ 新增分類</button>
       <input type="search" class="list-search" id="listSearch" placeholder="搜尋標題、分類、年份、地點…">
-      <span class="list-count" id="listCount">共 ${items.length} 件</span>
+      <span class="list-count" id="listCount">共 ${items.length} 件・${cats.length} 個分類</span>
     </div>
-    <div id="groupedList">${groups}</div>
-    <div class="item-grid" style="padding-top:8px;">${addCardHtml("新增作品")}</div>
+    <div class="field-hint" style="margin:-10px 0 22px;">案子依「分類」分組，每個分類裡依年份由新到舊排列。</div>
+    <div id="groupedList">${groups || `<div class="empty-note">還沒有任何案子，先按上面的「＋ 新增分類」建立第一個分類。</div>`}</div>
   `;
 }
 
-/* 搜尋：只切換卡片顯示，不重畫畫面（重畫會讓輸入框失去焦點）；整個分組都沒有符合的就把分組標題一起藏起來 */
+/* 新增分類：分類是掛在案子上的（前台的分類列表是從所有案子的分類整理出來的），
+   所以新增分類＝輸入名稱後直接開一個「這個分類的新案子」，存檔之後這個分類就出現了。 */
+function addCategory(){
+  const name = (prompt("新分類的名稱（例如：Tectonic）") || "").trim();
+  if(!name) return;
+  const existing = state.projects.find(p => (p.category || "").toLowerCase() === name.toLowerCase());
+  if(existing){
+    toast(`已經有「${existing.category}」這個分類了，請直接在它底下新增案子`, true);
+    return;
+  }
+  openEditor("projects", Object.assign(blankItem("projects"), { category: name }), -1, true);
+}
+
+/* 修改分類名稱：把這個分類底下所有案子的分類一起改掉，一次存檔。
+   改成已經存在的分類名稱 = 合併兩個分類。 */
+async function renameCategory(oldName){
+  const input = prompt(`把分類「${oldName}」改名為：`, oldName);
+  if(input === null) return;
+  const name = input.trim();
+  if(!name || name === oldName) return;
+  const clash = state.projects.some(p => (p.category || "未分類") !== oldName && (p.category || "") === name);
+  if(clash && !confirm(`已經有「${name}」這個分類，改名之後兩個分類會合併成一個。確定嗎？`)) return;
+  try{
+    setLoading(true, "儲存中…");
+    let n = 0;
+    state.projects.forEach(p => { if((p.category || "未分類") === oldName){ p.category = name; n++; } });
+    await saveCollection("projects");
+    toast(`已把 ${n} 件案子的分類改為「${name}」，網站幾分鐘內會更新`);
+    render();
+  }catch(err){
+    toast("儲存失敗：" + err.message, true);
+  }finally{
+    setLoading(false);
+  }
+}
+
+/* 搜尋：只切換卡片顯示，不重畫畫面（重畫會讓輸入框失去焦點）；整個分類都沒有符合的就把分類區塊藏起來 */
 function bindProjectListTools(){
   const el = document.getElementById("tabContent");
-  el.querySelectorAll("[data-view]").forEach(btn => btn.addEventListener("click", () => {
-    state.projectView = btn.dataset.view;
-    try { localStorage.setItem("admin_project_view", state.projectView); } catch(e){}
-    renderTabContent();
+  const addCatBtn = document.getElementById("addCategoryBtn");
+  if(addCatBtn) addCatBtn.addEventListener("click", addCategory);
+  el.querySelectorAll("[data-add-cat]").forEach(btn => btn.addEventListener("click", () => {
+    openEditor("projects", Object.assign(blankItem("projects"), { category: btn.dataset.addCat === "未分類" ? "" : btn.dataset.addCat }), -1, true);
   }));
+  el.querySelectorAll("[data-rename-cat]").forEach(btn => btn.addEventListener("click", () => renameCategory(btn.dataset.renameCat)));
+
   const input = document.getElementById("listSearch");
   if(!input) return;
   input.addEventListener("input", () => {
@@ -923,16 +959,14 @@ function bindProjectListTools(){
       card.style.display = ok ? "" : "none";
       if(ok) shown++;
     });
-    el.querySelectorAll("#groupedList .item-grid").forEach(grid => {
-      const any = [...grid.children].some(c => c.style.display !== "none");
-      grid.style.display = any ? "" : "none";
-      const head = grid.previousElementSibling;
-      if(head && head.classList.contains("subgroup-head")) head.style.display = any ? "" : "none";
-    });
     el.querySelectorAll("#groupedList .group-block").forEach(g => {
-      g.style.display = [...g.querySelectorAll(".item-card")].some(c => c.style.display !== "none") ? "" : "none";
+      const any = [...g.querySelectorAll(".item-card[data-hay]")].some(c => c.style.display !== "none");
+      g.style.display = any || !q ? "" : "none";
+      g.querySelectorAll("[data-add-cat]").forEach(b => { b.style.display = q ? "none" : ""; });
     });
-    document.getElementById("listCount").textContent = q ? `符合 ${shown} 件` : `共 ${state.projects.length} 件`;
+    document.getElementById("listCount").textContent = q
+      ? `符合 ${shown} 件`
+      : `共 ${state.projects.length} 件・${new Set(state.projects.map(p => p.category || "未分類")).size} 個分類`;
   });
 }
 
