@@ -1454,24 +1454,45 @@ function cropRatioFor(item, kind){
   }
   return GALLERY_CROP_RATIO[size] || null;
 }
-function focusObjectPosition(focus, ri, rc){
-  const clamp01 = (v) => Math.max(0, Math.min(1, v));
-  let px = 0.5, py = 0.5;
-  if(Math.abs(ri - rc) > 1e-3){
-    if(ri > rc) px = clamp01((focus.x * ri - rc / 2) / (ri - rc));          // 照片比格子寬：左右裁
-    else { const a = 1 / ri, b = 1 / rc; py = clamp01((focus.y * a - b / 2) / (a - b)); } // 照片比格子高：上下裁
-  }
-  return (px * 100).toFixed(1) + "% " + (py * 100).toFixed(1) + "%";
+function focusCrop(f, ri, rc){
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const iw = ri > rc ? ri / rc : 1;   // 照片鋪滿格子（cover）後，寬度是格子寬的幾倍
+  const ih = ri > rc ? 1 : rc / ri;   // 高度是格子高的幾倍
+  const fx = clamp(f.x, 0.001, 0.999), fy = clamp(f.y, 0.001, 0.999);
+  // 每個方向：照片比格子大的那個方向可以用 object-position 平移（a 是主體在格子裡的位置，可選範圍 [lo, hi]）；
+  // 剛好填滿的那個方向沒有多餘可以平移，a 就固定。先盡量把 a 放到正中央 0.5。
+  const axis = (fv, size) => {
+    const lo = fv * size - (size - 1), hi = fv * size;
+    const a = clamp(0.5, Math.min(lo, hi), Math.max(lo, hi));
+    const p = size > 1 ? clamp((fv * size - a) / (size - 1), 0, 1) : 0.5;
+    return { a, p, need: Math.max(1, 0.5 / Math.min(a, 1 - a)) };
+  };
+  const X = axis(fx, iw), Y = axis(fy, ih);
+  // 平移到不了正中央的方向，才把照片放大（scale），讓它有多餘可以再移；放大有上限，
+  // 盡量不把主體（若知道大小 w,h）裁掉（最多容許邊緣被裁掉約 2%），偵測不到大小時最多放大 1.35 倍。
+  let cap = 1.35;
+  if(f.w > 0 && f.h > 0) cap = clamp(Math.min(1.04 / Math.min(0.9, f.w * iw), 1.04 / Math.min(0.9, f.h * ih)), 1, 1.8);
+  const z = Math.min(Math.max(X.need, Y.need), cap);
+  const pos = (X.p * 100).toFixed(1) + "% " + (Y.p * 100).toFixed(1) + "%";
+  if(z < 1.0005) return { pos, z: 1, origin: "50% 50%" };
+  // 放大是以 transform-origin 為基準（要落在 0～1 之內，照片才會繼續蓋滿格子）
+  const Ox = clamp((0.5 - z * X.a) / (1 - z), 0, 1), Oy = clamp((0.5 - z * Y.a) / (1 - z), 0, 1);
+  return { pos, z: Math.round(z * 1000) / 1000, origin: (Ox * 100).toFixed(2) + "% " + (Oy * 100).toFixed(2) + "%" };
 }
-function galleryItemPosition(item, kind){
-  if(typeof item !== "object" || !item) return "center";
-  if(item.position) return item.position;
+/* 回傳要加在 <img style> 裡的裁切樣式（object-position，必要時加 scale＋transform-origin）；
+   手動指定的 position（舊欄位）優先，沒有 focus 的照片維持置中。 */
+function galleryItemCropStyle(item, kind){
+  if(typeof item !== "object" || !item) return "object-position:center";
+  if(item.position) return "object-position:" + item.position;
   const f = item.focus, ri = Number(item.ar);
   if(f && typeof f.x === "number" && typeof f.y === "number" && ri > 0){
     const rc = cropRatioFor(item, kind);
-    if(rc) return focusObjectPosition(f, ri, rc);
+    if(rc){
+      const c = focusCrop(f, ri, rc);
+      return "object-position:" + c.pos + (c.z > 1 ? "; scale:" + c.z + "; transform-origin:" + c.origin : "");
+    }
   }
-  return "center";
+  return "object-position:center";
 }
 function galleryItemFit(item){
   return (typeof item === "object" && item.fit) ? item.fit : "cover";
@@ -1703,7 +1724,7 @@ function articleFigHtml(entry, p){
   const item = entry.item;
   const size = gallerySizeClass(item) === "tiny" ? "small" : gallerySizeClass(item);
   const caption = (typeof item === "object" && item.caption) ? `<figcaption>${esc(item.caption)}</figcaption>` : "";
-  const style = size === "span2" ? `object-position:${esc(galleryItemPosition(item, "gallery"))}` : "";
+  const style = size === "span2" ? esc(galleryItemCropStyle(item, "gallery")) : "";
   return `<figure class="article-fig fig-${size}" data-gallery-index="${entry.i}">${mediaHtml(galleryItemSrc(item), p.title, { thumb: size === "small", style })}${caption}</figure>`;
 }
 
@@ -1779,7 +1800,7 @@ function renderProject(id){
         <h3>Gallery</h3>
         <div class="gallery-grid">${p.gallery.map((item, i) => `
           <div class="gallery-item ${gallerySizeClass(item)}" data-gallery-index="${i}">
-            ${mediaHtml(galleryItemSrc(item), p.title, { thumb: !/\b(full|span2)\b/.test(gallerySizeClass(item)), style: `object-position:${esc(galleryItemPosition(item, "gallery"))}; object-fit:${esc(galleryItemFit(item))}` })}
+            ${mediaHtml(galleryItemSrc(item), p.title, { thumb: !/\b(full|span2)\b/.test(gallerySizeClass(item)), style: `${esc(galleryItemCropStyle(item, "gallery"))}; object-fit:${esc(galleryItemFit(item))}` })}
           </div>`).join("")}</div>
       </div>`
     : "";
@@ -1811,7 +1832,7 @@ function renderProject(id){
         <h3>${heading}</h3>
         <div class="drawing-grid">${items.map((item, i) => `
           <div class="drawing-item ${gallerySizeClass(item)} ${drawingOrientationClass(item)}" data-drawing-index="${i}">
-            ${mediaHtml(galleryItemSrc(item), p.title, { thumb: /\b(small|tiny)\b/.test(gallerySizeClass(item)), style: `object-position:${esc(galleryItemPosition(item, "drawing"))}; object-fit:${esc(galleryItemFit(item))}` })}
+            ${mediaHtml(galleryItemSrc(item), p.title, { thumb: /\b(small|tiny)\b/.test(gallerySizeClass(item)), style: `${esc(galleryItemCropStyle(item, "drawing"))}; object-fit:${esc(galleryItemFit(item))}` })}
           </div>`).join("")}</div>
       </div>`
     : "";

@@ -1325,14 +1325,30 @@ function projectEditorHtml(ed){
    ============================================================ */
 const FOCUS_PREVIEW_RATIOS = [["3:4", 3 / 4], ["4:3", 4 / 3], ["3:2", 3 / 2], ["16:9", 16 / 9]];
 
-function adminFocusPos(focus, ri, rc){
-  const clamp01 = (v) => Math.max(0, Math.min(1, v));
-  let px = 0.5, py = 0.5;
-  if(Math.abs(ri - rc) > 1e-3){
-    if(ri > rc) px = clamp01((focus.x * ri - rc / 2) / (ri - rc));
-    else { const a = 1 / ri, b = 1 / rc; py = clamp01((focus.y * a - b / 2) / (a - b)); }
-  }
-  return (px * 100).toFixed(1) + "% " + (py * 100).toFixed(1) + "%";
+function focusCrop(f, ri, rc){
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const iw = ri > rc ? ri / rc : 1;   // 照片鋪滿格子（cover）後，寬度是格子寬的幾倍
+  const ih = ri > rc ? 1 : rc / ri;   // 高度是格子高的幾倍
+  const fx = clamp(f.x, 0.001, 0.999), fy = clamp(f.y, 0.001, 0.999);
+  // 每個方向：照片比格子大的那個方向可以用 object-position 平移（a 是主體在格子裡的位置，可選範圍 [lo, hi]）；
+  // 剛好填滿的那個方向沒有多餘可以平移，a 就固定。先盡量把 a 放到正中央 0.5。
+  const axis = (fv, size) => {
+    const lo = fv * size - (size - 1), hi = fv * size;
+    const a = clamp(0.5, Math.min(lo, hi), Math.max(lo, hi));
+    const p = size > 1 ? clamp((fv * size - a) / (size - 1), 0, 1) : 0.5;
+    return { a, p, need: Math.max(1, 0.5 / Math.min(a, 1 - a)) };
+  };
+  const X = axis(fx, iw), Y = axis(fy, ih);
+  // 平移到不了正中央的方向，才把照片放大（scale），讓它有多餘可以再移；放大有上限，
+  // 盡量不把主體（若知道大小 w,h）裁掉（最多容許邊緣被裁掉約 2%），偵測不到大小時最多放大 1.35 倍。
+  let cap = 1.35;
+  if(f.w > 0 && f.h > 0) cap = clamp(Math.min(1.04 / Math.min(0.9, f.w * iw), 1.04 / Math.min(0.9, f.h * ih)), 1, 1.8);
+  const z = Math.min(Math.max(X.need, Y.need), cap);
+  const pos = (X.p * 100).toFixed(1) + "% " + (Y.p * 100).toFixed(1) + "%";
+  if(z < 1.0005) return { pos, z: 1, origin: "50% 50%" };
+  // 放大是以 transform-origin 為基準（要落在 0～1 之內，照片才會繼續蓋滿格子）
+  const Ox = clamp((0.5 - z * X.a) / (1 - z), 0, 1), Oy = clamp((0.5 - z * Y.a) / (1 - z), 0, 1);
+  return { pos, z: Math.round(z * 1000) / 1000, origin: (Ox * 100).toFixed(2) + "% " + (Oy * 100).toFixed(2) + "%" };
 }
 function adminCropRatio(kind, item){
   const size = (item && item.size) || "small";
@@ -1341,10 +1357,19 @@ function adminCropRatio(kind, item){
   if(item && item.orientation === "portrait") return ({ large: 2 / 3, small: 3 / 4 })[size] || null;
   return ({ large: 3 / 2, small: 16 / 9, tiny: 2 })[size] || null;
 }
+/* 把裁切結果套到一張 <img>（格子預覽、對焦視窗的比例預覽共用） */
+function applyCropToImg(img, f, ri, rc){
+  if(!img || !f || !(ri > 0) || !rc){ if(img){ img.style.objectPosition = ""; img.style.scale = ""; img.style.transformOrigin = ""; } return; }
+  const c = focusCrop(f, ri, rc);
+  img.style.objectPosition = c.pos;
+  img.style.scale = c.z > 1 ? String(c.z) : "";
+  img.style.transformOrigin = c.z > 1 ? c.origin : "";
+}
 function tileFocusStyle(kind, item){
   const rc = adminCropRatio(kind, item);
   if(!rc || !item.focus || !(item.ar > 0)) return "";
-  return ` style="object-position:${adminFocusPos(item.focus, item.ar, rc)}"`;
+  const c = focusCrop(item.focus, item.ar, rc);
+  return ` style="object-position:${c.pos}${c.z > 1 ? "; scale:" + c.z + "; transform-origin:" + c.origin : ""}"`;
 }
 
 /* 從畫面（縮小到 200px）找主體：
@@ -1394,6 +1419,8 @@ function detectFocus(bitmap){
       const [x0, x1] = range(col), [y0, y1] = range(row);
       out.x = ((x0 + x1 + 1) / 2) / w;
       out.y = ((y0 + y1 + 1) / 2) / h;
+      out.w = (x1 - x0 + 1) / w;
+      out.h = (y1 - y0 + 1) / h;
       out.mode = "bbox";
       return out;
     }
@@ -1434,6 +1461,7 @@ async function analyzeEntryFocus(ed, entry){
   if(bm.close) bm.close();
   const r3 = (v) => Math.round(v * 1000) / 1000;
   entry.focus = { x: r3(r.x), y: r3(r.y) };
+  if(r.w > 0 && r.h > 0){ entry.focus.w = r3(r.w); entry.focus.h = r3(r.h); }
   entry.ar = Math.round(r.ar * 10000) / 10000;
   return true;
 }
@@ -1445,7 +1473,7 @@ function autoFocusNewEntries(ed, kind, entries){
       const list = ed.item[kind] || ed.item.blocks || [];
       const i = list.indexOf(entry);
       const img = document.querySelector(`.tile[data-tile-kind="${kind}"][data-tile-index="${i}"] img`);
-      if(img){ const s = tileFocusStyle(kind === "gallery" ? "gallery" : "drawing", entry); if(s) img.style.objectPosition = s.replace(/.*object-position:([^"]+)".*/, "$1"); }
+      if(img){ const k = kind === "gallery" ? "gallery" : "drawing"; applyCropToImg(img, entry.focus, entry.ar, adminCropRatio(k, entry)); }
     }).catch(() => {});
   });
 }
@@ -1494,21 +1522,21 @@ function openFocusModal(ed, entry, kind, onDone){
   const stageImg = overlay.querySelector(".fm-stage img");
   const cross = overlay.querySelector(".fm-cross");
   const prevImgs = [...overlay.querySelectorAll(".fm-frame img")];
-  let focus = entry.focus ? { x: entry.focus.x, y: entry.focus.y } : { x: 0.5, y: 0.5 };
+  let focus = entry.focus ? Object.assign({}, entry.focus) : { x: 0.5, y: 0.5 };
   let ar = entry.ar > 0 ? entry.ar : 0;
 
   function paint(){
     if(!ar && stageImg.naturalWidth) ar = stageImg.naturalWidth / stageImg.naturalHeight;
     cross.style.left = (focus.x * 100) + "%";
     cross.style.top = (focus.y * 100) + "%";
-    prevImgs.forEach((img, k) => { img.style.objectPosition = ar ? adminFocusPos(focus, ar, FOCUS_PREVIEW_RATIOS[k][1]) : "50% 50%"; });
+    prevImgs.forEach((img, k) => applyCropToImg(img, focus, ar, FOCUS_PREVIEW_RATIOS[k][1]));
   }
   if(stageImg.complete) paint(); else stageImg.addEventListener("load", paint);
   paint();
 
   const setFromEvent = (e) => {
     const r = stageImg.getBoundingClientRect();
-    focus = { x: Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)), y: Math.max(0, Math.min(1, (e.clientY - r.top) / r.height)) };
+    focus = Object.assign({}, focus, { x: Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)), y: Math.max(0, Math.min(1, (e.clientY - r.top) / r.height)) });
     paint();
   };
   let dragging = false;
@@ -1528,12 +1556,13 @@ function openFocusModal(ed, entry, kind, onDone){
       try{
         const bm = await loadBitmapForEntry(ed, entry.src);
         const r = detectFocus(bm); if(bm.close) bm.close();
-        focus = { x: r.x, y: r.y }; ar = r.ar; paint();
+        focus = { x: r.x, y: r.y }; if(r.w > 0){ focus.w = r.w; focus.h = r.h; } else { delete focus.w; delete focus.h; } ar = r.ar; paint();
       }catch(err){ toast("偵測失敗：" + err.message, true); }
     }
     else if(which === "ok"){
       const r3 = (v) => Math.round(v * 1000) / 1000;
       entry.focus = { x: r3(focus.x), y: r3(focus.y), m: 1 };
+      if(focus.w > 0 && focus.h > 0){ entry.focus.w = r3(focus.w); entry.focus.h = r3(focus.h); }
       if(ar) entry.ar = Math.round(ar * 10000) / 10000;
       close();
       if(onDone) onDone();
