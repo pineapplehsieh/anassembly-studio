@@ -913,43 +913,96 @@
       "gallery": [
         {
           "src": "uploads/1790514238797-螢幕擷取畫面_2026-09-27_210240.png",
-          "size": "full"
+          "size": "full",
+          "focus": {
+            "x": 0.528,
+            "y": 0.557
+          },
+          "ar": 2.8423
         },
         {
           "src": "uploads/1790561487657-S__49471492_0.jpg",
-          "size": "small"
+          "size": "small",
+          "focus": {
+            "x": 0.579,
+            "y": 0.463
+          },
+          "ar": 1.7778
         },
         {
           "src": "uploads/1790563381539-S__49471494_0.jpg",
-          "size": "span2"
+          "size": "span2",
+          "focus": {
+            "x": 0.522,
+            "y": 0.437
+          },
+          "ar": 3.1788
         },
         {
           "src": "uploads/1790563377050-S__49471496_0.jpg",
-          "size": "small"
+          "size": "small",
+          "focus": {
+            "x": 0.468,
+            "y": 0.459
+          },
+          "ar": 1.7778
         },
         {
           "src": "uploads/1792077468885-LINE_ALBUM_20260412_260412_3.jpg",
-          "size": "small"
+          "size": "small",
+          "focus": {
+            "x": 0.525,
+            "y": 0.465,
+            "m": 1
+          },
+          "ar": 1.7771
         },
         {
           "src": "uploads/1792077473472-LINE_ALBUM_20260412_260412_2.jpg",
-          "size": "small"
+          "size": "small",
+          "focus": {
+            "x": 0.488,
+            "y": 0.473
+          },
+          "ar": 1.7771
         },
         {
           "src": "uploads/1792077488177-LINE_ALBUM_20260412_260412_5_-_複製.jpg",
-          "size": "small"
+          "size": "small",
+          "focus": {
+            "x": 0.475,
+            "y": 0.487
+          },
+          "ar": 1.7771
         },
         {
           "src": "uploads/1792077481180-LINE_ALBUM_20260412_260412_6.jpg",
-          "size": "small"
+          "size": "small",
+          "focus": {
+            "x": 0.488,
+            "y": 0.478,
+            "m": 1
+          },
+          "ar": 1.7771
         },
         {
           "src": "uploads/1792077477935-LINE_ALBUM_20260412_260412_9.jpg",
-          "size": "small"
+          "size": "small",
+          "focus": {
+            "x": 0.453,
+            "y": 0.544
+          },
+          "ar": 1.7771
         },
         {
           "src": "uploads/1792077484705-LINE_ALBUM_20260412_260412_10.jpg",
-          "size": "span2"
+          "size": "span2",
+          "focus": {
+            "x": 0.49,
+            "y": 0.49,
+            "m": 1
+          },
+          "ar": 1.7771
         }
       ],
       "drawings": [
