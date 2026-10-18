@@ -1437,8 +1437,41 @@ function gallerySizeClass(item){
   const size = typeof item === "string" ? "small" : (item.size || "small");
   return ["large", "small", "tiny", "wide", "full", "span2"].includes(size) ? size : "small";
 }
-function galleryItemPosition(item){
-  return (typeof item === "object" && item.position) ? item.position : "center";
+/* 自動「對焦」：後台會替每張照片偵測主體的位置，存成 focus:{x,y}（0～1，照片裡主體的中心）
+   與 ar（照片的寬高比）。格子是固定比例（會裁切）時，這裡依「這個格子的比例」算出 object-position，
+   讓主體落在格子正中央——黑邊左右不等寬的照片就不會偏掉。換大小時也會自動重算。
+   手動指定的 position（舊欄位）優先；沒有 focus 的照片維持置中。
+   kind: "gallery"（相簿／專欄）或 "drawing"（圖說、Render）。 */
+const GALLERY_CROP_RATIO = { large: 3 / 4, small: 4 / 3, wide: 3 / 2, span2: 16 / 9 };
+const DRAWING_CROP_RATIO = { large: 3 / 2, small: 16 / 9, tiny: 2 };
+const DRAWING_PORTRAIT_RATIO = { large: 2 / 3, small: 3 / 4 };
+function cropRatioFor(item, kind){
+  const size = gallerySizeClass(item);
+  if(kind === "drawing"){
+    if(size === "full") return null;
+    if(item && item.orientation === "portrait" && DRAWING_PORTRAIT_RATIO[size]) return DRAWING_PORTRAIT_RATIO[size];
+    return DRAWING_CROP_RATIO[size] || null;
+  }
+  return GALLERY_CROP_RATIO[size] || null;
+}
+function focusObjectPosition(focus, ri, rc){
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
+  let px = 0.5, py = 0.5;
+  if(Math.abs(ri - rc) > 1e-3){
+    if(ri > rc) px = clamp01((focus.x * ri - rc / 2) / (ri - rc));          // 照片比格子寬：左右裁
+    else { const a = 1 / ri, b = 1 / rc; py = clamp01((focus.y * a - b / 2) / (a - b)); } // 照片比格子高：上下裁
+  }
+  return (px * 100).toFixed(1) + "% " + (py * 100).toFixed(1) + "%";
+}
+function galleryItemPosition(item, kind){
+  if(typeof item !== "object" || !item) return "center";
+  if(item.position) return item.position;
+  const f = item.focus, ri = Number(item.ar);
+  if(f && typeof f.x === "number" && typeof f.y === "number" && ri > 0){
+    const rc = cropRatioFor(item, kind);
+    if(rc) return focusObjectPosition(f, ri, rc);
+  }
+  return "center";
 }
 function galleryItemFit(item){
   return (typeof item === "object" && item.fit) ? item.fit : "cover";
@@ -1670,7 +1703,7 @@ function articleFigHtml(entry, p){
   const item = entry.item;
   const size = gallerySizeClass(item) === "tiny" ? "small" : gallerySizeClass(item);
   const caption = (typeof item === "object" && item.caption) ? `<figcaption>${esc(item.caption)}</figcaption>` : "";
-  const style = size === "span2" ? `object-position:${esc(galleryItemPosition(item))}` : "";
+  const style = size === "span2" ? `object-position:${esc(galleryItemPosition(item, "gallery"))}` : "";
   return `<figure class="article-fig fig-${size}" data-gallery-index="${entry.i}">${mediaHtml(galleryItemSrc(item), p.title, { thumb: size === "small", style })}${caption}</figure>`;
 }
 
@@ -1746,7 +1779,7 @@ function renderProject(id){
         <h3>Gallery</h3>
         <div class="gallery-grid">${p.gallery.map((item, i) => `
           <div class="gallery-item ${gallerySizeClass(item)}" data-gallery-index="${i}">
-            ${mediaHtml(galleryItemSrc(item), p.title, { thumb: !/\b(full|span2)\b/.test(gallerySizeClass(item)), style: `object-position:${esc(galleryItemPosition(item))}; object-fit:${esc(galleryItemFit(item))}` })}
+            ${mediaHtml(galleryItemSrc(item), p.title, { thumb: !/\b(full|span2)\b/.test(gallerySizeClass(item)), style: `object-position:${esc(galleryItemPosition(item, "gallery"))}; object-fit:${esc(galleryItemFit(item))}` })}
           </div>`).join("")}</div>
       </div>`
     : "";
@@ -1778,7 +1811,7 @@ function renderProject(id){
         <h3>${heading}</h3>
         <div class="drawing-grid">${items.map((item, i) => `
           <div class="drawing-item ${gallerySizeClass(item)} ${drawingOrientationClass(item)}" data-drawing-index="${i}">
-            ${mediaHtml(galleryItemSrc(item), p.title, { thumb: /\b(small|tiny)\b/.test(gallerySizeClass(item)), style: `object-position:${esc(galleryItemPosition(item))}; object-fit:${esc(galleryItemFit(item))}` })}
+            ${mediaHtml(galleryItemSrc(item), p.title, { thumb: /\b(small|tiny)\b/.test(gallerySizeClass(item)), style: `object-position:${esc(galleryItemPosition(item, "drawing"))}; object-fit:${esc(galleryItemFit(item))}` })}
           </div>`).join("")}</div>
       </div>`
     : "";

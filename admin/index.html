@@ -147,6 +147,32 @@ input,textarea,select{ font-family:inherit; font-size:14px; }
 .chart-table-toggle{ margin-top:8px; border:0; background:none; cursor:pointer; font-size:12.5px; color:var(--muted); padding:4px 0; }
 .chart-table-toggle:hover{ color:var(--ink); }
 .chart-table{ max-height:360px; overflow:auto; margin-top:6px; }
+.tile .focus-btn{
+  position:absolute; top:5px; left:50%; transform:translateX(-50%); width:22px; height:22px; border-radius:50%;
+  background:rgba(20,19,17,0.65); color:#fff; border:none; font-size:12px; line-height:1; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.tile .focus-btn:hover{ background:var(--ink); }
+.tile .focus-btn.active{ background:#fff; color:var(--ink); }
+.tile .orient-btn{ z-index:2; }
+.auto-focus-row{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:-4px 0 12px; }
+.auto-focus-row .field-hint{ margin:0; }
+#focusModal{ position:fixed; inset:0; z-index:80; background:rgba(20,19,17,.62); display:flex; align-items:center; justify-content:center; padding:18px; }
+#focusModal .fm-box{ background:var(--paper, #fbfaf8); border-radius:12px; padding:18px 20px; max-width:960px; width:100%; max-height:calc(100vh - 36px); overflow:auto; box-shadow:0 20px 60px rgba(0,0,0,.35); }
+#focusModal .fm-title{ font-size:16px; font-weight:700; margin-bottom:12px; display:flex; flex-wrap:wrap; gap:4px 12px; align-items:baseline; }
+#focusModal .fm-title span{ font-size:12px; font-weight:400; color:var(--muted); }
+#focusModal .fm-body{ display:flex; flex-wrap:wrap; gap:18px; align-items:flex-start; }
+#focusModal .fm-stage{ position:relative; flex:1 1 420px; min-width:0; max-width:620px; cursor:crosshair; touch-action:none; user-select:none; background:#e8e4dc; }
+#focusModal .fm-stage img{ display:block; width:100%; height:auto; max-height:62vh; object-fit:contain; }
+#focusModal .fm-cross{ position:absolute; width:34px; height:34px; margin:-17px 0 0 -17px; border:2px solid #fff; border-radius:50%; box-shadow:0 0 0 1.5px rgba(0,0,0,.7), inset 0 0 0 1.5px rgba(0,0,0,.7); pointer-events:none; }
+#focusModal .fm-cross::before, #focusModal .fm-cross::after{ content:""; position:absolute; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.6); }
+#focusModal .fm-cross::before{ left:50%; top:-8px; bottom:-8px; width:1px; }
+#focusModal .fm-cross::after{ top:50%; left:-8px; right:-8px; height:1px; }
+#focusModal .fm-previews{ display:flex; flex-wrap:wrap; gap:12px; flex:0 0 auto; width:250px; align-content:flex-start; }
+#focusModal .fm-prev{ display:flex; flex-direction:column; gap:4px; width:116px; font-size:11.5px; color:var(--muted); }
+#focusModal .fm-frame{ width:100%; overflow:hidden; background:#000; border-radius:4px; }
+#focusModal .fm-frame img{ width:100%; height:100%; object-fit:cover; display:block; }
+#focusModal .fm-actions{ display:flex; gap:8px; margin-top:16px; }
 .list-tools{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-bottom:24px; }
 .view-switch{ display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#fff; }
 .view-switch button{ border:0; background:none; padding:8px 16px; font-size:13px; cursor:pointer; color:var(--muted); }
@@ -1204,6 +1230,7 @@ function projectEditorHtml(ed){
 
       <div class="field-block">
         <div class="label">相簿 Gallery</div>
+        <div class="auto-focus-row"><button type="button" class="btn" data-auto-focus="gallery">◎ 自動置中重點（全部照片）</button><span class="field-hint">偵測每張照片的主體，讓它落在格子正中央；手動調過的不會被蓋掉。新上傳的照片會自動做。</span></div>
         <div class="tile-grid-drop" id="galleryDrop">
           <div class="tile-grid" id="galleryGrid">
             ${(p.gallery || []).map((g, i) => galleryTileHtml(ed, g, i, "gallery", (p.gallery || []).length)).join("")}
@@ -1219,6 +1246,7 @@ function projectEditorHtml(ed){
 
       <div class="field-block">
         <div class="label">圖說 / 圖面 Drawings</div>
+        <div class="auto-focus-row"><button type="button" class="btn" data-auto-focus="drawings">◎ 自動置中重點（全部照片）</button><span class="field-hint">偵測每張照片的主體，讓它落在格子正中央；手動調過的不會被蓋掉。新上傳的照片會自動做。</span></div>
         <div class="tile-grid-drop" id="drawingsDrop">
           <div class="tile-grid" id="drawingsGrid">
             ${(p.drawings || []).map((g, i) => galleryTileHtml(ed, g, i, "drawings", (p.drawings || []).length)).join("")}
@@ -1230,6 +1258,7 @@ function projectEditorHtml(ed){
 
       <div class="field-block">
         <div class="label">Render 渲染圖（選填）</div>
+        <div class="auto-focus-row"><button type="button" class="btn" data-auto-focus="renders">◎ 自動置中重點（全部照片）</button><span class="field-hint">偵測每張照片的主體，讓它落在格子正中央；手動調過的不會被蓋掉。新上傳的照片會自動做。</span></div>
         <div class="tile-grid-drop" id="rendersDrop">
           <div class="tile-grid" id="rendersGrid">
             ${(p.renders || []).map((g, i) => galleryTileHtml(ed, g, i, "renders", (p.renders || []).length)).join("")}
@@ -1283,6 +1312,233 @@ function projectEditorHtml(ed){
       </div>
     </div>
   `;
+}
+
+/* ============================================================
+   自動對焦（類似 InDesign 的「內容感知填滿」）
+   相簿／圖說的格子是固定比例、會裁切的。照片如果有黑邊（或白邊），主體左右不等寬時，
+   預設置中裁切會把主體裁偏。這裡替每張照片偵測「主體的中心」：
+     entry.focus = { x, y }   主體中心（0～1，照片裡的位置；m:1 代表是你手動調過的）
+     entry.ar                 照片寬高比
+   前台再依格子的比例算出裁切位置，讓主體落在格子正中央（換大小也會自動重算）。
+   新上傳的照片自動偵測；也可以按「自動置中重點」重新偵測整組，或用「◎」手動微調。
+   ============================================================ */
+const FOCUS_PREVIEW_RATIOS = [["3:4", 3 / 4], ["4:3", 4 / 3], ["3:2", 3 / 2], ["16:9", 16 / 9]];
+
+function adminFocusPos(focus, ri, rc){
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
+  let px = 0.5, py = 0.5;
+  if(Math.abs(ri - rc) > 1e-3){
+    if(ri > rc) px = clamp01((focus.x * ri - rc / 2) / (ri - rc));
+    else { const a = 1 / ri, b = 1 / rc; py = clamp01((focus.y * a - b / 2) / (a - b)); }
+  }
+  return (px * 100).toFixed(1) + "% " + (py * 100).toFixed(1) + "%";
+}
+function adminCropRatio(kind, item){
+  const size = (item && item.size) || "small";
+  if(kind === "gallery") return ({ large: 3 / 4, small: 4 / 3, wide: 3 / 2, span2: 16 / 9 })[size] || null;
+  if(size === "full") return null;
+  if(item && item.orientation === "portrait") return ({ large: 2 / 3, small: 3 / 4 })[size] || null;
+  return ({ large: 3 / 2, small: 16 / 9, tiny: 2 })[size] || null;
+}
+function tileFocusStyle(kind, item){
+  const rc = adminCropRatio(kind, item);
+  if(!rc || !item.focus || !(item.ar > 0)) return "";
+  return ` style="object-position:${adminFocusPos(item.focus, item.ar, rc)}"`;
+}
+
+/* 從畫面（縮小到 200px）找主體：
+   - 邊緣一圈顏色很一致（黑邊、白邊、純色背景）→ 把「跟邊緣顏色差很多」的像素當主體，取主體範圍的中心；
+   - 邊緣不一致（一般照片）→ 用細節（邊緣強度）的重心，並且只往那個方向偏一部分，避免過度裁偏。 */
+function detectFocus(bitmap){
+  const MAX = 200;
+  const sc = Math.min(1, MAX / Math.max(bitmap.width, bitmap.height));
+  const w = Math.max(8, Math.round(bitmap.width * sc)), h = Math.max(8, Math.round(bitmap.height * sc));
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  const px = ctx.getImageData(0, 0, w, h).data;
+  const lum = (i) => 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+  const out = { x: 0.5, y: 0.5, ar: bitmap.width / bitmap.height, mode: "center" };
+
+  // 邊緣一圈
+  const rw = Math.max(2, Math.round(Math.min(w, h) * 0.03));
+  const ring = [];
+  for(let y = 0; y < h; y++) for(let x = 0; x < w; x++){
+    if(x < rw || y < rw || x >= w - rw || y >= h - rw) ring.push((y * w + x) * 4);
+  }
+  const med = (arr) => { const s = arr.slice().sort((a, b) => a - b); return s[Math.floor(s.length / 2)]; };
+  const bg = [0, 1, 2].map(c => med(ring.map(i => px[i + c])));
+  const bgL = 0.299 * bg[0] + 0.587 * bg[1] + 0.114 * bg[2];
+  const mad = ring.reduce((a, i) => a + Math.abs(lum(i) - bgL), 0) / ring.length;
+
+  if(mad < 14){
+    // 有一圈一致的邊：偵測主體範圍
+    const col = new Array(w).fill(0), row = new Array(h).fill(0);
+    let total = 0;
+    for(let y = 0; y < h; y++) for(let x = 0; x < w; x++){
+      const i = (y * w + x) * 4;
+      const d = Math.max(Math.abs(px[i] - bg[0]), Math.abs(px[i + 1] - bg[1]), Math.abs(px[i + 2] - bg[2]));
+      if(d > 40){ col[x]++; row[y]++; total++; }
+    }
+    if(total >= w * h * 0.008){
+      const range = (arr) => {
+        const t = arr.reduce((a, b) => a + b, 0);
+        let acc = 0, lo = 0, hi = arr.length - 1;
+        for(let k = 0; k < arr.length; k++){ acc += arr[k]; if(acc >= t * 0.005){ lo = k; break; } }
+        acc = 0;
+        for(let k = arr.length - 1; k >= 0; k--){ acc += arr[k]; if(acc >= t * 0.005){ hi = k; break; } }
+        return [lo, hi];
+      };
+      const [x0, x1] = range(col), [y0, y1] = range(row);
+      out.x = ((x0 + x1 + 1) / 2) / w;
+      out.y = ((y0 + y1 + 1) / 2) / h;
+      out.mode = "bbox";
+      return out;
+    }
+    return out; // 整張都是背景色：維持置中
+  }
+
+  // 一般照片：細節重心
+  let sx = 0, sy = 0, sw = 0;
+  for(let y = 1; y < h - 1; y++) for(let x = 1; x < w - 1; x++){
+    const i = (y * w + x) * 4;
+    const g = Math.abs(lum(i + 4) - lum(i - 4)) + Math.abs(lum(i + w * 4) - lum(i - w * 4));
+    const wgt = g * g;
+    sx += x * wgt; sy += y * wgt; sw += wgt;
+  }
+  if(sw > 0){
+    const cx = (sx / sw) / w, cy = (sy / sw) / h;
+    out.x = 0.5 + (cx - 0.5) * 0.6;
+    out.y = 0.5 + (cy - 0.5) * 0.6;
+    out.mode = "detail";
+  }
+  return out;
+}
+
+async function loadBitmapForEntry(ed, src){
+  const pending = ed.pendingUploads[src];
+  if(pending) return createImageBitmap(pending.file, { imageOrientation: "from-image" });
+  // 已經發布的照片：後台跟前台同一個網域，直接用相對路徑讀
+  const url = new URL("../" + String(src).split("/").map(encodeURIComponent).join("/"), location.href).href;
+  const res = await fetch(url, { cache: "no-store" });
+  if(!res.ok) throw new Error("讀不到照片 " + src);
+  return createImageBitmap(await res.blob(), { imageOrientation: "from-image" });
+}
+
+async function analyzeEntryFocus(ed, entry){
+  if(!entry || !entry.src || isVideoRef(ed, entry.src)) return false;
+  const bm = await loadBitmapForEntry(ed, entry.src);
+  const r = detectFocus(bm);
+  if(bm.close) bm.close();
+  const r3 = (v) => Math.round(v * 1000) / 1000;
+  entry.focus = { x: r3(r.x), y: r3(r.y) };
+  entry.ar = Math.round(r.ar * 10000) / 10000;
+  return true;
+}
+
+/* 剛上傳的照片：背景偵測，完成後只更新格子預覽，不重畫整個編輯畫面（避免打斷打字） */
+function autoFocusNewEntries(ed, kind, entries){
+  entries.forEach(entry => {
+    analyzeEntryFocus(ed, entry).then(() => {
+      const list = ed.item[kind] || ed.item.blocks || [];
+      const i = list.indexOf(entry);
+      const img = document.querySelector(`.tile[data-tile-kind="${kind}"][data-tile-index="${i}"] img`);
+      if(img){ const s = tileFocusStyle(kind === "gallery" ? "gallery" : "drawing", entry); if(s) img.style.objectPosition = s.replace(/.*object-position:([^"]+)".*/, "$1"); }
+    }).catch(() => {});
+  });
+}
+
+/* 整組重新偵測（手動調過的不覆蓋） */
+async function autoFocusAll(ed, entries){
+  const todo = entries.filter(e => e && e.src && !isVideoRef(ed, e.src) && !(e.focus && e.focus.m));
+  if(!todo.length){ toast("沒有需要偵測的照片（手動調整過的不會被覆蓋）"); return; }
+  let ok = 0, fail = 0;
+  try{
+    for(let k = 0; k < todo.length; k++){
+      setLoading(true, `分析照片中… ${k + 1}/${todo.length}`);
+      try { if(await analyzeEntryFocus(ed, todo[k])) ok++; } catch(e){ fail++; }
+    }
+  } finally { setLoading(false); }
+  toast(fail ? `已自動置中 ${ok} 張，${fail} 張讀不到` : `已自動置中 ${ok} 張照片的重點`, !!fail && !ok);
+  rerenderEditor();
+}
+
+/* 手動微調：在照片上點（或拖曳）要放在格子正中央的位置，右邊同步預覽各種比例的裁切結果 */
+function openFocusModal(ed, entry, kind, onDone){
+  if(!entry) return;
+  const url = resolveTileSrc(ed, entry.src);
+  if(!url) return;
+  const old = document.getElementById("focusModal"); if(old) old.remove();
+  const overlay = document.createElement("div");
+  overlay.id = "focusModal";
+  overlay.innerHTML = `
+    <div class="fm-box">
+      <div class="fm-title">調整對焦點<span>點照片（或拖曳十字）選出「要放在格子正中央」的位置</span></div>
+      <div class="fm-body">
+        <div class="fm-stage"><img src="${esc(url)}" alt="" draggable="false"><div class="fm-cross"></div></div>
+        <div class="fm-previews">${FOCUS_PREVIEW_RATIOS.map(([label, r]) => `
+          <div class="fm-prev"><div class="fm-frame" style="aspect-ratio:${r}"><img src="${esc(url)}" alt=""></div><span>${label}</span></div>`).join("")}
+        </div>
+      </div>
+      <div class="fm-actions">
+        <button class="btn" data-fm="auto">自動偵測</button>
+        <button class="btn" data-fm="center">置中</button>
+        <span style="flex:1"></span>
+        <button class="btn" data-fm="cancel">取消</button>
+        <button class="btn primary" data-fm="ok">確定</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const stageImg = overlay.querySelector(".fm-stage img");
+  const cross = overlay.querySelector(".fm-cross");
+  const prevImgs = [...overlay.querySelectorAll(".fm-frame img")];
+  let focus = entry.focus ? { x: entry.focus.x, y: entry.focus.y } : { x: 0.5, y: 0.5 };
+  let ar = entry.ar > 0 ? entry.ar : 0;
+
+  function paint(){
+    if(!ar && stageImg.naturalWidth) ar = stageImg.naturalWidth / stageImg.naturalHeight;
+    cross.style.left = (focus.x * 100) + "%";
+    cross.style.top = (focus.y * 100) + "%";
+    prevImgs.forEach((img, k) => { img.style.objectPosition = ar ? adminFocusPos(focus, ar, FOCUS_PREVIEW_RATIOS[k][1]) : "50% 50%"; });
+  }
+  if(stageImg.complete) paint(); else stageImg.addEventListener("load", paint);
+  paint();
+
+  const setFromEvent = (e) => {
+    const r = stageImg.getBoundingClientRect();
+    focus = { x: Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)), y: Math.max(0, Math.min(1, (e.clientY - r.top) / r.height)) };
+    paint();
+  };
+  let dragging = false;
+  overlay.querySelector(".fm-stage").addEventListener("pointerdown", (e) => { dragging = true; setFromEvent(e); try { e.currentTarget.setPointerCapture(e.pointerId); } catch(err){} });
+  overlay.querySelector(".fm-stage").addEventListener("pointermove", (e) => { if(dragging) setFromEvent(e); });
+  overlay.querySelector(".fm-stage").addEventListener("pointerup", () => { dragging = false; });
+
+  const close = () => overlay.remove();
+  overlay.addEventListener("click", async (e) => {
+    const act = e.target.closest("[data-fm]");
+    if(e.target === overlay){ close(); return; }
+    if(!act) return;
+    const which = act.dataset.fm;
+    if(which === "cancel") close();
+    else if(which === "center"){ focus = { x: 0.5, y: 0.5 }; paint(); }
+    else if(which === "auto"){
+      try{
+        const bm = await loadBitmapForEntry(ed, entry.src);
+        const r = detectFocus(bm); if(bm.close) bm.close();
+        focus = { x: r.x, y: r.y }; ar = r.ar; paint();
+      }catch(err){ toast("偵測失敗：" + err.message, true); }
+    }
+    else if(which === "ok"){
+      const r3 = (v) => Math.round(v * 1000) / 1000;
+      entry.focus = { x: r3(focus.x), y: r3(focus.y), m: 1 };
+      if(ar) entry.ar = Math.round(ar * 10000) / 10000;
+      close();
+      if(onDone) onDone();
+    }
+  });
 }
 
 /* ============================================================
@@ -1349,6 +1605,8 @@ function blocksToGallery(blocks){
     if(b.caption) g.caption = b.caption;
     if(b.position) g.position = b.position;
     if(b.fit) g.fit = b.fit;
+    if(b.focus) g.focus = b.focus;
+    if(b.ar) g.ar = b.ar;
     return g;
   });
 }
@@ -1398,6 +1656,7 @@ function articleEditorBlockHtml(ed){
       <div class="art-tools">
         <span class="art-handle" draggable="true" data-handle="${i}" title="拖曳換位置">⠿</span>
         <button type="button" data-art-move="${i}" data-dir="-1" title="往上" ${i === 0 ? "disabled" : ""}>↑</button>
+        ${b.type === "img" && !isVideoRef(ed, b.src) ? `<button type="button" data-art-focus="${i}" title="調整對焦點">◎</button>` : ""}
         <button type="button" data-art-move="${i}" data-dir="1" title="往下" ${i === blocks.length - 1 ? "disabled" : ""}>↓</button>
         <button type="button" data-art-del="${i}" title="刪除這個區塊">×</button>
       </div>`;
@@ -1424,6 +1683,7 @@ function articleEditorBlockHtml(ed){
   return `
     <div class="field-block">
       <div class="label">文章內容（專欄報導）</div>
+        <div class="auto-focus-row"><button type="button" class="btn" data-auto-focus="blocks">◎ 自動置中重點（全部照片）</button><span class="field-hint">偵測每張照片的主體，讓它落在格子正中央；手動調過的不會被蓋掉。新上傳的照片會自動做。</span></div>
       <div class="art-editor" id="artEditor">
         ${gap(0)}${rows.map((r, i) => r + gap(i + 1)).join("")}
       </div>
@@ -1460,6 +1720,7 @@ function artInsertFiles(ed, at, files){
   });
   ed.item.blocks.splice(at, 0, ...news);
   rerenderEditor();
+  autoFocusNewEntries(ed, "blocks", news);
 }
 
 function bindArticleEditor(ed){
@@ -1500,6 +1761,9 @@ function bindArticleEditor(ed){
   root.querySelectorAll("[data-art-move]").forEach(btn => btn.addEventListener("click", () => {
     const i = parseInt(btn.dataset.artMove, 10);
     artMoveBlock(ed, i, i + parseInt(btn.dataset.dir, 10));
+  }));
+  root.querySelectorAll("[data-art-focus]").forEach(btn => btn.addEventListener("click", () => {
+    openFocusModal(ed, blocks[parseInt(btn.dataset.artFocus, 10)], "gallery", rerenderEditor);
   }));
   root.querySelectorAll("[data-art-del]").forEach(btn => btn.addEventListener("click", () => {
     const i = parseInt(btn.dataset.artDel, 10);
@@ -1594,7 +1858,8 @@ function galleryTileHtml(ed, item, i, kind, total){
   const withCaption = kind === "gallery" && ed.item.layout === "article";
   const tileHtml = `
     <div class="tile" data-tile-kind="${kind}" data-tile-index="${i}">
-      ${src ? mediaTagHtml(src, isVideoRef(ed, item.src)) : ""}
+      ${src ? mediaTagHtml(src, isVideoRef(ed, item.src), tileFocusStyle(drawingLike ? "drawing" : "gallery", item)) : ""}
+      ${src && !isVideoRef(ed, item.src) ? `<button class="focus-btn ${item.focus && item.focus.m ? "active" : ""}" data-focus-tile title="調整對焦點（照片主體要放在格子正中央的位置；已自動偵測，可在這裡手動微調）">◎</button>` : ""}
       ${drawingLike ? `<button class="orient-btn ${isPortrait ? "active" : ""}" data-orient-toggle title="直式圖片">↕ 直式</button>` : ""}
       <button class="remove-btn" data-remove-tile title="移除">×</button>
       <div class="tile-controls">
@@ -1621,6 +1886,11 @@ function bindProjectEditorEvents(ed){
       if(r.value === "article") ed.item.layout = "article"; else { commitBlocks(ed); delete ed.item.layout; ed.blocksReady = false; }
       rerenderEditor(); // 版型換了：相簿提示與圖說欄位跟著換
     }
+  }));
+  document.querySelectorAll("[data-auto-focus]").forEach(btn => btn.addEventListener("click", () => {
+    const k = btn.dataset.autoFocus;
+    const entries = k === "blocks" ? (ed.item.blocks || []).filter(b => b.type === "img") : (ed.item[k] || []);
+    autoFocusAll(ed, entries);
   }));
   bindArticleEditor(ed);
   bindTileGrid(ed, "gallery", "galleryGrid", "galleryDrop");
@@ -1695,6 +1965,8 @@ function bindTileGrid(ed, kind, gridId, dropId){
       ed.item[kind].splice(i, 1);
       rerenderEditor();
     });
+    const focusBtn = tile.querySelector("[data-focus-tile]");
+    if(focusBtn) focusBtn.addEventListener("click", () => openFocusModal(ed, ed.item[kind][i], kind === "gallery" ? "gallery" : "drawing", rerenderEditor));
     tile.querySelectorAll("[data-set-size]").forEach(btn => {
       btn.addEventListener("click", () => {
         ed.item[kind][i].size = btn.dataset.setSize;
@@ -1747,12 +2019,16 @@ function bindTileGrid(ed, kind, gridId, dropId){
 
 function addTileFiles(ed, kind, files){
   ed.item[kind] = ed.item[kind] || [];
+  const added = [];
   files.forEach(file => {
     const tempKey = "PENDING::" + uid();
     ed.pendingUploads[tempKey] = { file, previewUrl: URL.createObjectURL(file) };
-    ed.item[kind].push({ src: tempKey, size: "small" });
+    const entry = { src: tempKey, size: "small" };
+    ed.item[kind].push(entry);
+    added.push(entry);
   });
   rerenderEditor();
+  autoFocusNewEntries(ed, kind, added); // 自動偵測主體位置（背景進行）
 }
 
 /* 選照片、調整版型、勾系列/書籍…這些動作都會整個重畫編輯畫面，
