@@ -89,7 +89,7 @@ input,textarea,select{ font-family:inherit; font-size:14px; }
 #publishBanner .pb-close{ background:none; border:0; color:#fff; font-size:20px; line-height:1; cursor:pointer; opacity:.7; padding:0 2px; }
 #publishBanner .spinner{ flex:none; border-color:rgba(255,255,255,.35); border-top-color:#fff; }
 .art-editor{ background:#fff; border:1px solid var(--line); border-radius:8px; padding:14px 18px 10px; max-width:820px; }
-.art-gap{ display:flex; justify-content:center; gap:8px; padding:3px 0; opacity:.4; transition:opacity .15s ease; border-radius:6px; }
+.art-gap{ display:flex; justify-content:center; gap:8px; padding:3px 0; opacity:.7; transition:opacity .15s ease; border-radius:6px; }
 .art-gap:hover, .art-gap:focus-within, .art-gap.drag-over{ opacity:1; }
 .art-gap.drag-over{ background:rgba(107,99,85,.1); }
 .art-gap button{ border:1px dashed var(--line); background:#fff; border-radius:14px; padding:3px 12px; font-size:12px; cursor:pointer; color:var(--muted); }
@@ -101,6 +101,7 @@ input,textarea,select{ font-family:inherit; font-size:14px; }
 .art-block.drop-after{ box-shadow:0 3px 0 var(--ink); }
 .art-tools{ position:absolute; right:4px; top:4px; display:flex; gap:4px; z-index:3; opacity:0; transition:opacity .15s ease; }
 .art-block:hover .art-tools, .art-block:focus-within .art-tools{ opacity:1; }
+.art-tools button[data-art-img-at]{ width:auto; padding:0 9px; font-size:12px; }
 .art-tools button, .art-tools .art-handle{
   min-width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center;
   border:1px solid var(--line); background:#fff; border-radius:6px; font-size:14px; line-height:1; color:var(--ink); cursor:pointer;
@@ -1686,6 +1687,7 @@ function articleEditorBlockHtml(ed){
         <span class="art-handle" draggable="true" data-handle="${i}" title="拖曳換位置">⠿</span>
         <button type="button" data-art-move="${i}" data-dir="-1" title="往上" ${i === 0 ? "disabled" : ""}>↑</button>
         ${b.type === "img" && !isVideoRef(ed, b.src) ? `<button type="button" data-art-focus="${i}" title="調整對焦點">◎</button>` : ""}
+        ${b.type === "p" ? `<button type="button" data-art-img-at="${i}" title="在游標所在的位置插入圖片（會把這段文字從游標處切開，圖片放在中間）">🖼 在游標處插圖</button>` : ""}
         <button type="button" data-art-move="${i}" data-dir="1" title="往下" ${i === blocks.length - 1 ? "disabled" : ""}>↓</button>
         <button type="button" data-art-del="${i}" title="刪除這個區塊">×</button>
       </div>`;
@@ -1713,12 +1715,13 @@ function articleEditorBlockHtml(ed){
     <div class="field-block">
       <div class="label">文章內容（專欄報導）</div>
         <div class="auto-focus-row"><button type="button" class="btn" data-auto-focus="blocks">◎ 自動置中重點（全部照片）</button><span class="field-hint">偵測每張照片的主體，讓它落在格子正中央；手動調過的不會被蓋掉。新上傳的照片會自動做。</span></div>
+      ${(ed.item.drawings || []).length + (ed.item.renders || []).length ? `<div class="auto-focus-row"><button type="button" class="btn" id="artImportExtras">⤴ 把「圖說 Drawings」「Render」的 ${(ed.item.drawings || []).length + (ed.item.renders || []).length} 張圖搬進文章</button><span class="field-hint">這些圖現在是接在文章最後面的獨立區塊；搬進來之後可以拖到文章中任何位置。</span></div>` : ""}
       <div class="art-editor" id="artEditor">
         ${gap(0)}${rows.map((r, i) => r + gap(i + 1)).join("")}
       </div>
       <div class="field-hint">
         像在 Word 裡排版：點兩個區塊之間的「＋ 文字」「＋ 圖片／影片」插入內容；用 ↑ ↓ 或抓住左邊的 ⠿ 拖曳來換位置；圖片可以選大小、填圖說。
-        文字框裡按一次 Enter＝半行的段落間隔，空一行＝大段落；按 <b>Ctrl＋Enter</b>（Mac：⌘＋Enter）會在游標處把文字拆成兩個區塊，方便在中間插圖。
+        要讓圖插在一段文字的「句子中間」：把游標點在要插入的位置，按那段右上角的「🖼 在游標處插圖」（也可以直接把圖片貼上）。文字框裡按一次 Enter＝半行的段落間隔，空一行＝大段落；按 <b>Ctrl＋Enter</b>（Mac：⌘＋Enter）會在游標處把文字拆成兩個區塊，方便在中間插圖。
         大＝文字欄寬、中＝較窄（相鄰兩張「中」會併成一排）、寬＝比文字欄再寬、雙欄／全幅＝頁面全寬。圖說 Drawings 與 Render 會接在文章後面。
       </div>
     </div>
@@ -1737,6 +1740,52 @@ function artMoveBlock(ed, from, to){
   const [b] = arr.splice(from, 1);
   arr.splice(to, 0, b);
   rerenderEditor();
+}
+
+/* 在文字段落的「游標處」插入圖片：把段落從游標處切成前後兩段，圖片夾在中間
+   （游標在最前面就放在這段前面，在最後面就放在這段後面）。 */
+function artInsertAtCaret(ed, i, pos, files){
+  const list = acceptMediaFiles(files);
+  if(!list.length) return;
+  const blocks = ed.item.blocks;
+  const b = blocks[i];
+  if(!b || b.type !== "p") return;
+  const text = String(b.text || "");
+  const before = text.slice(0, pos).replace(/\s+$/, "");
+  const after = text.slice(pos).replace(/^\s+/, "");
+  const news = list.map(file => {
+    const tempKey = "PENDING::" + uid();
+    ed.pendingUploads[tempKey] = { file, previewUrl: URL.createObjectURL(file) };
+    return { type: "img", src: tempKey, size: "small" };
+  });
+  const parts = [];
+  if(before) parts.push({ type: "p", text: before });
+  parts.push(...news);
+  if(after) parts.push({ type: "p", text: after });
+  blocks.splice(i, 1, ...parts);
+  rerenderEditor();
+  autoFocusNewEntries(ed, "blocks", news);
+}
+
+/* 把「圖說 Drawings」「Render」裡的圖片搬進文章（接在文章最後，之後再拖到想要的位置），
+   不再是文章後面另外分開的區塊。 */
+function artImportExtras(ed){
+  const p = ed.item;
+  const sizeMap = { large: "large", small: "small", tiny: "small", full: "full" };
+  const pick = (arr) => (arr || []).filter(g => g && g.src).map(g => {
+    const b = { type: "img", src: g.src, size: sizeMap[g.size] || "small" };
+    if(g.caption) b.caption = g.caption;
+    if(g.focus) b.focus = g.focus;
+    if(g.ar) b.ar = g.ar;
+    return b;
+  });
+  const news = pick(p.drawings).concat(pick(p.renders));
+  if(!news.length) return;
+  p.blocks.push(...news);
+  p.drawings = [];
+  delete p.renders;
+  rerenderEditor();
+  toast(`已把 ${news.length} 張圖搬進文章最後面，可以拖到想要的位置`);
 }
 
 function artInsertFiles(ed, at, files){
@@ -1791,6 +1840,37 @@ function bindArticleEditor(ed){
     const i = parseInt(btn.dataset.artMove, 10);
     artMoveBlock(ed, i, i + parseInt(btn.dataset.dir, 10));
   }));
+  root.querySelectorAll("[data-art-img-at]").forEach(btn => {
+    const i = parseInt(btn.dataset.artImgAt, 10);
+    // 記下按下去之前文字框的游標位置（點按鈕後文字框會失去焦點）
+    let pos = null;
+    btn.addEventListener("mousedown", () => {
+      const ta = root.querySelector(`textarea[data-art-text="${i}"]`);
+      pos = ta ? ta.selectionStart : null;
+    });
+    btn.addEventListener("click", () => {
+      const ta = root.querySelector(`textarea[data-art-text="${i}"]`);
+      const caret = pos !== null ? pos : (ta ? ta.selectionStart : 0);
+      const input = document.createElement("input");
+      input.type = "file"; input.accept = "image/*,video/*"; input.multiple = true; input.style.display = "none";
+      input.addEventListener("change", () => artInsertAtCaret(ed, i, caret, input.files));
+      document.body.appendChild(input);
+      input.click();
+      setTimeout(() => input.remove(), 60000);
+    });
+  });
+  // 直接貼上圖片（截圖、複製的照片）到文字框 → 插在游標處
+  root.querySelectorAll("textarea.art-text").forEach(ta => {
+    const i = parseInt(ta.dataset.artText, 10);
+    ta.addEventListener("paste", (e) => {
+      const files = [...((e.clipboardData && e.clipboardData.files) || [])].filter(f => /^image\//i.test(f.type));
+      if(!files.length) return;
+      e.preventDefault();
+      artInsertAtCaret(ed, i, ta.selectionStart, files);
+    });
+  });
+  const importBtn = document.getElementById("artImportExtras");
+  if(importBtn) importBtn.addEventListener("click", () => artImportExtras(ed));
   root.querySelectorAll("[data-art-focus]").forEach(btn => btn.addEventListener("click", () => {
     openFocusModal(ed, blocks[parseInt(btn.dataset.artFocus, 10)], "gallery", rerenderEditor);
   }));
