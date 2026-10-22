@@ -174,6 +174,36 @@ input,textarea,select{ font-family:inherit; font-size:14px; }
 #focusModal .fm-frame{ width:100%; overflow:hidden; background:#000; border-radius:4px; }
 #focusModal .fm-frame img{ width:100%; height:100%; object-fit:cover; display:block; }
 #focusModal .fm-actions{ display:flex; gap:8px; margin-top:16px; }
+.pub-switch{ display:inline-flex; gap:10px; flex-wrap:wrap; }
+.pub-switch button{
+  display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:left; cursor:pointer;
+  padding:10px 16px; border:1.5px solid var(--line); border-radius:10px; background:#fff; font-size:14px; font-weight:700; color:var(--muted);
+}
+.pub-switch button span{ font-size:11.5px; font-weight:400; }
+.pub-switch button.on{ border-color:#1f6b45; color:#1f6b45; box-shadow:0 0 0 1px #1f6b45 inset; background:#f2faf5; }
+.pub-switch button.off{ border-color:#8a3b2a; color:#8a3b2a; box-shadow:0 0 0 1px #8a3b2a inset; background:#fbf3f1; }
+.unpub-badge{ position:absolute; left:8px; top:8px; z-index:2; padding:2px 9px; border-radius:10px; background:#8a3b2a; color:#fff; font-size:11px; font-weight:700; }
+.item-card.is-unpub .thumb :is(img,video){ opacity:.45; filter:grayscale(1); }
+.card-actions{ display:flex; gap:6px; margin-top:8px; }
+.card-actions button{ flex:1; border:1px solid var(--line); background:#fff; border-radius:6px; padding:4px 0; font-size:11.5px; cursor:pointer; color:var(--muted); }
+.card-actions button:hover{ border-color:var(--ink); color:var(--ink); }
+.card-actions button.do-publish{ border-color:#1f6b45; color:#1f6b45; }
+.status-chips{ display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#fff; }
+.status-chips button{ border:0; background:none; padding:7px 12px; font-size:12.5px; cursor:pointer; color:var(--muted); }
+.status-chips button.active{ background:var(--ink); color:#fff; }
+.unpub-chip{ display:inline-block; margin-left:6px; padding:0 7px; border-radius:9px; background:#8a3b2a; color:#fff; font-size:10.5px; font-weight:400; }
+#previewModal{ position:fixed; inset:0; z-index:90; background:#2b2a27; display:flex; flex-direction:column; }
+#previewModal .pv-bar{ display:flex; align-items:center; gap:14px; padding:8px 16px; background:#201f1d; color:#fff; font-size:13px; }
+#previewModal .pv-title{ opacity:.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#previewModal .pv-spacer{ flex:1; }
+#previewModal .view-switch{ border-color:#555; background:transparent; }
+#previewModal .view-switch button{ color:#bbb; padding:5px 14px; }
+#previewModal .view-switch button.active{ background:#fff; color:#201f1d; }
+#previewModal .pv-close{ background:none; border:0; color:#fff; font-size:26px; line-height:1; cursor:pointer; padding:0 4px; }
+#previewModal .pv-stage{ flex:1; min-height:0; display:flex; justify-content:center; background:#2b2a27; }
+#previewModal iframe{ width:100%; height:100%; border:0; background:#fff; }
+#previewModal .pv-stage.mobile{ padding:14px 0; }
+#previewModal .pv-stage.mobile iframe{ width:390px; max-width:100%; border-radius:14px; }
 .list-tools{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-bottom:24px; }
 .view-switch{ display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#fff; }
 .view-switch button{ border:0; background:none; padding:8px 16px; font-size:13px; cursor:pointer; color:var(--muted); }
@@ -935,19 +965,25 @@ function addCardHtml(label){
    每張卡片的 data-edit 仍然是它在 state.projects 裡的原始位置，所以點下去編輯、儲存都不受排序影響。 */
 function projectCardHtml(p, i){
   const first = (p.title || "").split("\n")[0] || "（未命名）";
+  const unpub = p.published === false;
   const seriesTags = (p.series || []).map(s => {
     const info = state.series.find(x => x.id === s.id);
     return `<span class="sr">${esc(info ? (info.title || s.id) : s.id)}</span>`;
   }).join("");
-  const hay = [p.title, p.category, p.year, p.location, p.id].join(" ").toLowerCase();
+  const hay = [p.title, p.category, p.year, p.location, p.id, unpub ? "未上架 下架" : "已上架"].join(" ").toLowerCase();
   return `
-    <div class="item-card" data-edit="${i}" data-hay="${esc(hay)}">
+    <div class="item-card ${unpub ? "is-unpub" : ""}" data-edit="${i}" data-hay="${esc(hay)}" data-pub="${unpub ? "0" : "1"}">
       <div class="thumb ${p.cover ? "" : "empty"}">
         ${p.cover ? mediaTagHtml(rawUrl(p.cover), isVideoRef(null, p.cover), " loading=\"lazy\"") : "尚無封面"}
+        ${unpub ? `<span class="unpub-badge">未上架</span>` : ""}
       </div>
       <div class="info">
         <div class="t">${esc(first)}</div>
         <div class="m">${esc(p.category || "")} · ${esc(p.year || "")}${seriesTags}</div>
+        <div class="card-actions">
+          <button type="button" data-quick-preview="${i}" title="預覽前台畫面">👁 預覽</button>
+          <button type="button" data-quick-toggle="${i}" class="${unpub ? "do-publish" : ""}" title="${unpub ? "上架到前台" : "從前台下架"}">${unpub ? "▲ 上架" : "▼ 下架"}</button>
+        </div>
       </div>
     </div>
   `;
@@ -955,6 +991,7 @@ function projectCardHtml(p, i){
 
 function projectsListHtml(){
   const items = state.projects.map((p, i) => ({ p, i }));
+  const unpubN = state.projects.filter(p => p.published === false).length;
   const catOf = (p) => p.category || "未分類";
   // 年份新到舊；同一年的，編號大（比較晚新增）的排前面
   const sorter = (a, b) => (parseInt(b.p.year, 10) || 0) - (parseInt(a.p.year, 10) || 0) || String(b.p.id).localeCompare(String(a.p.id), undefined, { numeric: true });
@@ -981,6 +1018,11 @@ function projectsListHtml(){
   return `
     <div class="list-tools">
       <button class="btn primary" id="addCategoryBtn">＋ 新增分類</button>
+      <div class="status-chips">
+        <button data-status-filter="all" class="active">全部 ${items.length}</button>
+        <button data-status-filter="pub">已上架 ${items.length - unpubN}</button>
+        <button data-status-filter="unpub">未上架 ${unpubN}</button>
+      </div>
       <input type="search" class="list-search" id="listSearch" placeholder="搜尋標題、分類、年份、地點…">
       <span class="list-count" id="listCount">共 ${items.length} 件・${cats.length} 個分類</span>
     </div>
@@ -1025,7 +1067,91 @@ async function renameCategory(oldName){
   }
 }
 
-/* 搜尋：只切換卡片顯示，不重畫畫面（重畫會讓輸入框失去焦點）；整個分類都沒有符合的就把分類區塊藏起來 */
+/* 上架／下架：從列表直接切換（不用打開編輯畫面），存檔後網站幾分鐘內更新 */
+async function quickTogglePublish(i){
+  const p = state.projects[i];
+  if(!p) return;
+  const name = (p.title || "").split("\n")[0] || p.id;
+  const willPublish = p.published === false;
+  const msg = willPublish
+    ? `確定要把「${name}」上架嗎？\n上架後前台訪客就看得到。`
+    : `確定要把「${name}」下架嗎？\n下架後前台訪客就看不到（內容還在，之後可以再上架）。`;
+  if(!confirm(msg)) return;
+  const before = p.published;
+  try{
+    setLoading(true, willPublish ? "上架中…" : "下架中…");
+    if(willPublish) delete p.published; else p.published = false;
+    await saveCollection("projects");
+    toast(willPublish ? "已上架，網站幾分鐘內會更新" : "已下架，網站幾分鐘內會更新");
+    render();
+  }catch(err){
+    if(before === undefined) delete p.published; else p.published = before;
+    toast("儲存失敗：" + err.message, true);
+  }finally{
+    setLoading(false);
+  }
+}
+
+/* ===== 預覽前台畫面 =====
+   開一個視窗，裡面是真正的前台網站（?preview=1 預覽模式：下架的案子也看得到、不計入訪客統計），
+   再把案子資料「直接送進去」——所以預覽的是你現在編輯、還沒儲存的內容，也包含剛選好、還沒上傳的照片。
+   可以切換桌機／手機寬度；網站裡的其他頁面也能照常瀏覽。 */
+function buildPreviewDraft(ed){
+  syncEditorFieldsToItem();
+  const p = JSON.parse(JSON.stringify(ed.item));
+  if(p.layout === "article") commitBlocks({ item: p });
+  p.credits = String(p.credits || "").replace(/\n/g, "<br>");
+  let json = JSON.stringify(p);
+  Object.keys(ed.pendingUploads || {}).forEach(key => {
+    const pu = ed.pendingUploads[key];
+    let url = pu.previewUrl;
+    // 還沒上傳的影片：blob 網址沒有副檔名，前台認不出是影片，補上副檔名記號
+    if(isVideoFile(pu.file)){ const m = /\.(mp4|webm|mov|m4v)$/i.exec(pu.file.name || ""); url += "#." + (m ? m[1] : "mp4"); }
+    json = json.split(key).join(url);
+  });
+  const out = JSON.parse(json);
+  if(!out.id) out.id = "__draft__";
+  return out;
+}
+
+function closePreview(){
+  const m = document.getElementById("previewModal");
+  if(m){ if(m._onMsg) window.removeEventListener("message", m._onMsg); m.remove(); }
+}
+
+function openPreview(project){
+  closePreview();
+  const url = new URL("../", location.href);
+  url.searchParams.set("preview", "1");
+  const overlay = document.createElement("div");
+  overlay.id = "previewModal";
+  const title = (project.title || "").split("\n")[0] || "預覽";
+  overlay.innerHTML = `
+    <div class="pv-bar">
+      <b>預覽前台畫面</b><span class="pv-title">${esc(title)}${project.published === false ? "（目前未上架）" : ""}</span>
+      <span class="pv-spacer"></span>
+      <div class="view-switch"><button data-pv="desktop" class="active">桌機</button><button data-pv="mobile">手機</button></div>
+      <button class="pv-close" aria-label="關閉預覽">×</button>
+    </div>
+    <div class="pv-stage"><iframe title="前台預覽" src="${esc(url.href)}"></iframe></div>`;
+  document.body.appendChild(overlay);
+  const iframe = overlay.querySelector("iframe");
+  const onMsg = (e) => {
+    if(e.origin !== location.origin || e.source !== iframe.contentWindow) return;
+    if(e.data && e.data.type === "preview-ready") iframe.contentWindow.postMessage({ type: "preview-project", project }, location.origin);
+  };
+  overlay._onMsg = onMsg;
+  window.addEventListener("message", onMsg);
+  overlay.querySelector(".pv-close").addEventListener("click", closePreview);
+  overlay.querySelectorAll("[data-pv]").forEach(b => b.addEventListener("click", () => {
+    overlay.querySelectorAll("[data-pv]").forEach(x => x.classList.toggle("active", x === b));
+    overlay.querySelector(".pv-stage").classList.toggle("mobile", b.dataset.pv === "mobile");
+  }));
+  document.addEventListener("keydown", function esc1(ev){ if(ev.key === "Escape"){ closePreview(); document.removeEventListener("keydown", esc1); } });
+}
+
+/* 搜尋＋上架狀態篩選：只切換卡片顯示，不重畫畫面（重畫會讓輸入框失去焦點）；
+   整個分類都沒有符合的就把分類區塊藏起來 */
 function bindProjectListTools(){
   const el = document.getElementById("tabContent");
   const addCatBtn = document.getElementById("addCategoryBtn");
@@ -1034,26 +1160,40 @@ function bindProjectListTools(){
     openEditor("projects", Object.assign(blankItem("projects"), { category: btn.dataset.addCat === "未分類" ? "" : btn.dataset.addCat }), -1, true);
   }));
   el.querySelectorAll("[data-rename-cat]").forEach(btn => btn.addEventListener("click", () => renameCategory(btn.dataset.renameCat)));
+  el.querySelectorAll("[data-quick-toggle]").forEach(btn => btn.addEventListener("click", (e) => { e.stopPropagation(); quickTogglePublish(parseInt(btn.dataset.quickToggle, 10)); }));
+  el.querySelectorAll("[data-quick-preview]").forEach(btn => btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    openPreview(JSON.parse(JSON.stringify(state.projects[parseInt(btn.dataset.quickPreview, 10)])));
+  }));
 
+  let statusFilter = "all";
   const input = document.getElementById("listSearch");
-  if(!input) return;
-  input.addEventListener("input", () => {
-    const q = input.value.trim().toLowerCase();
+  const apply = () => {
+    const q = input ? input.value.trim().toLowerCase() : "";
+    const filtering = !!q || statusFilter !== "all";
     let shown = 0;
     el.querySelectorAll(".item-card[data-hay]").forEach(card => {
-      const ok = !q || card.dataset.hay.includes(q);
+      const okStatus = statusFilter === "all" || (statusFilter === "pub" ? card.dataset.pub === "1" : card.dataset.pub === "0");
+      const ok = okStatus && (!q || card.dataset.hay.includes(q));
       card.style.display = ok ? "" : "none";
       if(ok) shown++;
     });
     el.querySelectorAll("#groupedList .group-block").forEach(g => {
       const any = [...g.querySelectorAll(".item-card[data-hay]")].some(c => c.style.display !== "none");
-      g.style.display = any || !q ? "" : "none";
-      g.querySelectorAll("[data-add-cat]").forEach(b => { b.style.display = q ? "none" : ""; });
+      g.style.display = any || !filtering ? "" : "none";
+      g.querySelectorAll("[data-add-cat]").forEach(b => { b.style.display = filtering ? "none" : ""; });
     });
-    document.getElementById("listCount").textContent = q
+    const countEl = document.getElementById("listCount");
+    if(countEl) countEl.textContent = filtering
       ? `符合 ${shown} 件`
       : `共 ${state.projects.length} 件・${new Set(state.projects.map(p => p.category || "未分類")).size} 個分類`;
-  });
+  };
+  el.querySelectorAll("[data-status-filter]").forEach(chip => chip.addEventListener("click", () => {
+    statusFilter = chip.dataset.statusFilter;
+    el.querySelectorAll("[data-status-filter]").forEach(c => c.classList.toggle("active", c === chip));
+    apply();
+  }));
+  if(input) input.addEventListener("input", apply);
 }
 
 function booksListHtml(){
@@ -1106,6 +1246,7 @@ function blankItem(type){
     id: "", title: "", category: "", year: "", location: "", status: "",
     cover: "", coverPosition: "", description: "", gallery: [], drawings: [],
     series: [], books: [], credits: "", summary: "",
+    published: false, // 新案子一律先是「未上架」，確認好再上架
   };
   if(type === "books") return { id: "", title: "", year: "", cover: "", file: "", description: "" };
   return { id: "", title: "", cover: "", thumb: "", description: "" };
@@ -1158,6 +1299,7 @@ function projectEditorHtml(ed){
   const seriesIds = (p.series || []).map(s => s.id);
   const bookIds = p.books || [];
   const isArticle = p.layout === "article";
+  const isPub = p.published !== false;
   // 區塊只在「剛進入專欄報導」時整理一次；編輯中 description 還沒跟著更新，不能每次重畫都重排
   if(isArticle && !ed.blocksReady){ ensureBlocks(ed); ed.blocksReady = true; }
 
@@ -1166,6 +1308,15 @@ function projectEditorHtml(ed){
       <div class="editor-head">
         <button class="back-link" id="backBtn">← 回到作品列表</button>
         ${!ed.isNew ? `<button class="btn danger" id="deleteBtn">刪除這筆作品</button>` : ""}
+      </div>
+
+      <div class="field-block">
+        <div class="label">上架狀態</div>
+        <div class="pub-switch">
+          <button type="button" data-pub="1" class="${isPub ? "on" : ""}">● 已上架<span>前台訪客看得到</span></button>
+          <button type="button" data-pub="0" class="${!isPub ? "off" : ""}">○ 未上架<span>前台看不到（草稿）</span></button>
+        </div>
+        <div class="field-hint">${isPub ? "這個案子目前顯示在前台。" : "未上架的案子前台完全看不到（作品列表、首頁、系列、網址都不會出現），可以先放心編輯。"}按下面的「👁 預覽前台畫面」可以看它上架後在前台的樣子（包含還沒儲存的修改）。注意：下架只是從網站上藏起來，不是保密。</div>
       </div>
 
       <div class="field-block">
@@ -1309,7 +1460,10 @@ function projectEditorHtml(ed){
 
       <div class="save-bar">
         <span class="save-status" id="saveStatus"></span>
-        <button class="btn primary" id="saveBtn">儲存並發布</button>
+        <button class="btn" id="previewBtn" type="button">👁 預覽前台畫面</button>
+        ${isPub
+          ? `<button class="btn primary" id="saveBtn">儲存並發布</button>`
+          : `<button class="btn" id="saveBtn">儲存（保持下架）</button><button class="btn primary" id="saveAndPublishBtn">儲存並上架</button>`}
       </div>
     </div>
   `;
@@ -1989,6 +2143,14 @@ function bindProjectEditorEvents(ed){
   const deleteBtn = document.getElementById("deleteBtn");
   if(deleteBtn) deleteBtn.addEventListener("click", () => deleteCurrentItem());
 
+  document.querySelectorAll("[data-pub]").forEach(btn => btn.addEventListener("click", () => {
+    if(btn.dataset.pub === "1") delete ed.item.published; else ed.item.published = false;
+    rerenderEditor();
+  }));
+  const previewBtn = document.getElementById("previewBtn");
+  if(previewBtn) previewBtn.addEventListener("click", () => openPreview(buildPreviewDraft(ed)));
+  const pubSaveBtn = document.getElementById("saveAndPublishBtn");
+  if(pubSaveBtn) pubSaveBtn.addEventListener("click", () => { delete ed.item.published; saveProjectEditor(ed); });
   bindCoverDropEvents(ed, "cover");
   document.querySelectorAll('input[name="f_layout"]').forEach(r => r.addEventListener("change", () => {
     if(r.checked){
@@ -2225,6 +2387,8 @@ async function saveProjectEditor(ed){
   if(!p.renders || !p.renders.length) delete p.renders;
   // 標準版型是預設值，不寫 layout 欄位（既有作品的資料完全不變）
   if(p.layout !== "article") delete p.layout;
+  // 已上架是預設值，不寫欄位（既有作品的資料完全不變）；只有下架才寫 published:false
+  if(p.published !== false) delete p.published;
 
   try{
     setLoading(true, "儲存中…");
@@ -2233,7 +2397,7 @@ async function saveProjectEditor(ed){
     if(ed.isNew) state.projects.push(p);
     else state.projects[ed.index] = p;
     await saveCollection("projects");
-    toast("已發布，網站幾分鐘內會更新");
+    toast(p.published === false ? "已儲存（目前是未上架，前台看不到）" : "已發布，網站幾分鐘內會更新");
     closeEditor();
   }catch(err){
     toast("儲存失敗：" + err.message, true);
@@ -2439,7 +2603,7 @@ function seriesMembersHtml(ed){
       <div class="member-row" data-member="${esc(id)}">
         <div class="no">${String(k + 1).padStart(2, "0")}</div>
         <div class="mthumb">${p.cover ? mediaTagHtml(rawUrl(p.cover), isVideoRef(null, p.cover)) : ""}</div>
-        <div class="minfo"><div class="t">${esc((p.title || "").split("\n")[0] || "（未命名）")}</div><div class="m">${esc(p.category || "")} · ${esc(p.year || "")}</div></div>
+        <div class="minfo"><div class="t">${esc((p.title || "").split("\n")[0] || "（未命名）")}${p.published === false ? '<span class="unpub-chip">未上架</span>' : ""}</div><div class="m">${esc(p.category || "")} · ${esc(p.year || "")}</div></div>
         <button data-member-move="-1" title="往前移" ${k === 0 ? "disabled" : ""}>↑</button>
         <button data-member-move="1" title="往後移" ${k === ed.members.length - 1 ? "disabled" : ""}>↓</button>
         <button data-member-remove title="移出這個系列">×</button>

@@ -335,6 +335,14 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 
 .empty-state{ padding:60px 0; text-align:center; color:var(--muted); }
 
+/* 後台預覽模式 */
+#previewBar{
+  position:fixed; left:0; right:0; top:0; z-index:200; padding:6px 14px; text-align:center;
+  background:#8a3b2a; color:#fff; font-size:12.5px; letter-spacing:.03em;
+}
+body.preview-mode{ padding-top:30px; }
+.unpub-tag{ display:inline-block; margin-left:8px; padding:1px 8px; border-radius:10px; background:#8a3b2a; color:#fff; font-size:11px; font-weight:400; vertical-align:middle; }
+
 /* detail */
 .detail{ padding-top:36px; padding-bottom:100px; }
 .back-link{ display:inline-block; color:var(--muted); font-size:14px; margin-bottom:32px; }
@@ -913,6 +921,13 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
    - content/books.json    — 對應原本的 BOOKS 陣列
    ============================================================ */
 let PROJECTS = [];
+/* 上架／下架：作品有 published:false 就是下架——不會出現在作品列表、首頁、系列、分類、年份，
+   直接輸入網址也看不到（跟不存在一樣）。沒有 published 欄位的既有作品一律視為已上架。
+   後台的「預覽前台畫面」會用 ?preview=1 開這個網站：預覽模式下下架的作品也看得到，並標示「未上架」，
+   後台還能把「尚未儲存的草稿」直接送進來預覽（見最下面的 postMessage 處理）。
+   注意：下架只是「從網站上藏起來」，內容檔本身仍然在公開的 GitHub 專案裡，不是保密。 */
+const PREVIEW_MODE = new URLSearchParams(location.search).has("preview");
+function isPublished(p){ return !p || p.published !== false; }
 let SERIES_INFO = [];
 let BOOKS = [];
 let ABOUT = {};
@@ -937,7 +952,7 @@ async function loadContent(){
     fetch("content/books.json" + cb).then(r => r.json()).then(d => d.items),
     fetch("content/about.json" + cb).then(r => r.json()),
   ]);
-  PROJECTS = projects;
+  PROJECTS = PREVIEW_MODE ? projects : projects.filter(isPublished);
   SERIES_INFO = series;
   BOOKS = books;
   ABOUT = about;
@@ -1264,7 +1279,7 @@ function cardHtml(p){
   return `
     <article class="card" data-goto="${p.id}">
       ${thumb(p)}
-      <h3 class="card-title">${esc(p.title)}</h3>
+      <h3 class="card-title">${esc(p.title)}${PREVIEW_MODE && p.published === false ? '<span class="unpub-tag">未上架</span>' : ""}</h3>
       <p class="card-meta">${esc(p.category)} · ${esc(p.year)}</p>
     </article>
   `;
@@ -1388,7 +1403,7 @@ function workRowHtml(p){
       <div class="work-year">${esc(p.year)}</div>
       <div class="work-thumb">${thumbHtml}</div>
       <div class="work-title-wrap">
-        <h3 class="work-title">${esc(p.title)}</h3>
+        <h3 class="work-title">${esc(p.title)}${PREVIEW_MODE && p.published === false ? '<span class="unpub-tag">未上架</span>' : ""}</h3>
         <p class="work-meta">${esc(p.category)} · ${esc(p.location)}</p>
       </div>
     </div>
@@ -2074,7 +2089,7 @@ function route(){
   stopHomeSlideshow();
   if(typeof closeLightbox === "function") closeLightbox();
   const hash = location.hash || "#/";
-  if(window.goatcounter && window.goatcounter.count){
+  if(!PREVIEW_MODE && window.goatcounter && window.goatcounter.count){
     window.goatcounter.count({ path: hash });
   }
   if(hash === "#/about"){
@@ -2665,10 +2680,41 @@ document.addEventListener("keydown", (e) => {
   if(e.key === "ArrowRight") lightboxNext();
 });
 
+/* ---- 預覽模式（後台「預覽前台畫面」）---- */
+function updatePreviewBar(){
+  if(!PREVIEW_MODE) return;
+  let bar = document.getElementById("previewBar");
+  if(!bar){ bar = document.createElement("div"); bar.id = "previewBar"; document.body.appendChild(bar); }
+  const m = /^#\/project\/(.+)$/.exec(location.hash || "");
+  const p = m ? PROJECTS.find(x => x.id === decodeURIComponent(m[1])) : null;
+  if(p && p.__draft) bar.textContent = "預覽模式｜顯示的是你正在編輯、尚未儲存的內容" + (p.published === false ? "（目前未上架，一般訪客在前台看不到）" : "");
+  else if(p && p.published === false) bar.textContent = "預覽模式｜這個案子目前「未上架」，一般訪客在前台看不到";
+  else bar.textContent = "預覽模式｜網站上目前未上架的案子會標示「未上架」，一般訪客看不到";
+}
+function setupPreviewMode(){
+  document.body.classList.add("preview-mode");
+  updatePreviewBar();
+  // 後台送來「正在編輯、還沒儲存」的草稿：放進作品清單（覆蓋同編號的舊資料）並直接打開那個案子
+  window.addEventListener("message", (e) => {
+    if(e.origin !== location.origin || !e.data || e.data.type !== "preview-project" || !e.data.project) return;
+    const p = e.data.project;
+    p.id = p.id || "__draft__";
+    p.__draft = true;
+    const i = PROJECTS.findIndex(x => x.id === p.id);
+    if(i >= 0) PROJECTS[i] = p; else PROJECTS.push(p);
+    const target = "#/project/" + p.id;
+    if(location.hash === target) route(); else location.hash = target;
+    updatePreviewBar();
+  });
+  // 告訴後台：我準備好了，可以把草稿送過來
+  if(window.parent && window.parent !== window) window.parent.postMessage({ type: "preview-ready" }, location.origin);
+}
+
 app.innerHTML = `<div class="wrap" style="padding:140px 0; text-align:center; color:var(--muted);">Loading…</div>`;
 loadContent().then(() => {
-  window.addEventListener("hashchange", route);
+  window.addEventListener("hashchange", () => { route(); updatePreviewBar(); });
   route();
+  if(PREVIEW_MODE) setupPreviewMode();
 }).catch(err => {
   console.error("內容載入失敗：", err);
   app.innerHTML = `<div class="wrap" style="padding:140px 0; text-align:center; color:var(--muted);">內容載入失敗，請重新整理頁面再試一次。<br><span style="font-size:12px;">${esc(err && err.message || String(err))}</span></div>`;
