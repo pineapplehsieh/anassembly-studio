@@ -5,6 +5,7 @@
 //
 // GoatCounter 的 API 限制「每秒最多 4 個請求」，超過會回 429。所以這裡的請求一律
 // 排隊、間隔至少 MIN_GAP_MS 才送下一個，被限流時也會依照對方建議的等待時間自動重試。
+// （2026-11-05 重新部署：讓每日資料 daily 生效）
 const FAR_PAST = "2020-01-01T00:00:00Z";
 const MIN_GAP_MS = 300;
 const MAX_TRIES = 4;
