@@ -145,6 +145,16 @@ input,textarea,select{ font-family:inherit; font-size:14px; }
 }
 .chart-tip[hidden]{ display:none; }
 .chart-tip span{ opacity:.85; }
+.day-detail{ margin-top:16px; padding-top:14px; border-top:1px solid var(--line); }
+.day-detail .dd-empty{ font-size:12.5px; color:var(--muted); }
+.day-detail .dd-head{ font-size:13px; color:var(--muted); margin-bottom:10px; }
+.day-detail .dd-head b{ color:var(--ink); font-size:15px; }
+.dd-row{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 14px; padding:7px 0; border-bottom:1px solid #f1eee8; align-items:center; }
+.dd-row .dd-name{ font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dd-row .dd-path{ grid-column:1; font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dd-row .dd-n{ grid-row:1 / span 2; grid-column:2; font-weight:700; font-size:14px; text-align:right; }
+.dd-row .dd-bar{ grid-column:1 / -1; height:3px; background:#efece5; border-radius:2px; overflow:hidden; }
+.dd-row .dd-bar i{ display:block; height:100%; background:var(--ink); border-radius:2px; }
 .chart-table-toggle{ margin-top:8px; border:0; background:none; cursor:pointer; font-size:12.5px; color:var(--muted); padding:4px 0; }
 .chart-table-toggle:hover{ color:var(--ink); }
 .chart-table{ max-height:360px; overflow:auto; margin-top:6px; }
@@ -2807,6 +2817,7 @@ function renderDailyChart(box, daily, range){
     +   '<span>' + activeDays + " 天有人瀏覽</span>"
     + "</div>"
     + '<div class="chart-wrap" id="chartWrap">' + dailyChartSvg(rows) + '<div class="chart-tip" id="chartTip" hidden></div></div>'
+    + '<div class="day-detail" id="dayDetail"></div>'
     + '<button class="chart-table-toggle" id="chartTableToggle">' + (showTable ? "隱藏表格 −" : "顯示每天的數字表格 +") + "</button>"
     + (showTable ? '<div class="chart-table">' + dailyTableHtml(rows) + "</div>" : "");
 
@@ -2834,15 +2845,48 @@ function renderDailyChart(box, daily, range){
     tip.style.left = Math.max(0, Math.min(wb.width - tw, xr - tw / 2)) + "px";
     tip.style.top = "0px";
   }
+  // 點選某一天：下面列出那天被瀏覽的頁面（名稱、網址、次數）。選取的那天維持標示，離開滑鼠也不會消失。
+  const detailEl = box.querySelector("#dayDetail");
+  let selIdx = rows.findIndex(r => r.day === box.dataset.day);
+  function applySel(){
+    wrap.querySelectorAll(".dbar").forEach(el => { el.style.opacity = selIdx >= 0 ? (el.dataset.i === String(selIdx) ? "1" : "0.4") : ""; });
+  }
+  function renderDayDetail(){
+    if(selIdx < 0){ detailEl.innerHTML = '<div class="dd-empty">👆 點上面圖表的某一天，就會列出那天被瀏覽的頁面。</div>'; return; }
+    const r = rows[selIdx];
+    const label = (r.date.getMonth() + 1) + "/" + r.date.getDate() + "（週" + WEEKDAY_ZH[r.date.getDay()] + "）";
+    if(!box._pages){
+      detailEl.innerHTML = '<div class="dd-head"><b>' + label + "</b></div><div class=\"dd-empty\">" + (box._pagesError ? "頁面明細暫時讀不到（" + esc(box._pagesError) + "）" : "還沒有頁面明細（統計服務更新後就會出現）") + "</div>";
+      return;
+    }
+    const list = box._pages[r.day] || [];
+    if(!list.length){
+      detailEl.innerHTML = '<div class="dd-head"><b>' + label + '</b>　' + (r.count > 0 ? "共 " + r.count + " 次瀏覽，但沒有拿到頁面明細" : "這天沒有瀏覽紀錄") + "</div>";
+      return;
+    }
+    const max = Math.max(...list.map(x => x.count));
+    const sum = list.reduce((a, x) => a + x.count, 0);
+    detailEl.innerHTML = '<div class="dd-head"><b>' + label + "</b>　共 <b>" + r.count + "</b> 次瀏覽・看了 " + list.length + " 個頁面（依次數排序）</div>"
+      + list.map(x => '<div class="dd-row"><div class="dd-name">' + esc(statsPathLabel(x.path)) + '</div><div class="dd-path">' + esc(x.path) + '</div><div class="dd-n">' + x.count + '</div><div class="dd-bar"><i style="width:' + Math.max(3, Math.round(x.count / max * 100)) + '%"></i></div></div>').join("")
+      + (box._pagesMore ? '<div class="dd-empty" style="margin-top:8px;">（頁面很多，只列出最常被看的前 100 個頁面）</div>' : "");
+  }
   function hide(){
     tip.hidden = true;
-    wrap.querySelectorAll(".dbar").forEach(el => { el.style.opacity = ""; });
+    applySel();
+  }
+  function select(i){
+    selIdx = i;
+    box.dataset.day = rows[i].day;
+    applySel();
+    renderDayDetail();
   }
   wrap.querySelectorAll(".dhit").forEach(h => {
     h.addEventListener("mouseenter", (e) => show(parseInt(h.dataset.i, 10), e.clientX));
-    h.addEventListener("click", (e) => show(parseInt(h.dataset.i, 10), e.clientX));
+    h.addEventListener("click", (e) => { const i = parseInt(h.dataset.i, 10); show(i, e.clientX); select(i); });
   });
   wrap.addEventListener("mouseleave", hide);
+  applySel();
+  renderDayDetail();
 }
 
 function statsLoadingHtml(){
@@ -2944,7 +2988,12 @@ async function loadAndRenderStats(el){
       ${data.dashboardUrl ? `<div class="field-hint" style="margin-top:20px;"><a href="${esc(data.dashboardUrl)}" target="_blank" rel="noopener">在 GoatCounter 看更詳細的統計（含不重複人數、來源、裝置）↗</a></div>` : ""}
     `;
     const chartBox = el.querySelector("#dailyChart");
-    if(chartBox && Array.isArray(data.daily)) renderDailyChart(chartBox, data.daily, 30);
+    if(chartBox && Array.isArray(data.daily)){
+      chartBox._pages = data.dailyPages || null;
+      chartBox._pagesError = data.dailyPagesError || null;
+      chartBox._pagesMore = !!data.dailyPagesMore;
+      renderDailyChart(chartBox, data.daily, 30);
+    }
     const skipBox = el.querySelector("#skipSelfStats");
     if(skipBox) skipBox.addEventListener("change", () => setSelfExcluded(skipBox.checked));
   }catch(err){

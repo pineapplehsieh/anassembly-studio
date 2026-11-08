@@ -99,6 +99,28 @@ exports.handler = async () => {
       dailyError = err.message;
     }
 
+    // 每一天各頁面被瀏覽幾次（最近 90 天）：用 /stats/hits 的 daily 模式，一次拿到「每個頁面 × 每一天」，
+    // 後台點圖上的某一天就能直接列出那天看了哪些頁面，不用再另外查。
+    let dailyPages = {};
+    let dailyPagesError = null;
+    let dailyPagesMore = false;
+    try{
+      const hits = await gcFetch(site, token, "/stats/hits", { start: isoDaysAgo(89), end: now, limit: 100, daily: "true" });
+      dailyPagesMore = !!hits.more;
+      (hits.hits || []).forEach(h => {
+        if(h.event) return;
+        (h.stats || []).forEach(s => {
+          const c = s.daily != null ? s.daily : (Array.isArray(s.hourly) ? s.hourly.reduce((a, b) => a + b, 0) : 0);
+          if(!c) return;
+          const day = String(s.day).slice(0, 10);
+          (dailyPages[day] = dailyPages[day] || []).push({ path: h.path, count: c });
+        });
+      });
+      Object.keys(dailyPages).forEach(d => dailyPages[d].sort((a, b) => b.count - a.count));
+    }catch(err){
+      dailyPagesError = err.message;
+    }
+
     return json(200, {
       today: today.total,
       last7Days: last7.total,
@@ -108,6 +130,9 @@ exports.handler = async () => {
       topPagesError,
       daily,
       dailyError,
+      dailyPages,
+      dailyPagesError,
+      dailyPagesMore,
       dashboardUrl: `https://${site}.goatcounter.com`,
     });
   }catch(err){
